@@ -8,7 +8,7 @@ This file is the durable project handoff. Keep it current whenever project conve
 - Linear project: https://linear.app/jtworks/project/world-instrument-1472eb8e5477
 - Linear team: Jtworks
 - Local checkout: `/Users/JonathanTrubshaw/Documents/weathart/world-instrument`
-- Active implementation branch: `cursor/weather-stream-path-73db` for `JTW-17`.
+- Active implementation branch: none confirmed yet for `JTW-18`; watch for a fresh Cursor PR/branch after release.
 - Cursor environment setup is complete.
 - Stale pre-setup Cursor draft PRs closed: PR #1 (`cursor/instrument-app-shell-1cf1`) and PR #3 (`cursor/core-contracts-7e26`).
 - Local Node environment: Homebrew `node@24` installed; current shell resolves `node` to `v24.16.0` and `npm` to `11.13.0`.
@@ -21,8 +21,8 @@ This file is the durable project handoff. Keep it current whenever project conve
 - `JTW-14`: Install dependencies and establish CI baseline. Done; PR #7 merged.
 - `JTW-15`: Implement core stream, score, and replay contracts. Done; PR #12 merged.
 - `JTW-16`: Select visual rendering engine and create instrument app shell. Done; PR #16 merged.
-- `JTW-17`: Build first weather adapter and deterministic weather score. In Progress on `cursor/weather-stream-path-73db`.
-- `JTW-18`: Add quality coverage thresholds and refactor review cadence. Backlog, unassigned until ready.
+- `JTW-17`: Build first weather adapter and deterministic weather score. Done; PR #20 merged.
+- `JTW-18`: Add quality coverage thresholds and refactor review cadence. In Progress, delegated to Cursor.
 - `JTW-19`: Decide weather provider and credential strategy. Done.
 - `JTW-20`: Document 15-minute PR review fallback policy. Done.
 - `JTW-21`: Record Cursor setup completion and stale PR cleanup. Done.
@@ -34,7 +34,8 @@ This file is the durable project handoff. Keep it current whenever project conve
 - `JTW-28`: Document Cursor draft PR ready-for-review handling. Done.
 - `JTW-29`: Refresh durable handoff after core merge and visual shell release. Done.
 - `JTW-30`: Document backlog exhaustion gap-finding automation behavior. Done.
-- `JTW-31`: Refresh durable handoff after app shell merge and weather release. Current docs issue.
+- `JTW-31`: Refresh durable handoff after app shell merge and weather release. Done.
+- `JTW-32`: Refresh durable handoff after weather merge and quality release. Current docs issue.
 
 ## Orchestration Rules
 
@@ -91,7 +92,7 @@ This file is the durable project handoff. Keep it current whenever project conve
 
 There is no longer a global pause on Cursor setup. Pick the next issue deliberately, assign/delegate it only when ready, and avoid starting multiple coding-heavy Cursor tasks unless that concurrency is intentional.
 
-Current coding-heavy work is `JTW-17` on `cursor/weather-stream-path-73db`. Do not release another coding-heavy Cursor issue until this work is resolved and merged or explicitly paused.
+Current coding-heavy work is `JTW-18`, delegated to Cursor. Watch for a fresh Cursor branch/PR for quality coverage thresholds and refactor review cadence. Do not release another coding-heavy Cursor issue until this work is resolved and merged or explicitly paused.
 
 ## Source Checks
 
@@ -114,10 +115,12 @@ Current coding-heavy work is `JTW-17` on `cursor/weather-stream-path-73db`. Do n
 - JTW-16 was released to Cursor on 2026-06-14 after PR #12 merged. Watch for a fresh Cursor branch/PR, and if it opens as draft, mark ready only after Cursor clearly hands back initial work.
 - JTW-16 implementation branch `cursor/instrument-app-shell-dc22` verified locally on 2026-06-14 with Node `v24.16.0` and npm `11.13.0`: `npm run check`, `npm run build`, and `npm run test:smoke` passed. Vite reports an expected initial bundle-size warning because Three.js is included in the first shell.
 - PR #16 (`Select rendering path and add instrument app shell`) merged on 2026-06-14 and `JTW-16` was marked Done before `JTW-17` started.
-- JTW-17 implementation branch `cursor/weather-stream-path-73db` verified locally on 2026-06-14 with Node `v24.16.0` and npm `11.13.0`: `npm run check` passed.
+- JTW-17 implementation branch `cursor/weather-stream-path-73db` verified on 2026-06-14 with Node `v24.16.0` and npm `11.13.0`: `npm run check` passed.
 - The active PR monitor automation was updated on 2026-06-14 to create new Linear issues from product/app gap analysis when the explicit backlog is empty and no implementation PR is active.
 - PR #16 (`JTW-16 select rendering path and add instrument app shell`) merged on 2026-06-14 after CI passed and the latest-head Codex review fallback window elapsed with known actionable feedback addressed.
 - JTW-17 was released to Cursor on 2026-06-14 after PR #16 merged. Fixture-first weather adapter and score work should proceed without live credentials; live credential gaps should fail clearly and never put secrets in source control.
+- PR #20 (`Build first weather adapter and score`) merged on 2026-06-14 after CI passed and the latest-head Codex review fallback window elapsed with known actionable feedback addressed. `JTW-17` was marked Done; Linear also retained a stale attachment to closed superseded PR #19, so PR #20 was added manually as the correct implementation PR link.
+- JTW-18 was released to Cursor on 2026-06-14 after PR #20 merged. Scope is enforceable Vitest coverage thresholds, coherent workspace quality scripts, CI enforcement, `docs/QUALITY.md` rationale, and a reusable refactor review issue template.
 
 ## Cursor Cloud specific instructions
 
