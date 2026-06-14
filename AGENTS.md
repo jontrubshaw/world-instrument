@@ -8,21 +8,24 @@ This file is the durable project handoff. Keep it current whenever project conve
 - Linear project: https://linear.app/jtworks/project/world-instrument-1472eb8e5477
 - Linear team: Jtworks
 - Local checkout: `/Users/JonathanTrubshaw/Documents/weathart/world-instrument`
-- Active scaffold branch: `jontrubshaw/jtw-12-scaffold-repository-structure-and-project-documentation`
-- Active scaffold PR: https://github.com/jontrubshaw/world-instrument/pull/2
+- Active documentation branch: `jontrubshaw/jtw-21-record-cursor-setup-completion-and-stale-pr-cleanup`
+- Cursor environment setup is complete.
+- Stale pre-setup Cursor draft PRs closed: PR #1 (`cursor/instrument-app-shell-1cf1`) and PR #3 (`cursor/core-contracts-7e26`).
 - Local Node environment: Homebrew `node@24` installed; current shell resolves `node` to `v24.16.0` and `npm` to `11.13.0`.
 
 ## Linear Issues
 
 - `JTW-11`: Create comprehensive World Instrument project plan. This is the first issue and master planning issue.
-- `JTW-12`: Scaffold repository structure and project documentation. Current setup issue.
-- `JTW-13`: Set up Cursor environment for world-instrument. Assigned to Jonny; runtime implementation pauses on this.
+- `JTW-12`: Scaffold repository structure and project documentation. Done.
+- `JTW-13`: Set up Cursor environment for world-instrument. Done.
 - `JTW-14`: Install dependencies and establish CI baseline. Backlog, unassigned until ready.
 - `JTW-15`: Implement core stream, score, and replay contracts. Backlog, unassigned until ready.
 - `JTW-16`: Select visual rendering engine and create instrument app shell. Backlog, unassigned until ready.
 - `JTW-17`: Build first weather adapter and deterministic weather score. Backlog, unassigned until ready.
 - `JTW-18`: Add quality coverage thresholds and refactor review cadence. Backlog, unassigned until ready.
 - `JTW-19`: Decide weather provider and credential strategy. Assigned to Jonny.
+- `JTW-20`: Document 15-minute PR review fallback policy. Done.
+- `JTW-21`: Record Cursor setup completion and stale PR cleanup. Current documentation issue.
 
 ## Orchestration Rules
 
@@ -41,7 +44,7 @@ This file is the durable project handoff. Keep it current whenever project conve
 - As problems arise, create Linear issues for them.
 - Keep documentation updated when the plan changes.
 - Perform periodic refactor reviews to keep the codebase clean.
-- Do not start runtime feature implementation until the Cursor environment setup issue is complete.
+- Cursor environment setup is complete, but coding-heavy issues should still be assigned to Cursor only when intentionally ready to start.
 
 ## People And Agents
 
@@ -70,15 +73,16 @@ This file is the durable project handoff. Keep it current whenever project conve
 - `packages/scores`: Versioned deterministic score implementations.
 - `packages/adapters`: Stream adapters such as weather, news, sensors, and replay.
 
-## Pause Condition
+## Current Work Selection
 
-After the repository scaffold is created, create an issue assigned to Jonny Trubshaw to set up the Cursor environment for this repo, then pause before implementation work.
+There is no longer a global pause on Cursor setup. Pick the next issue deliberately, assign/delegate it only when ready, and avoid starting multiple coding-heavy Cursor tasks unless that concurrency is intentional.
 
 ## Source Checks
 
 - Official Node schedule checked on 2026-06-14: Node 20 ended 2026-04-30; Node 24 ends 2028-04-30; Node 26 starts LTS 2026-10-28.
 - `npm run check` passed locally on 2026-06-14 with Node `v24.16.0` and npm `11.13.0`.
 - PR #2 Codex review timing observed on 2026-06-14: about 3-5 minutes for early reviews and about 8 minutes for review of commit `fd0eaf4`; latest commit `d0ca86c` still had no latest-head review after 15 minutes. Use 10 minutes as the default review wait and 15 minutes as the merge fallback threshold.
+- PR #1 and PR #3 were closed on 2026-06-14 as stale drafts from the pre-Cursor-setup misfire; their associated issues `JTW-16` and `JTW-15` remain in Backlog.
 
 ## Cursor Cloud specific instructions
 

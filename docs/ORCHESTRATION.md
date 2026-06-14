@@ -27,6 +27,6 @@
 - Merge to `main` only after reviews complete, or after the 15-minute fallback threshold when the PR is clean and all known actionable feedback has been addressed.
 - Jonny has approved Codex to merge reviewed PRs.
 
-## Current Pause
+## Current Work Selection
 
-After scaffolding, create a Linear issue for Jonny to set up Cursor for this repository and pause before runtime implementation starts.
+Cursor environment setup is complete. Coding-heavy issues should still be assigned or delegated to Cursor only when intentionally ready to start. Keep planned work in Backlog until it is selected.
