@@ -30,3 +30,7 @@
 ## Current Work Selection
 
 Cursor environment setup is complete. Coding-heavy issues should still be assigned or delegated to Cursor only when intentionally ready to start. Keep planned work in Backlog until it is selected.
+
+## CI
+
+The baseline CI workflow runs on pull requests and pushes to `main`. It installs dependencies with `npm ci` under Node 24 and runs `npm run check`. Add browser/e2e jobs only after the instrument app shell and Playwright configuration exist.

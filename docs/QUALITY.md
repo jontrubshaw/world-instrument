@@ -5,11 +5,14 @@ World Instrument should be built as a durable creative system.
 ## Required Gates
 
 - Node 24 LTS baseline.
+- `npm ci` must succeed from a fresh checkout.
 - TypeScript strict mode.
 - ESLint must pass.
 - Prettier check must pass.
 - Unit and contract tests must pass.
 - Browser smoke tests must cover the instrument shell once implemented.
+
+The current CI gate runs `npm ci` and `npm run check`. Browser smoke tests are intentionally excluded until the app shell and Playwright configuration exist.
 
 ## Test Expectations
 
@@ -22,7 +25,7 @@ World Instrument should be built as a durable creative system.
 ## Review Expectations
 
 - Every implementation PR should reference a Linear issue.
-- Automatic Codex PR review must complete before merge.
+- Automatic Codex PR review should complete before merge, except under the documented low-risk docs and 15-minute fallback rules in `docs/ORCHESTRATION.md`.
 - PRs should include test evidence or explain why tests were not applicable.
 - Refactor review issues should be created periodically after major feature work.
 
