@@ -89,31 +89,32 @@ describe('weather adapter', () => {
         latitude: 51.5072,
         longitude: -0.1276,
       },
-      fetchWeather: async (url) => {
+      fetchWeather: (url) => {
         requestedUrl = url;
 
-        return {
+        return Promise.resolve({
           ok: true,
           status: 200,
-          json: async () => ({
-            latitude: 51.5,
-            longitude: -0.12,
-            timezone: 'GMT',
-            current: {
-              time: '2026-06-14T21:00',
-              temperature_2m: 18.4,
-              apparent_temperature: 17.9,
-              relative_humidity_2m: 72,
-              precipitation: 0.1,
-              rain: 0,
-              weather_code: 3,
-              cloud_cover: 86,
-              surface_pressure: 1012.4,
-              wind_speed_10m: 6.8,
-              wind_direction_10m: 248,
-            },
-          }),
-        };
+          json: () =>
+            Promise.resolve({
+              latitude: 51.5,
+              longitude: -0.12,
+              timezone: 'GMT',
+              current: {
+                time: '2026-06-14T21:00',
+                temperature_2m: 18.4,
+                apparent_temperature: 17.9,
+                relative_humidity_2m: 72,
+                precipitation: 0.1,
+                rain: 0,
+                weather_code: 3,
+                cloud_cover: 86,
+                surface_pressure: 1012.4,
+                wind_speed_10m: 6.8,
+                wind_direction_10m: 248,
+              },
+            }),
+        });
       },
     });
 
