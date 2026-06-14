@@ -3,14 +3,14 @@ import {
   SCORE_VERSION_SCHEMA_VERSION,
   type ScoreOutput,
   type ScoreVersionMetadata,
-} from './score.js';
+} from './score.ts';
 import {
   STREAM_STATE_SCHEMA_VERSION,
   type NormalizedStreamState,
   type StreamSample,
   type StreamStatus,
-} from './stream.js';
-import type { JsonObject, JsonValue } from './json.js';
+} from './stream.ts';
+import type { JsonObject, JsonValue } from './json.ts';
 
 export const REPLAY_SNAPSHOT_SCHEMA_VERSION = 'replay-snapshot.v1' as const;
 

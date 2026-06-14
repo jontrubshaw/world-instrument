@@ -1,5 +1,5 @@
-import type { JsonObject } from './json.js';
-import type { NormalizedStreamState } from './stream.js';
+import type { JsonObject } from './json.ts';
+import type { NormalizedStreamState } from './stream.ts';
 
 export const SCORE_VERSION_SCHEMA_VERSION = 'score-version.v1' as const;
 export const SCORE_INPUT_SCHEMA_VERSION = 'score-input.v1' as const;

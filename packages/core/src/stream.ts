@@ -1,4 +1,4 @@
-import type { JsonObject } from './json.js';
+import type { JsonObject } from './json.ts';
 
 export const STREAM_STATE_SCHEMA_VERSION = 'stream-state.v1' as const;
 

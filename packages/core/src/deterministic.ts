@@ -1,4 +1,4 @@
-import type { JsonObject, JsonValue } from './json.js';
+import type { JsonObject, JsonValue } from './json.ts';
 
 const FNV_OFFSET_BASIS = 0x811c9dc5;
 const FNV_PRIME = 0x01000193;

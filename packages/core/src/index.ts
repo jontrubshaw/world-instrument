@@ -1,4 +1,4 @@
-export type { JsonArray, JsonObject, JsonPrimitive, JsonValue } from './json.js';
+export type { JsonArray, JsonObject, JsonPrimitive, JsonValue } from './json.ts';
 export {
   clamp,
   createSeededRandom,
@@ -9,7 +9,7 @@ export {
   randomRange,
   stableStringify,
   type SeededRandom,
-} from './deterministic.js';
+} from './deterministic.ts';
 export {
   STREAM_STATE_SCHEMA_VERSION,
   type BooleanStreamSample,
@@ -26,7 +26,7 @@ export {
   type StreamStateSchemaVersion,
   type StreamStatus,
   type VectorStreamSample,
-} from './stream.js';
+} from './stream.ts';
 export {
   SCORE_INPUT_SCHEMA_VERSION,
   SCORE_OUTPUT_SCHEMA_VERSION,
@@ -45,7 +45,7 @@ export {
   type ScoreVersionMetadata,
   type ScoreVersionSchemaVersion,
   type VisualOutputState,
-} from './score.js';
+} from './score.ts';
 export {
   REPLAY_SNAPSHOT_SCHEMA_VERSION,
   ReplaySnapshotValidationError,
@@ -55,4 +55,4 @@ export {
   type ReplayFrame,
   type ReplaySnapshot,
   type ReplaySnapshotSchemaVersion,
-} from './replay.js';
+} from './replay.ts';
