@@ -409,7 +409,8 @@ function hasCredentials(credentials: WeatherProviderCredentials | undefined): bo
 }
 
 function assertRecordedWeatherPayload(raw: RecordedWeatherPayload): void {
-  assertSchemaVersion(raw.schemaVersion);
+  const schemaVersion: string = raw.schemaVersion;
+  assertSchemaVersion(schemaVersion);
   assertTimestamp(raw.receivedAt, 'receivedAt');
   assertTimestamp(raw.current.observedAt, 'current.observedAt');
   assertTimestamp(raw.recording.recordedAt, 'recording.recordedAt');
@@ -420,9 +421,9 @@ function assertRecordedWeatherPayload(raw: RecordedWeatherPayload): void {
   assertFiniteNumber(raw.current.windSpeedMetersPerSecond, 'current.windSpeedMetersPerSecond');
 }
 
-function assertSchemaVersion(value: RecordedWeatherSchemaVersion): void {
+function assertSchemaVersion(value: string): void {
   if (value !== RECORDED_WEATHER_SCHEMA_VERSION) {
-    throw new Error(`Unsupported weather fixture schema: ${String(value)}`);
+    throw new Error(`Unsupported weather fixture schema: ${value}`);
   }
 }
 

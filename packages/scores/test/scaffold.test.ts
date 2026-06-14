@@ -33,6 +33,10 @@ describe('weather-pressure score', () => {
 
   it('produces output that validates inside a replay snapshot', () => {
     const output = weatherPressureScore.evaluate(weatherPressureInput);
+    const capturedAt =
+      weatherPressureInput.frame.renderedAt ??
+      weatherPressureInput.streams[0]?.observedAt ??
+      '1970-01-01T00:00:00.000Z';
     const replaySnapshot: ReplaySnapshot = {
       schemaVersion: REPLAY_SNAPSHOT_SCHEMA_VERSION,
       snapshotId: 'weather-pressure-golden-2026-06-14T20:00:00Z',
@@ -42,8 +46,7 @@ describe('weather-pressure score', () => {
         {
           frameIndex: weatherPressureInput.frame.frameIndex,
           elapsedMs: weatherPressureInput.frame.elapsedMs,
-          capturedAt:
-            weatherPressureInput.frame.renderedAt ?? weatherPressureInput.streams[0]!.observedAt,
+          capturedAt,
           streams: weatherPressureInput.streams,
           seed: weatherPressureInput.seed,
           output,
