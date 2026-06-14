@@ -105,6 +105,7 @@ Current coding-heavy work is `JTW-16`, delegated to Cursor on `cursor/instrument
 - JTW-15 fresh implementation branch created on 2026-06-14: `cursor/core-contracts-48f1`.
 - PR #11 (`JTW-25 document Linear automation mismatch`) merged on 2026-06-14 after CI passed; docs-only review exception applied.
 - PR #12 (`Implement core stream, score, and replay contracts`) merged before `JTW-16` was released intentionally to Cursor.
+- JTW-16 implementation branch `cursor/instrument-app-shell-dc22` verified locally on 2026-06-14 with Node `v24.16.0` and npm `11.13.0`: `npm run check`, `npm run build`, and `npm run test:smoke` passed. Vite reports an expected initial bundle-size warning because Three.js is included in the first shell.
 
 ## Cursor Cloud specific instructions
 
