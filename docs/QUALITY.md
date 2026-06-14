@@ -20,12 +20,12 @@ The current CI gate runs `npm ci`, `npm run check`, `npm run build`, installs th
 Vitest coverage is enforced for executable source under `packages/*/src`.
 The initial threshold is:
 
-| Metric | Minimum |
-| --- | ---: |
-| Statements | 80% |
-| Branches | 70% |
-| Functions | 90% |
-| Lines | 80% |
+| Metric     | Minimum |
+| ---------- | ------: |
+| Statements |     80% |
+| Branches   |     70% |
+| Functions  |     90% |
+| Lines      |     80% |
 
 These targets are intentionally package-focused because the current source packages contain the deterministic core contracts, weather adapter, and weather score logic where regressions would affect replay correctness.
 The browser app shell is still covered by Playwright smoke tests until UI behavior has enough unit-testable seams to justify app coverage thresholds.
