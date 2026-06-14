@@ -74,3 +74,4 @@ The project should be built as a high-quality creative system, not an MVP. Deter
 4. After `JTW-15` lands, update docs and release `JTW-16` for the visual rendering decision and app shell.
 5. Keep `JTW-19` with Jonny for the weather provider and credential decision; fixture-first weather work can be planned before live credentials, but live provider integration should not proceed without that decision.
 6. Continue creating Linear issues for new problems, follow-on implementation work, refactor reviews, and human decisions as they arise.
+7. If the explicit backlog runs out, evaluate the built app against the product vision and create new scoped Linear issues for the next concrete gaps rather than pausing the project.

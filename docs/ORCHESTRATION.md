@@ -15,6 +15,14 @@
 - Create new issues as problems arise.
 - Keep issue descriptions actionable with acceptance criteria.
 
+## Backlog Discovery
+
+- If there is no active implementation PR and no ready backlog issue remains, Codex should evaluate the current repository and product state against the World Instrument intent.
+- Look for concrete gaps in deterministic streams, replayability, visual output, sound output, haptics, quality gates, app experience, and documentation.
+- Create new Linear issues for the highest-value gaps, with scoped descriptions and acceptance criteria.
+- Assign human-decision issues to Jonny. Keep coding-heavy issues in Backlog until intentionally selected, and delegate them to Cursor only when ready to start.
+- Continue orchestration from the newly created issues rather than stopping because the original backlog is empty.
+
 ## Cursor Handoffs
 
 - When Cursor owns a coding issue, operational handoffs to Cursor happen in that Linear issue thread, not in GitHub PR comments.
