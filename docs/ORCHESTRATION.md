@@ -20,7 +20,8 @@
 - Use branches tied to Linear issue identifiers.
 - Open PRs for implementation changes.
 - Wait for automatic Codex PR reviews after PR creation and subsequent pushes.
-- After pushing to a PR, wait about 5 minutes by default before re-checking review state.
+- After pushing to a PR, wait about 10 minutes by default before re-checking review state.
+- If no review appears for the latest PR head after 10 minutes, check timestamps and wait another 5 minutes before manually triggering review or asking for direction.
 - Merge to `main` only after reviews complete and blockers are resolved.
 - Jonny has approved Codex to merge reviewed PRs.
 
