@@ -21,8 +21,9 @@
 - Open PRs for implementation changes.
 - Wait for automatic Codex PR reviews after PR creation and subsequent pushes.
 - After pushing to a PR, wait about 10 minutes by default before re-checking review state.
-- If no review appears for the latest PR head after 10 minutes, check timestamps and wait another 5 minutes before manually triggering review or asking for direction.
-- Merge to `main` only after reviews complete and blockers are resolved.
+- If no review appears for the latest PR head after 10 minutes, check timestamps and wait another 5 minutes.
+- If no latest-head review appears after 15 minutes total, merge when the PR is clean and all known actionable feedback has been addressed.
+- Merge to `main` only after reviews complete, or after the 15-minute fallback threshold when the PR is clean and all known actionable feedback has been addressed.
 - Jonny has approved Codex to merge reviewed PRs.
 
 ## Current Pause
