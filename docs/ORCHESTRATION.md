@@ -20,6 +20,7 @@
 - Use branches tied to Linear issue identifiers.
 - Open PRs for implementation changes.
 - Wait for automatic Codex PR reviews after PR creation and subsequent pushes.
+- For docs-only or similarly low-risk orchestration updates, use best judgment: if the PR is clean, has no actionable feedback, and Codex has provided a thumbs-up signal or the change is clearly non-runtime, it can merge without waiting the full review window.
 - After pushing to a PR, wait about 10 minutes by default before re-checking review state.
 - If no review appears for the latest PR head after 10 minutes, check timestamps and wait another 5 minutes.
 - If no latest-head review appears after 15 minutes total, merge when the PR is clean and all known actionable feedback has been addressed.
