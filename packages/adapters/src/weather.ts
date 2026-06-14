@@ -18,6 +18,19 @@ export const WEATHER_ADAPTER_ID = 'weather.open-meteo';
 export const WEATHER_ADAPTER_VERSION = '1.0.0';
 export const WEATHER_CREDENTIAL_ENV = 'WORLD_INSTRUMENT_WEATHER_API_KEY';
 
+const OPEN_METEO_CURRENT_FIELDS = [
+  'temperature_2m',
+  'apparent_temperature',
+  'relative_humidity_2m',
+  'precipitation',
+  'rain',
+  'weather_code',
+  'cloud_cover',
+  'surface_pressure',
+  'wind_speed_10m',
+  'wind_direction_10m',
+] as const;
+
 export interface WeatherLocation {
   readonly id: string;
   readonly label: string;
@@ -152,7 +165,7 @@ export class WeatherAdapter implements StreamAdapter<WeatherAdapterRaw, WeatherA
   ): Promise<StreamAdapterResult<WeatherAdapterRaw>> {
     const receivedAt = config.receivedAt ?? new Date().toISOString();
     const credentialEnvName = config.credentialEnvName ?? WEATHER_CREDENTIAL_ENV;
-    const apiKey = config.apiKey ?? process.env[credentialEnvName];
+    const apiKey = config.apiKey ?? readCredentialFromEnv(credentialEnvName);
 
     if (apiKey === undefined || apiKey.length === 0) {
       return createFailureResult(config, {
@@ -192,11 +205,7 @@ export class WeatherAdapter implements StreamAdapter<WeatherAdapterRaw, WeatherA
         });
       }
 
-      const payload = parseRecordedWeatherPayload(
-        await response.json(),
-        config.location,
-        receivedAt,
-      );
+      const payload = mapOpenMeteoResponse(await response.json(), config.location, receivedAt, url);
 
       if (payload === undefined) {
         return createFailureResult(config, {
@@ -536,13 +545,79 @@ function parseCurrent(value: Record<string, unknown>): WeatherCurrentPayload {
   return current;
 }
 
+function mapOpenMeteoResponse(
+  value: unknown,
+  fallbackLocation: WeatherLocation,
+  receivedAt: string,
+  sourceUri: string,
+): RecordedWeatherPayload | undefined {
+  if (!isRecord(value) || !isRecord(value.current)) {
+    return undefined;
+  }
+
+  const observedAt = parseOpenMeteoObservedAt(value.current.time);
+  if (observedAt === undefined) {
+    return undefined;
+  }
+
+  return {
+    provider: 'open-meteo',
+    observedAt,
+    receivedAt,
+    sourceUri,
+    location: {
+      ...fallbackLocation,
+      ...(typeof value.timezone === 'string' ? { timezone: value.timezone } : {}),
+    },
+    current: parseOpenMeteoCurrent(value.current),
+  };
+}
+
+function parseOpenMeteoCurrent(value: Record<string, unknown>): WeatherCurrentPayload {
+  const current: MutableWeatherCurrentPayload = {};
+  assignFinite(current, 'temperatureCelsius', value.temperature_2m);
+  assignFinite(current, 'apparentTemperatureCelsius', value.apparent_temperature);
+  assignFinite(current, 'relativeHumidityPercent', value.relative_humidity_2m);
+  assignFinite(current, 'precipitationMm', value.precipitation);
+  assignFinite(current, 'rainMm', value.rain);
+  assignFinite(current, 'weatherCode', value.weather_code);
+  assignFinite(current, 'cloudCoverPercent', value.cloud_cover);
+  assignFinite(current, 'pressureHpa', value.surface_pressure);
+  assignFinite(current, 'windSpeedMetersPerSecond', value.wind_speed_10m);
+  assignFinite(current, 'windDirectionDegrees', value.wind_direction_10m);
+
+  return current;
+}
+
+function parseOpenMeteoObservedAt(value: unknown): string | undefined {
+  if (typeof value !== 'string' || value.length === 0) {
+    return undefined;
+  }
+
+  const timestamp = /(?:Z|[+-]\d{2}:?\d{2})$/u.test(value) ? value : `${value}Z`;
+  const parsed = new Date(timestamp);
+
+  return Number.isNaN(parsed.valueOf()) ? undefined : parsed.toISOString();
+}
+
 function buildLiveUrl(endpointUrl: string, location: WeatherLocation, apiKey: string): string {
   const url = new URL(endpointUrl);
   url.searchParams.set('latitude', String(location.latitude));
   url.searchParams.set('longitude', String(location.longitude));
+  url.searchParams.set('current', OPEN_METEO_CURRENT_FIELDS.join(','));
+  url.searchParams.set('timezone', 'GMT');
+  url.searchParams.set('wind_speed_unit', 'ms');
   url.searchParams.set('apikey', apiKey);
 
   return url.toString();
+}
+
+function readCredentialFromEnv(credentialEnvName: string): string | undefined {
+  if (typeof process === 'undefined') {
+    return undefined;
+  }
+
+  return process.env[credentialEnvName];
 }
 
 function serializeLocation(location: WeatherLocation): JsonObject {

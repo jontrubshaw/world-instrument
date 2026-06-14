@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { STREAM_STATE_SCHEMA_VERSION } from '@world-instrument/core';
 
@@ -76,6 +76,112 @@ describe('weather adapter', () => {
     });
   });
 
+  it('maps Open-Meteo live responses into normalized weather state', async () => {
+    let requestedUrl: string | undefined;
+    const adapter = new WeatherAdapter({
+      mode: 'live',
+      endpointUrl: 'https://api.open-meteo.com/v1/forecast',
+      apiKey: 'test-api-key',
+      receivedAt: '2026-06-14T21:05:00.000Z',
+      location: {
+        id: 'london-uk',
+        label: 'London, UK',
+        latitude: 51.5072,
+        longitude: -0.1276,
+      },
+      fetchWeather: async (url) => {
+        requestedUrl = url;
+
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            latitude: 51.5,
+            longitude: -0.12,
+            timezone: 'GMT',
+            current: {
+              time: '2026-06-14T21:00',
+              temperature_2m: 18.4,
+              apparent_temperature: 17.9,
+              relative_humidity_2m: 72,
+              precipitation: 0.1,
+              rain: 0,
+              weather_code: 3,
+              cloud_cover: 86,
+              surface_pressure: 1012.4,
+              wind_speed_10m: 6.8,
+              wind_direction_10m: 248,
+            },
+          }),
+        };
+      },
+    });
+
+    const result = await adapter.read({ afterSequence: 4 });
+
+    expect(requestedUrl).toBeDefined();
+    const url = new URL(requestedUrl ?? '');
+    expect(url.searchParams.get('latitude')).toBe('51.5072');
+    expect(url.searchParams.get('longitude')).toBe('-0.1276');
+    expect(url.searchParams.get('apikey')).toBe('test-api-key');
+    expect(url.searchParams.get('timezone')).toBe('GMT');
+    expect(url.searchParams.get('wind_speed_unit')).toBe('ms');
+    expect(url.searchParams.get('current')).toBe(
+      [
+        'temperature_2m',
+        'apparent_temperature',
+        'relative_humidity_2m',
+        'precipitation',
+        'rain',
+        'weather_code',
+        'cloud_cover',
+        'surface_pressure',
+        'wind_speed_10m',
+        'wind_direction_10m',
+      ].join(','),
+    );
+    expect(result.raw).toMatchObject({
+      provider: 'open-meteo',
+      observedAt: '2026-06-14T21:00:00.000Z',
+      receivedAt: '2026-06-14T21:05:00.000Z',
+      location: {
+        id: 'london-uk',
+        label: 'London, UK',
+        timezone: 'GMT',
+      },
+      current: {
+        temperatureCelsius: 18.4,
+        apparentTemperatureCelsius: 17.9,
+        relativeHumidityPercent: 72,
+        precipitationMm: 0.1,
+        rainMm: 0,
+        weatherCode: 3,
+        cloudCoverPercent: 86,
+        pressureHpa: 1012.4,
+        windSpeedMetersPerSecond: 6.8,
+        windDirectionDegrees: 248,
+      },
+    });
+    expect(result.state).toMatchObject({
+      streamId: 'weather:london-uk',
+      status: 'ok',
+      observedAt: '2026-06-14T21:00:00.000Z',
+      receivedAt: '2026-06-14T21:05:00.000Z',
+      sequence: 5,
+      metadata: {
+        provider: 'open-meteo',
+        mode: 'live',
+        condition: 'overcast',
+        weatherCode: 3,
+      },
+    });
+    expect(result.state.samples.find((sample) => sample.key === 'temperature')).toMatchObject({
+      kind: 'numeric',
+      value: 18.4,
+      quality: 'measured',
+    });
+  });
+
   it('returns a clear error stream state when live credentials are missing', async () => {
     const envName = 'WORLD_INSTRUMENT_TEST_WEATHER_API_KEY';
     const previousValue = process.env.WORLD_INSTRUMENT_TEST_WEATHER_API_KEY;
@@ -123,6 +229,38 @@ describe('weather adapter', () => {
       } else {
         process.env.WORLD_INSTRUMENT_TEST_WEATHER_API_KEY = previousValue;
       }
+    }
+  });
+
+  it('returns missing credentials instead of crashing when process is unavailable', async () => {
+    const originalProcess = globalThis.process;
+    vi.stubGlobal('process', undefined);
+
+    try {
+      const adapter = new WeatherAdapter({
+        mode: 'live',
+        endpointUrl: 'https://weather.example.test/current',
+        receivedAt: '2026-06-14T21:05:00.000Z',
+        location: {
+          id: 'london-uk',
+          label: 'London, UK',
+          latitude: 51.5072,
+          longitude: -0.1276,
+        },
+      });
+
+      const result = await adapter.read();
+
+      expect(result.raw).toMatchObject({
+        ok: false,
+        error: {
+          code: 'missing-credentials',
+          message: 'Weather live mode requires apiKey or WORLD_INSTRUMENT_WEATHER_API_KEY.',
+        },
+      });
+      expect(result.state.status).toBe('error');
+    } finally {
+      vi.stubGlobal('process', originalProcess);
     }
   });
 });
