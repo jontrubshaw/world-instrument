@@ -9,6 +9,7 @@ This file is the durable project handoff. Keep it current whenever project conve
 - Linear team: Jtworks
 - Local checkout: `/Users/JonathanTrubshaw/Documents/weathart/world-instrument`
 - Active scaffold branch: `jontrubshaw/jtw-12-scaffold-repository-structure-and-project-documentation`
+- Active scaffold PR: https://github.com/jontrubshaw/world-instrument/pull/2
 
 ## Linear Issues
 
