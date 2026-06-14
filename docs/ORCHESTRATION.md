@@ -31,6 +31,8 @@
 
 Cursor environment setup is complete. Coding-heavy issues should still be assigned or delegated to Cursor only when intentionally ready to start. Keep planned work in Backlog until it is selected.
 
+`JTW-15` is the current coding-heavy work delegated to Cursor. Do not release another coding-heavy Cursor issue until `JTW-15` opens a fresh PR/branch, lands, or is confirmed stalled. While waiting, Codex should continue with non-blocking orchestration work: planning docs, issue grooming, review coordination, and cleanup that does not conflict with `packages/core`.
+
 ## CI
 
 The baseline CI workflow runs on pull requests and pushes to `main`. It installs dependencies with `npm ci` under Node 24 and runs `npm run check`. Add browser/e2e jobs only after the instrument app shell and Playwright configuration exist.
