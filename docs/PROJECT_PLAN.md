@@ -57,11 +57,20 @@ The project should be built as a high-quality creative system, not an MVP. Deter
    - Refactor reviews.
    - Dependency audits.
 
+## Completed Setup
+
+1. Comprehensive Linear plan issue created: `JTW-11`.
+2. Repository structure and documentation scaffolded: `JTW-12`.
+3. Cursor environment setup completed: `JTW-13`.
+4. CI baseline established and merged: `JTW-14`.
+5. PR review fallback policy documented: `JTW-20`.
+6. Stale pre-setup Cursor PRs closed and documented: `JTW-21`.
+
 ## Current Sequence
 
-1. Create the comprehensive Linear plan issue: `JTW-11`.
-2. Scaffold repository structure and documentation: `JTW-12`.
-3. Create a Cursor setup issue for Jonny.
-4. Pause until Cursor is ready.
-5. Move ready coding-heavy implementation issues out of backlog and delegate them to Cursor.
-6. Review PRs, wait for automatic Codex reviews, then merge approved work to `main`.
+1. Monitor `JTW-15`, which is the active coding-heavy issue delegated to Cursor.
+2. Do not release another coding-heavy Cursor issue until `JTW-15` opens a fresh PR/branch, lands, or is confirmed stalled.
+3. Review the `JTW-15` PR when it appears, wait for automatic Codex review unless a documented exception applies, and merge only after checks and actionable feedback are handled.
+4. After `JTW-15` lands, update docs and release `JTW-16` for the visual rendering decision and app shell.
+5. Keep `JTW-19` with Jonny for the weather provider and credential decision; fixture-first weather work can be planned before live credentials, but live provider integration should not proceed without that decision.
+6. Continue creating Linear issues for new problems, follow-on implementation work, refactor reviews, and human decisions as they arise.

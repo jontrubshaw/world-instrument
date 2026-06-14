@@ -26,7 +26,8 @@ This file is the durable project handoff. Keep it current whenever project conve
 - `JTW-19`: Decide weather provider and credential strategy. Assigned to Jonny.
 - `JTW-20`: Document 15-minute PR review fallback policy. Done.
 - `JTW-21`: Record Cursor setup completion and stale PR cleanup. Done.
-- `JTW-22`: Refresh durable agent handoff after CI baseline and JTW-15 delegation. Current documentation issue.
+- `JTW-22`: Refresh durable agent handoff after CI baseline and JTW-15 delegation. Done.
+- `JTW-23`: Update execution plan for post-setup orchestration phase. Current documentation issue.
 
 ## Orchestration Rules
 
@@ -81,6 +82,8 @@ There is no longer a global pause on Cursor setup. Pick the next issue deliberat
 
 Current coding-heavy work is `JTW-15`, delegated to Cursor. Do not release another coding-heavy Cursor issue until `JTW-15` has either produced a PR/branch or is confirmed blocked/stalled.
 
+Current docs work is `JTW-23`: update `docs/PROJECT_PLAN.md` and `docs/ORCHESTRATION.md` so they reflect the post-setup orchestration phase.
+
 ## Source Checks
 
 - Official Node schedule checked on 2026-06-14: Node 20 ended 2026-04-30; Node 24 ends 2028-04-30; Node 26 starts LTS 2026-10-28.
@@ -90,6 +93,7 @@ Current coding-heavy work is `JTW-15`, delegated to Cursor. Do not release anoth
 - PR #2 Codex review timing observed on 2026-06-14: about 3-5 minutes for early reviews and about 8 minutes for review of commit `fd0eaf4`; latest commit `d0ca86c` still had no latest-head review after 15 minutes. Use 10 minutes as the default review wait and 15 minutes as the merge fallback threshold.
 - PR #1 and PR #3 were closed on 2026-06-14 as stale drafts from the pre-Cursor-setup misfire; `JTW-16` remains in Backlog, and `JTW-15` was later released intentionally to Cursor.
 - JTW-15 release-to-Cursor check on 2026-06-14: Linear showed `Todo`, assignee `Jonny Trubshaw`, delegate `Cursor`; `gh pr list` showed no fresh open PR; `git ls-remote --heads origin` showed only `main`, old closed Cursor branches, and the merged Cursor setup branch.
+- PR #8 (`JTW-22 refresh durable handoff state`) merged on 2026-06-14 after CI passed; docs-only review exception applied.
 
 ## Cursor Cloud specific instructions
 
