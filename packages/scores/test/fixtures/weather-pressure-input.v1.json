@@ -1,0 +1,97 @@
+{
+  "schemaVersion": "score-input.v1",
+  "score": {
+    "schemaVersion": "score-version.v1",
+    "scoreId": "weather-pressure",
+    "scoreVersion": "1.0.0",
+    "displayName": "Weather Pressure",
+    "deterministic": true,
+    "supportedStreamSchemas": ["stream-state.v1"],
+    "description": "Maps normalized weather into bounded instrument parameters.",
+    "createdAt": "2026-06-14T19:59:00.000Z"
+  },
+  "frame": {
+    "frameIndex": 0,
+    "elapsedMs": 0,
+    "renderedAt": "2026-06-14T20:00:00.000Z"
+  },
+  "streams": [
+    {
+      "schemaVersion": "stream-state.v1",
+      "streamId": "weather:london",
+      "source": {
+        "id": "open-meteo:london",
+        "kind": "weather",
+        "label": "London weather",
+        "uri": "https://api.open-meteo.com"
+      },
+      "status": "ok",
+      "observedAt": "2026-06-14T20:00:00.000Z",
+      "receivedAt": "2026-06-14T20:00:01.000Z",
+      "sequence": 42,
+      "samples": [
+        {
+          "kind": "numeric",
+          "key": "temperature",
+          "label": "Temperature",
+          "observedAt": "2026-06-14T20:00:00.000Z",
+          "quality": "measured",
+          "value": 18.4,
+          "unit": "celsius",
+          "delta": 0.2,
+          "rollingAverage": 17.9
+        },
+        {
+          "kind": "numeric",
+          "key": "windSpeed",
+          "label": "Wind speed",
+          "observedAt": "2026-06-14T20:00:00.000Z",
+          "quality": "measured",
+          "value": 6.8,
+          "unit": "m/s"
+        },
+        {
+          "kind": "categorical",
+          "key": "condition",
+          "label": "Condition",
+          "observedAt": "2026-06-14T20:00:00.000Z",
+          "quality": "measured",
+          "value": "cloudy",
+          "confidence": 0.83
+        },
+        {
+          "kind": "boolean",
+          "key": "isRaining",
+          "label": "Is raining",
+          "observedAt": "2026-06-14T20:00:00.000Z",
+          "quality": "measured",
+          "value": false,
+          "confidence": 0.91
+        },
+        {
+          "kind": "vector",
+          "key": "windVector",
+          "label": "Wind vector",
+          "observedAt": "2026-06-14T20:00:00.000Z",
+          "quality": "estimated",
+          "values": [0.2, 0.8],
+          "axes": ["x", "y"],
+          "unit": "normalized"
+        }
+      ],
+      "metadata": {
+        "provider": "fixture",
+        "upstreamProvider": "open-meteo",
+        "recording": {
+          "recordedAt": "2026-06-14T20:00:00.000Z",
+          "source": "recorded fixture for deterministic adapter and score tests"
+        },
+        "location": {
+          "lat": 51.5,
+          "lon": -0.12
+        }
+      }
+    }
+  ],
+  "seed": "weather-pressure:0"
+}

@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "score-output.v1",
+  "scoreId": "weather-pressure",
+  "scoreVersion": "1.0.0",
+  "frameIndex": 0,
+  "generatedAt": "2026-06-14T20:00:00.000Z",
+  "visual": {
+    "palette": ["#0b1026", "#7fb7ff"],
+    "parameters": [
+      {
+        "key": "diffusion",
+        "value": 0.46,
+        "min": 0,
+        "max": 1
+      },
+      {
+        "key": "particleDensity",
+        "value": 0.68,
+        "min": 0,
+        "max": 1
+      }
+    ]
+  },
+  "audio": {
+    "enabled": true,
+    "parameters": [
+      {
+        "key": "harmonicPressure",
+        "value": 0.3,
+        "min": 0,
+        "max": 1
+      }
+    ]
+  },
+  "haptic": {
+    "enabled": false,
+    "parameters": []
+  },
+  "trace": [
+    {
+      "key": "temperature",
+      "value": "18.4"
+    }
+  ]
+}

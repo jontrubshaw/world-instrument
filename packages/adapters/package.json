@@ -2,5 +2,11 @@
   "name": "@world-instrument/adapters",
   "version": "0.0.0",
   "private": true,
-  "type": "module"
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@world-instrument/core": "*"
+  }
 }

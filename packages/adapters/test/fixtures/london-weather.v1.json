@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "recorded-weather.v1",
+  "provider": {
+    "id": "open-meteo",
+    "label": "Open-Meteo",
+    "uri": "https://api.open-meteo.com"
+  },
+  "recording": {
+    "kind": "fixture",
+    "recordedAt": "2026-06-14T20:00:00.000Z",
+    "source": "recorded fixture for deterministic adapter and score tests"
+  },
+  "location": {
+    "id": "london",
+    "label": "London",
+    "latitude": 51.5,
+    "longitude": -0.12
+  },
+  "sequence": 42,
+  "receivedAt": "2026-06-14T20:00:01.000Z",
+  "current": {
+    "observedAt": "2026-06-14T20:00:00.000Z",
+    "temperatureCelsius": 18.4,
+    "temperatureDeltaCelsius": 0.2,
+    "rollingAverageTemperatureCelsius": 17.9,
+    "windSpeedMetersPerSecond": 6.8,
+    "condition": "cloudy",
+    "conditionConfidence": 0.83,
+    "isRaining": false,
+    "rainConfidence": 0.91,
+    "windVector": {
+      "values": [0.2, 0.8],
+      "axes": ["x", "y"],
+      "unit": "normalized",
+      "quality": "estimated"
+    }
+  }
+}
