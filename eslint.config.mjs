@@ -8,8 +8,12 @@ export default tseslint.config(
     ignores: ['dist', 'coverage', 'playwright-report', 'test-results'],
   },
   js.configs.recommended,
-  ...tseslint.configs.strictTypeChecked,
+  ...tseslint.configs.strictTypeChecked.map((config) => ({
+    ...config,
+    files: ['**/*.{ts,tsx}'],
+  })),
   {
+    files: ['**/*.{ts,tsx}'],
     languageOptions: {
       parserOptions: {
         project: ['./tsconfig.json'],

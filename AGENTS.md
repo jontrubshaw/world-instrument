@@ -10,6 +10,7 @@ This file is the durable project handoff. Keep it current whenever project conve
 - Local checkout: `/Users/JonathanTrubshaw/Documents/weathart/world-instrument`
 - Active scaffold branch: `jontrubshaw/jtw-12-scaffold-repository-structure-and-project-documentation`
 - Active scaffold PR: https://github.com/jontrubshaw/world-instrument/pull/2
+- Local Node environment: Homebrew `node@24` installed; current shell resolves `node` to `v24.16.0` and `npm` to `11.13.0`.
 
 ## Linear Issues
 
