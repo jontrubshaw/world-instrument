@@ -8,7 +8,7 @@ This file is the durable project handoff. Keep it current whenever project conve
 - Linear project: https://linear.app/jtworks/project/world-instrument-1472eb8e5477
 - Linear team: Jtworks
 - Local checkout: `/Users/JonathanTrubshaw/Documents/weathart/world-instrument`
-- Active implementation branch: none locally; `main` is current as of PR #7.
+- Active implementation branch: `cursor/core-contracts-48f1` for `JTW-15`.
 - Cursor environment setup is complete.
 - Stale pre-setup Cursor draft PRs closed: PR #1 (`cursor/instrument-app-shell-1cf1`) and PR #3 (`cursor/core-contracts-7e26`).
 - Local Node environment: Homebrew `node@24` installed; current shell resolves `node` to `v24.16.0` and `npm` to `11.13.0`.
@@ -19,7 +19,7 @@ This file is the durable project handoff. Keep it current whenever project conve
 - `JTW-12`: Scaffold repository structure and project documentation. Done.
 - `JTW-13`: Set up Cursor environment for world-instrument. Done.
 - `JTW-14`: Install dependencies and establish CI baseline. Done; PR #7 merged.
-- `JTW-15`: Implement core stream, score, and replay contracts. Todo, assigned to Jonny, delegated to Cursor. Released intentionally after setup and CI completed. No fresh Cursor PR or branch existed when checked on 2026-06-14 at about 18:31 UTC.
+- `JTW-15`: Implement core stream, score, and replay contracts. Active on `cursor/core-contracts-48f1`; assigned to Jonny and delegated to Cursor.
 - `JTW-16`: Select visual rendering engine and create instrument app shell. Backlog, unassigned until ready.
 - `JTW-17`: Build first weather adapter and deterministic weather score. Backlog, unassigned until ready.
 - `JTW-18`: Add quality coverage thresholds and refactor review cadence. Backlog, unassigned until ready.
@@ -83,7 +83,7 @@ This file is the durable project handoff. Keep it current whenever project conve
 
 There is no longer a global pause on Cursor setup. Pick the next issue deliberately, assign/delegate it only when ready, and avoid starting multiple coding-heavy Cursor tasks unless that concurrency is intentional.
 
-Current coding-heavy work is `JTW-15`, delegated to Cursor. Do not release another coding-heavy Cursor issue until `JTW-15` has either produced a PR/branch or is confirmed blocked/stalled.
+Current coding-heavy work is `JTW-15`, delegated to Cursor on `cursor/core-contracts-48f1`. Do not release another coding-heavy Cursor issue until `JTW-15` has either merged or is confirmed blocked/stalled.
 
 ## Source Checks
 
@@ -99,6 +99,7 @@ Current coding-heavy work is `JTW-15`, delegated to Cursor. Do not release anoth
 - JTW-11 master plan issue description was refreshed on 2026-06-14 so Linear no longer describes the project as paused for Cursor setup.
 - PR #10 (`JTW-24 sync master plan handoff state`) merged on 2026-06-14 after CI passed; docs-only review exception applied.
 - Linear state correction on 2026-06-14: `JTW-15` had been auto-completed after docs PR #8, but was restored to Todo with delegate `Cursor`. Treat stale PR #3 and branch `cursor/core-contracts-7e26` as historical only.
+- JTW-15 fresh implementation branch created on 2026-06-14: `cursor/core-contracts-48f1`.
 
 ## Cursor Cloud specific instructions
 

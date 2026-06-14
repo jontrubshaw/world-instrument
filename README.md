@@ -51,7 +51,7 @@ The first prototype should focus on:
 
 ## Repository Status
 
-This repository is being scaffolded before feature implementation begins. The current focus is project structure, documentation, quality gates, and orchestration setup.
+This repository now has the initial scaffold, quality gates, and shared core contracts in place. The next feature work should build on the `packages/core` stream, score, replay, and deterministic utility boundary.
 
 ## Planned Stack
 
@@ -82,6 +82,13 @@ npm run check
 - [Orchestration](docs/ORCHESTRATION.md)
 - [Agent handoff notes](AGENTS.md)
 
+## Package Boundaries
+
+- `packages/core`: shared stream state, adapter, score, replay, JSON metadata, and deterministic utility contracts.
+- `packages/adapters`: source-specific ingestion and normalization implementations.
+- `packages/scores`: deterministic score implementations built on `@world-instrument/core`.
+- `apps/instrument`: browser runtime and user-facing instrument shell.
+
 ## Status
 
-This repository is the starting point for the project. Cursor setup is complete; implementation work should still be selected intentionally through Linear before being assigned.
+Cursor setup is complete. Runtime implementation work should still be selected intentionally through Linear before being assigned.

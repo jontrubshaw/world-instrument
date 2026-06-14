@@ -1,0 +1,139 @@
+{
+  "schemaVersion": "replay-snapshot.v1",
+  "snapshotId": "weather-demo-2026-06-14T20:00:00Z",
+  "createdAt": "2026-06-14T20:00:00.000Z",
+  "score": {
+    "schemaVersion": "score-version.v1",
+    "scoreId": "weather-pressure",
+    "scoreVersion": "1.0.0",
+    "displayName": "Weather Pressure",
+    "deterministic": true,
+    "supportedStreamSchemas": ["stream-state.v1"],
+    "description": "Maps normalized weather into bounded instrument parameters.",
+    "createdAt": "2026-06-14T19:59:00.000Z"
+  },
+  "frames": [
+    {
+      "frameIndex": 0,
+      "elapsedMs": 0,
+      "capturedAt": "2026-06-14T20:00:00.000Z",
+      "seed": "weather-pressure:0",
+      "streams": [
+        {
+          "schemaVersion": "stream-state.v1",
+          "streamId": "weather:london",
+          "source": {
+            "id": "open-meteo:london",
+            "kind": "weather",
+            "label": "London weather"
+          },
+          "status": "ok",
+          "observedAt": "2026-06-14T20:00:00.000Z",
+          "receivedAt": "2026-06-14T20:00:01.000Z",
+          "sequence": 42,
+          "samples": [
+            {
+              "kind": "numeric",
+              "key": "temperature",
+              "label": "Temperature",
+              "observedAt": "2026-06-14T20:00:00.000Z",
+              "quality": "measured",
+              "value": 18.4,
+              "unit": "celsius",
+              "delta": 0.2,
+              "rollingAverage": 17.9
+            },
+            {
+              "kind": "numeric",
+              "key": "windSpeed",
+              "observedAt": "2026-06-14T20:00:00.000Z",
+              "quality": "measured",
+              "value": 6.8,
+              "unit": "m/s"
+            },
+            {
+              "kind": "categorical",
+              "key": "condition",
+              "observedAt": "2026-06-14T20:00:00.000Z",
+              "quality": "measured",
+              "value": "cloudy",
+              "confidence": 0.83
+            },
+            {
+              "kind": "boolean",
+              "key": "isRaining",
+              "observedAt": "2026-06-14T20:00:00.000Z",
+              "quality": "measured",
+              "value": false,
+              "confidence": 0.91
+            },
+            {
+              "kind": "vector",
+              "key": "windVector",
+              "observedAt": "2026-06-14T20:00:00.000Z",
+              "quality": "estimated",
+              "values": [0.2, 0.8],
+              "axes": ["x", "y"],
+              "unit": "normalized"
+            }
+          ],
+          "metadata": {
+            "provider": "fixture",
+            "location": {
+              "lat": 51.5,
+              "lon": -0.12
+            }
+          }
+        }
+      ],
+      "output": {
+        "schemaVersion": "score-output.v1",
+        "scoreId": "weather-pressure",
+        "scoreVersion": "1.0.0",
+        "frameIndex": 0,
+        "generatedAt": "2026-06-14T20:00:00.000Z",
+        "visual": {
+          "palette": ["#0b1026", "#7fb7ff"],
+          "parameters": [
+            {
+              "key": "diffusion",
+              "value": 0.46,
+              "min": 0,
+              "max": 1
+            },
+            {
+              "key": "particleDensity",
+              "value": 0.68,
+              "min": 0,
+              "max": 1
+            }
+          ]
+        },
+        "audio": {
+          "enabled": true,
+          "parameters": [
+            {
+              "key": "harmonicPressure",
+              "value": 0.3,
+              "min": 0,
+              "max": 1
+            }
+          ]
+        },
+        "haptic": {
+          "enabled": false,
+          "parameters": []
+        },
+        "trace": [
+          {
+            "key": "temperature",
+            "value": "18.4"
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "fixture": true
+  }
+}
