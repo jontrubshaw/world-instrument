@@ -23,7 +23,7 @@ This file is the durable project handoff. Keep it current whenever project conve
 - `JTW-16`: Select visual rendering engine and create instrument app shell. Done; PR #16 merged.
 - `JTW-17`: Build first weather adapter and deterministic weather score. In Progress on `cursor/weather-stream-path-73db`.
 - `JTW-18`: Add quality coverage thresholds and refactor review cadence. Backlog, unassigned until ready.
-- `JTW-19`: Decide weather provider and credential strategy. Assigned to Jonny.
+- `JTW-19`: Decide weather provider and credential strategy. Done.
 - `JTW-20`: Document 15-minute PR review fallback policy. Done.
 - `JTW-21`: Record Cursor setup completion and stale PR cleanup. Done.
 - `JTW-22`: Refresh durable agent handoff after CI baseline and JTW-15 delegation. Done.
@@ -33,7 +33,8 @@ This file is the durable project handoff. Keep it current whenever project conve
 - `JTW-27`: Document Cursor review handoff requirements. Done.
 - `JTW-28`: Document Cursor draft PR ready-for-review handling. Done.
 - `JTW-29`: Refresh durable handoff after core merge and visual shell release. Done.
-- `JTW-30`: Document backlog exhaustion gap-finding automation behavior. Current docs issue for the monitor's next-work discovery rule.
+- `JTW-30`: Document backlog exhaustion gap-finding automation behavior. Done.
+- `JTW-31`: Refresh durable handoff after app shell merge and weather release. Current docs issue.
 
 ## Orchestration Rules
 
@@ -115,6 +116,8 @@ Current coding-heavy work is `JTW-17` on `cursor/weather-stream-path-73db`. Do n
 - PR #16 (`Select rendering path and add instrument app shell`) merged on 2026-06-14 and `JTW-16` was marked Done before `JTW-17` started.
 - JTW-17 implementation branch `cursor/weather-stream-path-73db` verified locally on 2026-06-14 with Node `v24.16.0` and npm `11.13.0`: `npm run check` passed.
 - The active PR monitor automation was updated on 2026-06-14 to create new Linear issues from product/app gap analysis when the explicit backlog is empty and no implementation PR is active.
+- PR #16 (`JTW-16 select rendering path and add instrument app shell`) merged on 2026-06-14 after CI passed and the latest-head Codex review fallback window elapsed with known actionable feedback addressed.
+- JTW-17 was released to Cursor on 2026-06-14 after PR #16 merged. Fixture-first weather adapter and score work should proceed without live credentials; live credential gaps should fail clearly and never put secrets in source control.
 
 ## Cursor Cloud specific instructions
 
