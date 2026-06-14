@@ -82,20 +82,25 @@ export function validateReplaySnapshot(value: unknown): readonly string[] {
     }
 
     frames.forEach((frame, index) => {
-      validateReplayFrame(frame, `$.frames[${String(index)}]`, issues);
+      validateReplayFrame(frame, `$.frames[${String(index)}]`, score, issues);
     });
   }
 
   return issues;
 }
 
-function validateReplayFrame(value: unknown, path: string, issues: string[]): void {
+function validateReplayFrame(
+  value: unknown,
+  path: string,
+  score: Record<string, unknown> | undefined,
+  issues: string[],
+): void {
   if (!isRecord(value)) {
     issues.push(`${path} must be an object`);
     return;
   }
 
-  requireNonNegativeInteger(value, 'frameIndex', path, issues);
+  const frameIndex = requireNonNegativeInteger(value, 'frameIndex', path, issues);
   requireNonNegativeNumber(value, 'elapsedMs', path, issues);
   requireTimestamp(value, 'capturedAt', path, issues);
   validateOptionalString(value, 'seed', path, issues);
@@ -114,6 +119,38 @@ function validateReplayFrame(value: unknown, path: string, issues: string[]): vo
   const output = optionalRecord(value, 'output', path, issues);
   if (output !== undefined) {
     validateScoreOutput(output, `${path}.output`, issues);
+    validateScoreOutputContext(output, `${path}.output`, score, frameIndex, issues);
+  }
+}
+
+function validateScoreOutputContext(
+  output: Record<string, unknown>,
+  path: string,
+  score: Record<string, unknown> | undefined,
+  frameIndex: number | undefined,
+  issues: string[],
+): void {
+  if (score !== undefined && typeof score.scoreId === 'string') {
+    requireMatchingValue(output, 'scoreId', score.scoreId, '$.score.scoreId', path, issues);
+  }
+
+  if (score !== undefined && typeof score.scoreVersion === 'string') {
+    requireMatchingValue(
+      output,
+      'scoreVersion',
+      score.scoreVersion,
+      '$.score.scoreVersion',
+      path,
+      issues,
+    );
+  }
+
+  if (
+    frameIndex !== undefined &&
+    typeof output.frameIndex === 'number' &&
+    output.frameIndex !== frameIndex
+  ) {
+    issues.push(`${path}.frameIndex must match the enclosing frameIndex`);
   }
 }
 
@@ -360,6 +397,19 @@ function requireLiteral(
 ): void {
   if (value[key] !== expected) {
     issues.push(`${path}.${key} must be ${String(expected)}`);
+  }
+}
+
+function requireMatchingValue(
+  value: Record<string, unknown>,
+  key: string,
+  expected: string,
+  expectedPath: string,
+  path: string,
+  issues: string[],
+): void {
+  if (typeof value[key] === 'string' && value[key] !== expected) {
+    issues.push(`${path}.${key} must match ${expectedPath}`);
   }
 }
 

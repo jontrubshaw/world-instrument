@@ -26,6 +26,16 @@ describe('deterministic utilities', () => {
     expect(stableStringify(right)).toBe(stableStringify(left));
   });
 
+  it('orders non-ASCII keys without locale-sensitive collation', () => {
+    expect(
+      stableStringify({
+        ä: 'umlaut',
+        z: 'zed',
+        a: 'first',
+      }),
+    ).toBe('{"a":"first","z":"zed","ä":"umlaut"}');
+  });
+
   it('hashes equivalent JSON values to the same digest', () => {
     const left = { b: 2, a: 1 };
     const right = { a: 1, b: 2 };

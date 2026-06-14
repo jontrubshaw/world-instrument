@@ -97,12 +97,26 @@ export function normalize(value: number, min: number, max: number): number {
 }
 
 function stableStringifyObject(value: JsonObject): string {
-  const entries = Object.entries(value).sort(([left], [right]) => left.localeCompare(right));
+  const entries = Object.entries(value).sort(([left], [right]) =>
+    compareUtf16CodeUnits(left, right),
+  );
   const serialized = entries.map(
     ([key, item]) => `${stringifyString(key)}:${stableStringify(item)}`,
   );
 
   return `{${serialized.join(',')}}`;
+}
+
+function compareUtf16CodeUnits(left: string, right: string): number {
+  if (left < right) {
+    return -1;
+  }
+
+  if (left > right) {
+    return 1;
+  }
+
+  return 0;
 }
 
 function isJsonArray(value: JsonObject | readonly JsonValue[]): value is readonly JsonValue[] {
