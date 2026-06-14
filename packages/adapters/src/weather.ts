@@ -482,69 +482,6 @@ function weatherCodeToCondition(weatherCode: number | undefined): string {
   return 'mixed';
 }
 
-function parseRecordedWeatherPayload(
-  value: unknown,
-  fallbackLocation: WeatherLocation,
-  fallbackReceivedAt: string,
-): RecordedWeatherPayload | undefined {
-  if (!isRecord(value) || !isRecord(value.current)) {
-    return undefined;
-  }
-
-  const observedAt = value.observedAt;
-  if (typeof observedAt !== 'string' || Number.isNaN(Date.parse(observedAt))) {
-    return undefined;
-  }
-
-  return {
-    provider: 'open-meteo',
-    observedAt,
-    receivedAt: typeof value.receivedAt === 'string' ? value.receivedAt : fallbackReceivedAt,
-    ...(typeof value.sourceUri === 'string' ? { sourceUri: value.sourceUri } : {}),
-    location: parseLocation(value.location) ?? fallbackLocation,
-    current: parseCurrent(value.current),
-  };
-}
-
-function parseLocation(value: unknown): WeatherLocation | undefined {
-  if (!isRecord(value)) {
-    return undefined;
-  }
-
-  if (
-    typeof value.id !== 'string' ||
-    typeof value.label !== 'string' ||
-    !isFiniteNumber(value.latitude) ||
-    !isFiniteNumber(value.longitude)
-  ) {
-    return undefined;
-  }
-
-  return {
-    id: value.id,
-    label: value.label,
-    latitude: value.latitude,
-    longitude: value.longitude,
-    ...(typeof value.timezone === 'string' ? { timezone: value.timezone } : {}),
-  };
-}
-
-function parseCurrent(value: Record<string, unknown>): WeatherCurrentPayload {
-  const current: MutableWeatherCurrentPayload = {};
-  assignFinite(current, 'temperatureCelsius', value.temperatureCelsius);
-  assignFinite(current, 'apparentTemperatureCelsius', value.apparentTemperatureCelsius);
-  assignFinite(current, 'relativeHumidityPercent', value.relativeHumidityPercent);
-  assignFinite(current, 'precipitationMm', value.precipitationMm);
-  assignFinite(current, 'rainMm', value.rainMm);
-  assignFinite(current, 'weatherCode', value.weatherCode);
-  assignFinite(current, 'cloudCoverPercent', value.cloudCoverPercent);
-  assignFinite(current, 'pressureHpa', value.pressureHpa);
-  assignFinite(current, 'windSpeedMetersPerSecond', value.windSpeedMetersPerSecond);
-  assignFinite(current, 'windDirectionDegrees', value.windDirectionDegrees);
-
-  return current;
-}
-
 function mapOpenMeteoResponse(
   value: unknown,
   fallbackLocation: WeatherLocation,
