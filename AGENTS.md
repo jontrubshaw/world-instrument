@@ -8,7 +8,7 @@ This file is the durable project handoff. Keep it current whenever project conve
 - Linear project: https://linear.app/jtworks/project/world-instrument-1472eb8e5477
 - Linear team: Jtworks
 - Local checkout: `/Users/JonathanTrubshaw/Documents/weathart/world-instrument`
-- Active implementation branch: `cursor/core-contracts-48f1` for `JTW-15`.
+- Active implementation branch: `cursor/core-contracts-48f1` for `JTW-15`; PR #12 is open.
 - Cursor environment setup is complete.
 - Stale pre-setup Cursor draft PRs closed: PR #1 (`cursor/instrument-app-shell-1cf1`) and PR #3 (`cursor/core-contracts-7e26`).
 - Local Node environment: Homebrew `node@24` installed; current shell resolves `node` to `v24.16.0` and `npm` to `11.13.0`.
@@ -19,7 +19,7 @@ This file is the durable project handoff. Keep it current whenever project conve
 - `JTW-12`: Scaffold repository structure and project documentation. Done.
 - `JTW-13`: Set up Cursor environment for world-instrument. Done.
 - `JTW-14`: Install dependencies and establish CI baseline. Done; PR #7 merged.
-- `JTW-15`: Implement core stream, score, and replay contracts. Active on `cursor/core-contracts-48f1`; assigned to Jonny and delegated to Cursor.
+- `JTW-15`: Implement core stream, score, and replay contracts. In Progress, assigned to Jonny, delegated to Cursor. Fresh Cursor PR #12 is open on `cursor/core-contracts-48f1`; Codex review completed and findings were handed back to Cursor via Linear comment.
 - `JTW-16`: Select visual rendering engine and create instrument app shell. Backlog, unassigned until ready.
 - `JTW-17`: Build first weather adapter and deterministic weather score. Backlog, unassigned until ready.
 - `JTW-18`: Add quality coverage thresholds and refactor review cadence. Backlog, unassigned until ready.
@@ -29,7 +29,8 @@ This file is the durable project handoff. Keep it current whenever project conve
 - `JTW-22`: Refresh durable agent handoff after CI baseline and JTW-15 delegation. Done.
 - `JTW-23`: Update execution plan for post-setup orchestration phase. Done.
 - `JTW-24`: Sync master plan and durable handoff after post-setup planning update. Done.
-- `JTW-25`: Document Linear auto-complete mismatch after docs PR. Done once the durable automation note is merged.
+- `JTW-25`: Document Linear auto-complete mismatch after docs PR. Done.
+- `JTW-27`: Document Cursor review handoff requirements. Current docs issue.
 
 ## Orchestration Rules
 
@@ -45,6 +46,7 @@ This file is the durable project handoff. Keep it current whenever project conve
 - If a review has not appeared for the latest PR head after 10 minutes, check timestamps and wait another 5 minutes.
 - If no latest-head review appears after 15 minutes total, merge when the PR is clean and all known actionable feedback has been addressed.
 - Jonny has approved Codex to merge reviewed PRs to `main`.
+- When Cursor owns a coding issue, review handoffs to Cursor go in the Linear issue thread, not in GitHub PR comments. Mention `@Cursor`, identify the PR and branch, list actionable findings, require same-branch fixes, and ask for `npm run check` before handback.
 - After docs PRs that reference implementation issue IDs, verify Linear issue state and attachments. PR #8 was docs-only but briefly auto-completed `JTW-15`; `JTW-15` was restored to Todo and still requires a fresh implementation PR.
 - As problems arise, create Linear issues for them.
 - Keep documentation updated when the plan changes.
@@ -83,7 +85,7 @@ This file is the durable project handoff. Keep it current whenever project conve
 
 There is no longer a global pause on Cursor setup. Pick the next issue deliberately, assign/delegate it only when ready, and avoid starting multiple coding-heavy Cursor tasks unless that concurrency is intentional.
 
-Current coding-heavy work is `JTW-15`, delegated to Cursor on `cursor/core-contracts-48f1`. Do not release another coding-heavy Cursor issue until `JTW-15` has either merged or is confirmed blocked/stalled.
+Current coding-heavy work is `JTW-15`, delegated to Cursor with PR #12 open on `cursor/core-contracts-48f1`. Do not release another coding-heavy Cursor issue until PR #12 is resolved and merged or the work is explicitly paused.
 
 ## Source Checks
 
@@ -100,6 +102,8 @@ Current coding-heavy work is `JTW-15`, delegated to Cursor on `cursor/core-contr
 - PR #10 (`JTW-24 sync master plan handoff state`) merged on 2026-06-14 after CI passed; docs-only review exception applied.
 - Linear state correction on 2026-06-14: `JTW-15` had been auto-completed after docs PR #8, but was restored to Todo with delegate `Cursor`. Treat stale PR #3 and branch `cursor/core-contracts-7e26` as historical only.
 - JTW-15 fresh implementation branch created on 2026-06-14: `cursor/core-contracts-48f1`.
+- PR #11 (`JTW-25 document Linear automation mismatch`) merged on 2026-06-14 after CI passed; docs-only review exception applied.
+- PR #12 (`Implement core stream, score, and replay contracts`) opened from fresh Cursor branch `cursor/core-contracts-48f1` on 2026-06-14. Codex review completed with findings; handoff was sent to Cursor in the Linear issue thread, not as a PR comment.
 
 ## Cursor Cloud specific instructions
 

@@ -15,6 +15,14 @@
 - Create new issues as problems arise.
 - Keep issue descriptions actionable with acceptance criteria.
 
+## Cursor Handoffs
+
+- When Cursor owns a coding issue, operational handoffs to Cursor happen in that Linear issue thread, not in GitHub PR comments.
+- After Codex review completes on a Cursor-owned PR, summarize actionable findings in a Linear comment that mentions `@Cursor`.
+- The handoff comment should include the PR number, branch name, each actionable review finding, the instruction to address findings on the same branch, and the expected verification command.
+- Keep GitHub comments for reviewer-facing discussion only. Use Linear as the agent coordination channel so Cursor receives the work in the place it is watching.
+- After Cursor pushes follow-up commits, re-check CI and wait for the subsequent automatic Codex review before merging, unless a documented fallback rule applies.
+
 ## GitHub
 
 - Use branches tied to Linear issue identifiers.
@@ -26,6 +34,7 @@
 - If no latest-head review appears after 15 minutes total, merge when the PR is clean and all known actionable feedback has been addressed.
 - Merge to `main` only after reviews complete, or after the 15-minute fallback threshold when the PR is clean and all known actionable feedback has been addressed.
 - Jonny has approved Codex to merge reviewed PRs.
+- Avoid putting implementation issue identifiers in docs-only PR titles, branch names, or PR bodies unless necessary. If a docs-only PR references an implementation issue, verify the Linear issue state after merge because integrations may attach or complete the wrong issue.
 
 ## Current Work Selection
 
