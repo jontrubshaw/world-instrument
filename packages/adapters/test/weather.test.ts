@@ -78,8 +78,8 @@ describe('weather adapter', () => {
 
   it('returns a clear error stream state when live credentials are missing', async () => {
     const envName = 'WORLD_INSTRUMENT_TEST_WEATHER_API_KEY';
-    const previousValue = process.env[envName];
-    delete process.env[envName];
+    const previousValue = process.env.WORLD_INSTRUMENT_TEST_WEATHER_API_KEY;
+    delete process.env.WORLD_INSTRUMENT_TEST_WEATHER_API_KEY;
 
     try {
       const adapter = new WeatherAdapter({
@@ -119,9 +119,9 @@ describe('weather adapter', () => {
       expect(result.state.samples.every((sample) => sample.quality === 'missing')).toBe(true);
     } finally {
       if (previousValue === undefined) {
-        delete process.env[envName];
+        delete process.env.WORLD_INSTRUMENT_TEST_WEATHER_API_KEY;
       } else {
-        process.env[envName] = previousValue;
+        process.env.WORLD_INSTRUMENT_TEST_WEATHER_API_KEY = previousValue;
       }
     }
   });
