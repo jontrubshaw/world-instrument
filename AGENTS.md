@@ -32,7 +32,8 @@ This file is the durable project handoff. Keep it current whenever project conve
 - `JTW-25`: Document Linear auto-complete mismatch after docs PR. Done.
 - `JTW-27`: Document Cursor review handoff requirements. Done.
 - `JTW-28`: Document Cursor draft PR ready-for-review handling. Done.
-- `JTW-29`: Refresh durable handoff after core merge and visual shell release. Current docs issue.
+- `JTW-29`: Refresh durable handoff after core merge and visual shell release. Done.
+- `JTW-30`: Document backlog exhaustion gap-finding automation behavior. Current docs issue for the monitor's next-work discovery rule.
 
 ## Orchestration Rules
 
@@ -51,6 +52,7 @@ This file is the durable project handoff. Keep it current whenever project conve
 - Cursor may open coding PRs as drafts. Mark a Cursor draft PR ready for review once Cursor has clearly handed back the initial work and is no longer actively pushing; then begin the normal CI and Codex review wait.
 - When Cursor owns a coding issue, review handoffs to Cursor go in the Linear issue thread, not in GitHub PR comments. Mention `@Cursor`, identify the PR and branch, list actionable findings, require same-branch fixes, and ask for `npm run check` before handback.
 - After docs PRs that reference implementation issue IDs, verify Linear issue state and attachments. PR #8 was docs-only but briefly auto-completed `JTW-15`; `JTW-15` was restored to Todo and still requires a fresh implementation PR.
+- If there is no active implementation PR and no ready backlog issue remains, evaluate the current app against the World Instrument intent and create scoped Linear issues for concrete gaps. Assign human-decision issues to Jonny and only delegate coding-heavy work to Cursor when intentionally ready.
 - As problems arise, create Linear issues for them.
 - Keep documentation updated when the plan changes.
 - Perform periodic refactor reviews to keep the codebase clean.
@@ -109,6 +111,7 @@ Current coding-heavy work is `JTW-16`, delegated to Cursor. Do not release anoth
 - PR #12 (`Implement core stream, score, and replay contracts`) opened from fresh Cursor branch `cursor/core-contracts-48f1` on 2026-06-14 and merged on 2026-06-14 after CI passed and the latest-head Codex review fallback window elapsed with all known actionable feedback addressed.
 - PR #13 (`JTW-27 document Cursor handoff workflow`) and PR #14 (`JTW-28 document Cursor draft PR promotion`) merged on 2026-06-14 after CI passed; docs-only review exception applied.
 - JTW-16 was released to Cursor on 2026-06-14 after PR #12 merged. Watch for a fresh Cursor branch/PR, and if it opens as draft, mark ready only after Cursor clearly hands back initial work.
+- The active PR monitor automation was updated on 2026-06-14 to create new Linear issues from product/app gap analysis when the explicit backlog is empty and no implementation PR is active.
 
 ## Cursor Cloud specific instructions
 
