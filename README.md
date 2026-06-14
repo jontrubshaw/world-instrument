@@ -49,6 +49,28 @@ The first prototype should focus on:
 - Optional Web Audio output.
 - A replay mode using recorded input snapshots.
 
+## Repository Status
+
+This repository is being scaffolded before feature implementation begins. The current focus is project structure, documentation, quality gates, and orchestration setup.
+
+## Planned Stack
+
+- TypeScript monorepo with npm workspaces.
+- Vite + React for the browser instrument.
+- Shared packages for stream contracts, deterministic scoring, replay fixtures, and output mappings.
+- WebGL-first visual output, with the rendering library selected before the first visual implementation issue.
+- Web Audio for browser-native sound output.
+- Vitest, Playwright, ESLint, Prettier, and strict TypeScript for quality gates.
+
+## Documentation
+
+- [Project plan](docs/PROJECT_PLAN.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Tech stack](docs/TECH_STACK.md)
+- [Quality bar](docs/QUALITY.md)
+- [Orchestration](docs/ORCHESTRATION.md)
+- [Agent handoff notes](AGENTS.md)
+
 ## Status
 
-This repository is the starting point for the project.
+This repository is the starting point for the project. Runtime implementation should wait until the Cursor environment setup issue is complete.
