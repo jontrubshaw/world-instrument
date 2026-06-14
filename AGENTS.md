@@ -49,6 +49,7 @@ This file is the durable project handoff. Keep it current whenever project conve
 
 - Runtime baseline: Node `24` LTS. Node 20 is not acceptable because it reached end-of-life on 2026-04-30.
 - npm baseline: use the npm version bundled with Node 24; require npm `>=11` unless later tooling proves otherwise.
+- `package-lock.json` is included in scaffold PR #2 because the initial quality gate now runs during JTW-12.
 - Do not create a Python `.venv` for the main project. This is a TypeScript/browser-first repository; add Python isolation only if a future issue introduces Python tooling.
 - Monorepo package manager: npm workspaces.
 - Language: TypeScript with strict settings.
@@ -73,3 +74,4 @@ After the repository scaffold is created, create an issue assigned to Jonny Trub
 ## Source Checks
 
 - Official Node schedule checked on 2026-06-14: Node 20 ended 2026-04-30; Node 24 ends 2028-04-30; Node 26 starts LTS 2026-10-28.
+- `npm run check` passed locally on 2026-06-14 with Node `v24.16.0` and npm `11.13.0`.
