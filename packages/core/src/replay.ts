@@ -22,7 +22,7 @@ export interface ReplayFrame {
   readonly capturedAt: string;
   readonly streams: readonly NormalizedStreamState[];
   readonly output?: ScoreOutput;
-  readonly seed?: string;
+  readonly seed: string;
 }
 
 export interface ReplaySnapshot {
@@ -103,7 +103,7 @@ function validateReplayFrame(
   const frameIndex = requireNonNegativeInteger(value, 'frameIndex', path, issues);
   requireNonNegativeNumber(value, 'elapsedMs', path, issues);
   requireTimestamp(value, 'capturedAt', path, issues);
-  validateOptionalString(value, 'seed', path, issues);
+  requireString(value, 'seed', path, issues);
 
   const streams = requireArray(value, 'streams', path, issues);
   if (streams !== undefined) {
@@ -112,7 +112,9 @@ function validateReplayFrame(
     }
 
     streams.forEach((stream, index) => {
-      validateNormalizedStreamState(stream, `${path}.streams[${String(index)}]`, issues);
+      const streamPath = `${path}.streams[${String(index)}]`;
+      validateNormalizedStreamState(stream, streamPath, issues);
+      validateStreamSchemaSupport(stream, streamPath, score, issues);
     });
   }
 
@@ -120,6 +122,28 @@ function validateReplayFrame(
   if (output !== undefined) {
     validateScoreOutput(output, `${path}.output`, issues);
     validateScoreOutputContext(output, `${path}.output`, score, frameIndex, issues);
+  }
+}
+
+function validateStreamSchemaSupport(
+  stream: unknown,
+  path: string,
+  score: Record<string, unknown> | undefined,
+  issues: string[],
+): void {
+  if (!isRecord(stream) || score === undefined) {
+    return;
+  }
+
+  const schemaVersion = stream.schemaVersion;
+  const supportedStreamSchemas = score.supportedStreamSchemas;
+
+  if (typeof schemaVersion !== 'string' || !isNonEmptyStringArray(supportedStreamSchemas)) {
+    return;
+  }
+
+  if (!supportedStreamSchemas.includes(schemaVersion)) {
+    issues.push(`${path}.schemaVersion must be included in $.score.supportedStreamSchemas`);
   }
 }
 
@@ -595,7 +619,7 @@ function requireStringArray(
     return;
   }
 
-  if (item.some((entry) => typeof entry !== 'string' || entry.length === 0)) {
+  if (!isNonEmptyStringArray(item)) {
     issues.push(`${path}.${key} must contain only non-empty strings`);
   }
 }
@@ -611,7 +635,7 @@ function validateOptionalStringArray(
     return;
   }
 
-  if (item.some((entry) => typeof entry !== 'string' || entry.length === 0)) {
+  if (!isNonEmptyStringArray(item)) {
     issues.push(`${path}.${key} must contain only non-empty strings when provided`);
   }
 }
@@ -680,6 +704,12 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function isUnknownArray(value: unknown): value is readonly unknown[] {
   return Array.isArray(value);
+}
+
+function isNonEmptyStringArray(value: unknown): value is readonly string[] {
+  return (
+    isUnknownArray(value) && value.every((entry) => typeof entry === 'string' && entry.length > 0)
+  );
 }
 
 function isAllowedStringLiteral(

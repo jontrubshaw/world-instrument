@@ -44,6 +44,7 @@ describe('replay snapshot schema', () => {
         '$.createdAt must be a parseable timestamp',
         '$.score.deterministic must be true',
         '$.frames[0].frameIndex must be greater than or equal to 0',
+        '$.frames[0].seed must be a non-empty string',
         '$.frames[0].streams[0].samples[0].value must be a finite number',
         '$.frames[0].output.visual.parameters[0].value must be between min and max',
       ]),
@@ -74,15 +75,44 @@ describe('replay snapshot schema', () => {
       ]),
     );
   });
+
+  it('rejects frames without an explicit deterministic seed', async () => {
+    const fixture = structuredClone(
+      await loadFixture('replay-snapshot.v1.valid.json'),
+    ) as MutableReplayFixture;
+
+    delete fixture.frames[0]?.seed;
+
+    expect(validateReplaySnapshot(fixture)).toEqual([
+      '$.frames[0].seed must be a non-empty string',
+    ]);
+  });
+
+  it('rejects frame streams not declared by the snapshot score metadata', async () => {
+    const fixture = structuredClone(
+      await loadFixture('replay-snapshot.v1.valid.json'),
+    ) as MutableReplayFixture;
+
+    fixture.score.supportedStreamSchemas = ['stream-state.v2'];
+
+    expect(validateReplaySnapshot(fixture)).toEqual([
+      '$.frames[0].streams[0].schemaVersion must be included in $.score.supportedStreamSchemas',
+    ]);
+  });
 });
 
 interface MutableReplayFixture {
   score: {
     scoreId: string;
     scoreVersion: string;
+    supportedStreamSchemas: string[];
   };
   frames: {
     frameIndex: number;
+    seed?: string;
+    streams: {
+      schemaVersion: string;
+    }[];
     output?: {
       scoreId: string;
       scoreVersion: string;
