@@ -8,7 +8,7 @@ This file is the durable project handoff. Keep it current whenever project conve
 - Linear project: https://linear.app/jtworks/project/world-instrument-1472eb8e5477
 - Linear team: Jtworks
 - Local checkout: `/Users/JonathanTrubshaw/Documents/weathart/world-instrument`
-- Active implementation branch: `cursor/core-contracts-48f1` for `JTW-15`; PR #12 is open.
+- Active implementation branch: `cursor/instrument-app-shell-dc22` for `JTW-16`.
 - Cursor environment setup is complete.
 - Stale pre-setup Cursor draft PRs closed: PR #1 (`cursor/instrument-app-shell-1cf1`) and PR #3 (`cursor/core-contracts-7e26`).
 - Local Node environment: Homebrew `node@24` installed; current shell resolves `node` to `v24.16.0` and `npm` to `11.13.0`.
@@ -19,8 +19,8 @@ This file is the durable project handoff. Keep it current whenever project conve
 - `JTW-12`: Scaffold repository structure and project documentation. Done.
 - `JTW-13`: Set up Cursor environment for world-instrument. Done.
 - `JTW-14`: Install dependencies and establish CI baseline. Done; PR #7 merged.
-- `JTW-15`: Implement core stream, score, and replay contracts. In Progress, assigned to Jonny, delegated to Cursor. Fresh Cursor PR #12 is open on `cursor/core-contracts-48f1`; Codex review completed and findings were handed back to Cursor via Linear comment.
-- `JTW-16`: Select visual rendering engine and create instrument app shell. Backlog, unassigned until ready.
+- `JTW-15`: Implement core stream, score, and replay contracts. Done; PR #12 merged.
+- `JTW-16`: Select visual rendering engine and create instrument app shell. In Progress, delegated to Cursor on `cursor/instrument-app-shell-dc22`.
 - `JTW-17`: Build first weather adapter and deterministic weather score. Backlog, unassigned until ready.
 - `JTW-18`: Add quality coverage thresholds and refactor review cadence. Backlog, unassigned until ready.
 - `JTW-19`: Decide weather provider and credential strategy. Assigned to Jonny.
@@ -69,11 +69,11 @@ This file is the durable project handoff. Keep it current whenever project conve
 - Language: TypeScript with strict settings.
 - Browser app: Vite + React.
 - Shared domain code: packages under `packages/*`.
-- Visual rendering: WebGL-first; choose Three.js or regl before first visual implementation.
+- Visual rendering: Three.js-backed WebGL.
 - Sound output: Web Audio API.
 - Test stack: Vitest for unit/contract tests, Playwright for browser and visual smoke tests.
 - Quality stack: ESLint, Prettier, TypeScript strict mode.
-- CI baseline: GitHub Actions runs `npm ci` and `npm run check` on pull requests and pushes to `main`. Playwright e2e remains excluded until the app shell exists.
+- CI baseline: GitHub Actions runs `npm ci`, `npm run check`, `npm run build`, installs Playwright Chromium, and runs `npm run test:smoke` on pull requests and pushes to `main`.
 
 ## Planned Package Boundaries
 
@@ -86,7 +86,7 @@ This file is the durable project handoff. Keep it current whenever project conve
 
 There is no longer a global pause on Cursor setup. Pick the next issue deliberately, assign/delegate it only when ready, and avoid starting multiple coding-heavy Cursor tasks unless that concurrency is intentional.
 
-Current coding-heavy work is `JTW-15`, delegated to Cursor with PR #12 open on `cursor/core-contracts-48f1`. Do not release another coding-heavy Cursor issue until PR #12 is resolved and merged or the work is explicitly paused.
+Current coding-heavy work is `JTW-16`, delegated to Cursor on `cursor/instrument-app-shell-dc22`. Do not release another coding-heavy Cursor issue until this work is resolved and merged or explicitly paused.
 
 ## Source Checks
 
@@ -95,7 +95,7 @@ Current coding-heavy work is `JTW-15`, delegated to Cursor with PR #12 open on `
 - JTW-14 CI baseline added on 2026-06-14: `.github/workflows/ci.yml` runs `npm ci` and `npm run check`.
 - PR #7 (`JTW-14 add CI quality gate`) merged on 2026-06-14 after CI passed and a Codex thumbs-up review signal appeared.
 - PR #2 Codex review timing observed on 2026-06-14: about 3-5 minutes for early reviews and about 8 minutes for review of commit `fd0eaf4`; latest commit `d0ca86c` still had no latest-head review after 15 minutes. Use 10 minutes as the default review wait and 15 minutes as the merge fallback threshold.
-- PR #1 and PR #3 were closed on 2026-06-14 as stale drafts from the pre-Cursor-setup misfire; `JTW-16` remains in Backlog, and `JTW-15` was later released intentionally to Cursor.
+- PR #1 and PR #3 were closed on 2026-06-14 as stale drafts from the pre-Cursor-setup misfire.
 - JTW-15 release-to-Cursor check on 2026-06-14: Linear showed `Todo`, assignee `Jonny Trubshaw`, delegate `Cursor`; `gh pr list` showed no fresh open PR; `git ls-remote --heads origin` showed only `main`, old closed Cursor branches, and the merged Cursor setup branch.
 - PR #8 (`JTW-22 refresh durable handoff state`) merged on 2026-06-14 after CI passed; docs-only review exception applied.
 - PR #9 (`JTW-23 update post-setup execution plan`) merged on 2026-06-14 after CI passed; docs-only review exception applied.
@@ -104,12 +104,11 @@ Current coding-heavy work is `JTW-15`, delegated to Cursor with PR #12 open on `
 - Linear state correction on 2026-06-14: `JTW-15` had been auto-completed after docs PR #8, but was restored to Todo with delegate `Cursor`. Treat stale PR #3 and branch `cursor/core-contracts-7e26` as historical only.
 - JTW-15 fresh implementation branch created on 2026-06-14: `cursor/core-contracts-48f1`.
 - PR #11 (`JTW-25 document Linear automation mismatch`) merged on 2026-06-14 after CI passed; docs-only review exception applied.
-- PR #12 (`Implement core stream, score, and replay contracts`) opened from fresh Cursor branch `cursor/core-contracts-48f1` on 2026-06-14. Codex review completed with findings; handoff was sent to Cursor in the Linear issue thread, not as a PR comment.
+- PR #12 (`Implement core stream, score, and replay contracts`) merged before `JTW-16` was released intentionally to Cursor.
 
 ## Cursor Cloud specific instructions
 
 - Node 24 is required (`.npmrc` sets `engine-strict=true`, so npm refuses to run under the wrong major). It is installed via `nvm` and the startup update script already runs `npm install` under Node 24.
 - Gotcha: the non-interactive shell used by the agent resolves `node` to a baseline `v22` from `/exec-daemon` that shadows nvm, so commands fail engine-strict checks. A login shell that sources `~/.bashrc` (nvm) already defaults to Node 24. For non-login shells, select Node 24 first, e.g. run `export PATH="$HOME/.nvm/versions/node/v24.16.0/bin:$PATH"` (or `. "$HOME/.nvm/nvm.sh" && nvm use 24`) at the start of a session before any `npm`/`npx` command. Verify with `node --version` showing `v24.x`.
-- This repository is a pre-implementation scaffold: there is no runnable app yet (no Vite config, `index.html`, or `dev` script in `apps/instrument`). The executable surface today is the quality gate. Run it with `npm run check` (typecheck + lint + format:check + Vitest); see `package.json` scripts for individual commands.
-- `npm run test:e2e` (Playwright) currently fails by design: there is no `playwright.config.*` yet, so Playwright tries to run the Vitest `scaffold.test.ts` files. This is expected until the e2e harness is added; it is not an environment problem.
-- Once the instrument app is implemented, it is intended to run via a Vite dev server in `apps/instrument` (a `dev` script and Vite config still need to be added).
+- The instrument app shell runs via Vite in `apps/instrument` with `npm run dev -w @world-instrument/instrument`.
+- `npm run check` runs typecheck + lint + format:check + Vitest. Browser smoke coverage runs separately with `npm run test:smoke`, which starts the Vite app through Playwright.

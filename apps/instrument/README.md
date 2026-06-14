@@ -12,6 +12,14 @@ Browser-based live instrument shell for World Instrument.
 ## Initial Implementation Notes
 
 - Use Vite + React + TypeScript.
-- Select the WebGL rendering library before implementing the first visual scene.
+- Use Three.js as the initial WebGL rendering path.
 - Web Audio should require explicit user activation before sound starts.
 - Haptic output must be constrained by safety limits defined in shared core.
+
+## Local Development
+
+```bash
+npm run dev -w @world-instrument/instrument
+```
+
+The app shell is intentionally abstract and canvas-first. Debug views can be added later, but raw stream data should not become the primary production experience.

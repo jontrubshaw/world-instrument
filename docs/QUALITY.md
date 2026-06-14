@@ -10,16 +10,16 @@ World Instrument should be built as a durable creative system.
 - ESLint must pass.
 - Prettier check must pass.
 - Unit and contract tests must pass.
-- Browser smoke tests must cover the instrument shell once implemented.
+- Browser smoke tests must cover the instrument shell.
 
-The current CI gate runs `npm ci` and `npm run check`. Browser smoke tests are intentionally excluded until the app shell and Playwright configuration exist.
+The current CI gate runs `npm ci`, `npm run check`, `npm run build`, installs the Playwright Chromium browser, and runs `npm run test:smoke`.
 
 ## Test Expectations
 
 - Score functions need deterministic golden tests.
 - Stream adapters need fixture-based tests.
 - Replay must test identical input producing identical score output.
-- Visual implementation needs at least one smoke test that verifies a nonblank rendered frame.
+- Visual implementation needs at least one smoke test that verifies the browser shell and rendered surface load.
 - Audio and haptics need contract tests for bounded output parameters.
 
 ## Review Expectations
