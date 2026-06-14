@@ -30,7 +30,9 @@ This file is the durable project handoff. Keep it current whenever project conve
 - `JTW-23`: Update execution plan for post-setup orchestration phase. Done.
 - `JTW-24`: Sync master plan and durable handoff after post-setup planning update. Done.
 - `JTW-25`: Document Linear auto-complete mismatch after docs PR. Done.
-- `JTW-27`: Document Cursor review handoff requirements. Current docs issue.
+- `JTW-27`: Document Cursor review handoff requirements. Done.
+- `JTW-28`: Document Cursor draft PR ready-for-review handling. Done.
+- `JTW-29`: Refresh durable handoff after core merge and visual shell release. Current docs issue.
 
 ## Orchestration Rules
 
@@ -104,7 +106,9 @@ Current coding-heavy work is `JTW-16`, delegated to Cursor on `cursor/instrument
 - Linear state correction on 2026-06-14: `JTW-15` had been auto-completed after docs PR #8, but was restored to Todo with delegate `Cursor`. Treat stale PR #3 and branch `cursor/core-contracts-7e26` as historical only.
 - JTW-15 fresh implementation branch created on 2026-06-14: `cursor/core-contracts-48f1`.
 - PR #11 (`JTW-25 document Linear automation mismatch`) merged on 2026-06-14 after CI passed; docs-only review exception applied.
-- PR #12 (`Implement core stream, score, and replay contracts`) merged before `JTW-16` was released intentionally to Cursor.
+- PR #12 (`Implement core stream, score, and replay contracts`) opened from fresh Cursor branch `cursor/core-contracts-48f1` on 2026-06-14 and merged on 2026-06-14 after CI passed and the latest-head Codex review fallback window elapsed with all known actionable feedback addressed.
+- PR #13 (`JTW-27 document Cursor handoff workflow`) and PR #14 (`JTW-28 document Cursor draft PR promotion`) merged on 2026-06-14 after CI passed; docs-only review exception applied.
+- JTW-16 was released to Cursor on 2026-06-14 after PR #12 merged. Watch for a fresh Cursor branch/PR, and if it opens as draft, mark ready only after Cursor clearly hands back initial work.
 - JTW-16 implementation branch `cursor/instrument-app-shell-dc22` verified locally on 2026-06-14 with Node `v24.16.0` and npm `11.13.0`: `npm run check`, `npm run build`, and `npm run test:smoke` passed. Vite reports an expected initial bundle-size warning because Three.js is included in the first shell.
 
 ## Cursor Cloud specific instructions
