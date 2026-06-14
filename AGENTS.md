@@ -33,6 +33,7 @@ This file is the durable project handoff. Keep it current whenever project conve
 - Codex handles orchestration, planning, documentation, lightweight scaffolding, issue decomposition, review coordination, and project hygiene.
 - Automatic Codex PR reviews are expected on PR creation and subsequent pushes.
 - Do not merge PRs until those reviews complete.
+- After pushing to a PR, wait about 5 minutes by default before re-checking automatic Codex review state.
 - Jonny has approved Codex to merge reviewed PRs to `main`.
 - As problems arise, create Linear issues for them.
 - Keep documentation updated when the plan changes.
