@@ -18,6 +18,8 @@
 ## Cursor Handoffs
 
 - When Cursor owns a coding issue, operational handoffs to Cursor happen in that Linear issue thread, not in GitHub PR comments.
+- Cursor may open implementation PRs as drafts. Once Cursor has completed its initial work and is no longer actively pushing, Codex should mark the PR ready for review before waiting for automatic Codex review.
+- Before marking a Cursor draft PR ready, confirm there is a handoff signal in Linear or another clear sign of completion, such as a completed Cursor comment, stable branch activity, or user confirmation.
 - After Codex review completes on a Cursor-owned PR, summarize actionable findings in a Linear comment that mentions `@Cursor`.
 - The handoff comment should include the PR number, branch name, each actionable review finding, the instruction to address findings on the same branch, and the expected verification command.
 - Keep GitHub comments for reviewer-facing discussion only. Use Linear as the agent coordination channel so Cursor receives the work in the place it is watching.
