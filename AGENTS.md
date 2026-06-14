@@ -8,7 +8,7 @@ This file is the durable project handoff. Keep it current whenever project conve
 - Linear project: https://linear.app/jtworks/project/world-instrument-1472eb8e5477
 - Linear team: Jtworks
 - Local checkout: `/Users/JonathanTrubshaw/Documents/weathart/world-instrument`
-- Active implementation branch: none locally; `main` is current as of PR #11.
+- Active implementation branch: `cursor/core-contracts-48f1` for `JTW-15`; PR #12 is open.
 - Cursor environment setup is complete.
 - Stale pre-setup Cursor draft PRs closed: PR #1 (`cursor/instrument-app-shell-1cf1`) and PR #3 (`cursor/core-contracts-7e26`).
 - Local Node environment: Homebrew `node@24` installed; current shell resolves `node` to `v24.16.0` and `npm` to `11.13.0`.
@@ -86,7 +86,7 @@ This file is the durable project handoff. Keep it current whenever project conve
 
 There is no longer a global pause on Cursor setup. Pick the next issue deliberately, assign/delegate it only when ready, and avoid starting multiple coding-heavy Cursor tasks unless that concurrency is intentional.
 
-Current coding-heavy work is `JTW-15`, delegated to Cursor with PR #12 open. Do not release another coding-heavy Cursor issue until PR #12 is resolved and merged or the work is explicitly paused.
+Current coding-heavy work is `JTW-15`, delegated to Cursor with PR #12 open on `cursor/core-contracts-48f1`. Do not release another coding-heavy Cursor issue until PR #12 is resolved and merged or the work is explicitly paused.
 
 ## Source Checks
 
@@ -102,6 +102,7 @@ Current coding-heavy work is `JTW-15`, delegated to Cursor with PR #12 open. Do 
 - JTW-11 master plan issue description was refreshed on 2026-06-14 so Linear no longer describes the project as paused for Cursor setup.
 - PR #10 (`JTW-24 sync master plan handoff state`) merged on 2026-06-14 after CI passed; docs-only review exception applied.
 - Linear state correction on 2026-06-14: `JTW-15` had been auto-completed after docs PR #8, but was restored to Todo with delegate `Cursor`. Treat stale PR #3 and branch `cursor/core-contracts-7e26` as historical only.
+- JTW-15 fresh implementation branch created on 2026-06-14: `cursor/core-contracts-48f1`.
 - PR #11 (`JTW-25 document Linear automation mismatch`) merged on 2026-06-14 after CI passed; docs-only review exception applied.
 - PR #12 (`Implement core stream, score, and replay contracts`) opened from fresh Cursor branch `cursor/core-contracts-48f1` on 2026-06-14. Codex review completed with findings; handoff was sent to Cursor in the Linear issue thread, not as a PR comment.
 

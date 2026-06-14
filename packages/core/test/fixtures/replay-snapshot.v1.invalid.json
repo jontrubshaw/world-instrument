@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "replay-snapshot.v0",
+  "snapshotId": "",
+  "createdAt": "not-a-date",
+  "score": {
+    "schemaVersion": "score-version.v1",
+    "scoreId": "weather-pressure",
+    "scoreVersion": "1.0.0",
+    "displayName": "Weather Pressure",
+    "deterministic": false,
+    "supportedStreamSchemas": ["stream-state.v1"]
+  },
+  "frames": [
+    {
+      "frameIndex": -1,
+      "elapsedMs": -10,
+      "capturedAt": "not-a-date",
+      "streams": [
+        {
+          "schemaVersion": "stream-state.v1",
+          "streamId": "weather:london",
+          "source": {
+            "id": "open-meteo:london",
+            "kind": "weather"
+          },
+          "status": "ok",
+          "observedAt": "2026-06-14T20:00:00.000Z",
+          "receivedAt": "2026-06-14T20:00:01.000Z",
+          "sequence": 42,
+          "samples": [
+            {
+              "kind": "numeric",
+              "key": "temperature",
+              "observedAt": "2026-06-14T20:00:00.000Z",
+              "quality": "measured",
+              "value": "warm"
+            }
+          ]
+        }
+      ],
+      "output": {
+        "schemaVersion": "score-output.v1",
+        "scoreId": "weather-pressure",
+        "scoreVersion": "1.0.0",
+        "frameIndex": 0,
+        "generatedAt": "2026-06-14T20:00:00.000Z",
+        "visual": {
+          "parameters": [
+            {
+              "key": "diffusion",
+              "value": 2,
+              "min": 0,
+              "max": 1
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "bad": true
+  }
+}
