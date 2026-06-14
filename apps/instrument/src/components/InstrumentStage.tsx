@@ -24,7 +24,7 @@ export function InstrumentStage() {
     const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
     camera.position.set(0, 0.1, 5.2);
 
-    const geometry = new THREE.IcosahedronGeometry(1.35, 8);
+    const geometry = new THREE.IcosahedronGeometry(1.35, 3);
     const bodyMaterial = new THREE.MeshStandardMaterial({
       color: 0x6ee7f9,
       emissive: 0x162759,
