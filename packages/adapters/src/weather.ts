@@ -189,6 +189,7 @@ export class WeatherAdapter implements StreamAdapter<WeatherAdapterRaw, WeatherA
 
     try {
       const url = buildLiveUrl(config.endpointUrl, config.location, apiKey);
+      const sourceUri = sanitizeLiveSourceUri(url);
       const response = await fetchWeather(url, {
         headers: {
           accept: 'application/json',
@@ -205,7 +206,12 @@ export class WeatherAdapter implements StreamAdapter<WeatherAdapterRaw, WeatherA
         });
       }
 
-      const payload = mapOpenMeteoResponse(await response.json(), config.location, receivedAt, url);
+      const payload = mapOpenMeteoResponse(
+        await response.json(),
+        config.location,
+        receivedAt,
+        sourceUri,
+      );
 
       if (payload === undefined) {
         return createFailureResult(config, {
@@ -545,6 +551,13 @@ function buildLiveUrl(endpointUrl: string, location: WeatherLocation, apiKey: st
   url.searchParams.set('timezone', 'GMT');
   url.searchParams.set('wind_speed_unit', 'ms');
   url.searchParams.set('apikey', apiKey);
+
+  return url.toString();
+}
+
+function sanitizeLiveSourceUri(sourceUri: string): string {
+  const url = new URL(sourceUri);
+  url.searchParams.delete('apikey');
 
   return url.toString();
 }

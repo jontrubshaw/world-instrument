@@ -141,10 +141,13 @@ describe('weather adapter', () => {
         'wind_direction_10m',
       ].join(','),
     );
+    url.searchParams.delete('apikey');
+    const expectedSourceUri = url.toString();
     expect(result.raw).toMatchObject({
       provider: 'open-meteo',
       observedAt: '2026-06-14T21:00:00.000Z',
       receivedAt: '2026-06-14T21:05:00.000Z',
+      sourceUri: expectedSourceUri,
       location: {
         id: 'london-uk',
         label: 'London, UK',
@@ -169,6 +172,9 @@ describe('weather adapter', () => {
       observedAt: '2026-06-14T21:00:00.000Z',
       receivedAt: '2026-06-14T21:05:00.000Z',
       sequence: 5,
+      source: {
+        uri: expectedSourceUri,
+      },
       metadata: {
         provider: 'open-meteo',
         mode: 'live',
@@ -181,6 +187,8 @@ describe('weather adapter', () => {
       value: 18.4,
       quality: 'measured',
     });
+    expect(JSON.stringify(result.raw)).not.toContain('test-api-key');
+    expect(JSON.stringify(result.state)).not.toContain('test-api-key');
   });
 
   it('returns a clear error stream state when live credentials are missing', async () => {
