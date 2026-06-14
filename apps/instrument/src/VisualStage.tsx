@@ -62,9 +62,9 @@ export function VisualStage() {
         renderer.setSize(safeWidth, safeHeight, false);
       };
 
-      const clock = new THREE.Clock();
-      const animate = () => {
-        const elapsed = clock.getElapsedTime();
+      const startTime = performance.now();
+      const animate = (timestamp: number) => {
+        const elapsed = (timestamp - startTime) / 1000;
 
         field.rotation.y = elapsed * 0.13;
         ring.rotation.x = elapsed * 0.08;
@@ -75,7 +75,7 @@ export function VisualStage() {
       };
 
       resize();
-      animate();
+      animationFrame = window.requestAnimationFrame(animate);
       window.addEventListener("resize", resize);
       setRenderMode("webgl");
 
