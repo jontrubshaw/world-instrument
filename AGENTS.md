@@ -28,7 +28,8 @@ This file is the durable project handoff. Keep it current whenever project conve
 - `JTW-21`: Record Cursor setup completion and stale PR cleanup. Done.
 - `JTW-22`: Refresh durable agent handoff after CI baseline and JTW-15 delegation. Done.
 - `JTW-23`: Update execution plan for post-setup orchestration phase. Done.
-- `JTW-24`: Sync master plan and durable handoff after post-setup planning update. Tracks the latest master-plan and handoff sync.
+- `JTW-24`: Sync master plan and durable handoff after post-setup planning update. Done.
+- `JTW-25`: Document Linear auto-complete mismatch after docs PR. Done once the durable automation note is merged.
 
 ## Orchestration Rules
 
@@ -44,6 +45,7 @@ This file is the durable project handoff. Keep it current whenever project conve
 - If a review has not appeared for the latest PR head after 10 minutes, check timestamps and wait another 5 minutes.
 - If no latest-head review appears after 15 minutes total, merge when the PR is clean and all known actionable feedback has been addressed.
 - Jonny has approved Codex to merge reviewed PRs to `main`.
+- After docs PRs that reference implementation issue IDs, verify Linear issue state and attachments. PR #8 was docs-only but briefly auto-completed `JTW-15`; `JTW-15` was restored to Todo and still requires a fresh implementation PR.
 - As problems arise, create Linear issues for them.
 - Keep documentation updated when the plan changes.
 - Perform periodic refactor reviews to keep the codebase clean.
@@ -95,6 +97,8 @@ Current coding-heavy work is `JTW-15`, delegated to Cursor. Do not release anoth
 - PR #8 (`JTW-22 refresh durable handoff state`) merged on 2026-06-14 after CI passed; docs-only review exception applied.
 - PR #9 (`JTW-23 update post-setup execution plan`) merged on 2026-06-14 after CI passed; docs-only review exception applied.
 - JTW-11 master plan issue description was refreshed on 2026-06-14 so Linear no longer describes the project as paused for Cursor setup.
+- PR #10 (`JTW-24 sync master plan handoff state`) merged on 2026-06-14 after CI passed; docs-only review exception applied.
+- Linear state correction on 2026-06-14: `JTW-15` had been auto-completed after docs PR #8, but was restored to Todo with delegate `Cursor`. Treat stale PR #3 and branch `cursor/core-contracts-7e26` as historical only.
 
 ## Cursor Cloud specific instructions
 
