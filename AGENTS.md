@@ -77,3 +77,11 @@ After the repository scaffold is created, create an issue assigned to Jonny Trub
 - Official Node schedule checked on 2026-06-14: Node 20 ended 2026-04-30; Node 24 ends 2028-04-30; Node 26 starts LTS 2026-10-28.
 - `npm run check` passed locally on 2026-06-14 with Node `v24.16.0` and npm `11.13.0`.
 - PR #2 Codex review timing observed on 2026-06-14: about 3-5 minutes for early reviews and about 8 minutes for review of commit `fd0eaf4`, so use 10 minutes as the default review wait baseline.
+
+## Cursor Cloud specific instructions
+
+- Node 24 is required (`.npmrc` sets `engine-strict=true`, so npm refuses to run under the wrong major). It is installed via `nvm` and the startup update script already runs `npm install` under Node 24.
+- Gotcha: the non-interactive shell used by the agent resolves `node` to a baseline `v22` from `/exec-daemon` that shadows nvm, so commands fail engine-strict checks. A login shell that sources `~/.bashrc` (nvm) already defaults to Node 24. For non-login shells, select Node 24 first, e.g. run `export PATH="$HOME/.nvm/versions/node/v24.16.0/bin:$PATH"` (or `. "$HOME/.nvm/nvm.sh" && nvm use 24`) at the start of a session before any `npm`/`npx` command. Verify with `node --version` showing `v24.x`.
+- This repository is a pre-implementation scaffold: there is no runnable app yet (no Vite config, `index.html`, or `dev` script in `apps/instrument`). The executable surface today is the quality gate. Run it with `npm run check` (typecheck + lint + format:check + Vitest); see `package.json` scripts for individual commands.
+- `npm run test:e2e` (Playwright) currently fails by design: there is no `playwright.config.*` yet, so Playwright tries to run the Vitest `scaffold.test.ts` files. This is expected until the e2e harness is added; it is not an environment problem.
+- Once the instrument app is implemented, it is intended to run via a Vite dev server in `apps/instrument` (a `dev` script and Vite config still need to be added).
