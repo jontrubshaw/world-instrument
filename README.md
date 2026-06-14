@@ -62,6 +62,17 @@ This repository is being scaffolded before feature implementation begins. The cu
 - Web Audio for browser-native sound output.
 - Vitest, Playwright, ESLint, Prettier, and strict TypeScript for quality gates.
 
+## Local Setup
+
+Use Node 24 and npm 11 or newer. The repository includes `.nvmrc` and enforces the Node major through `package.json` engines and `.npmrc`.
+
+```bash
+npm ci
+npm run check
+```
+
+`npm run check` is the current required quality gate: TypeScript, ESLint, Prettier, and Vitest. `npm run test:e2e` is reserved for the future Playwright browser harness and is not part of CI yet.
+
 ## Documentation
 
 - [Project plan](docs/PROJECT_PLAN.md)
@@ -73,4 +84,4 @@ This repository is being scaffolded before feature implementation begins. The cu
 
 ## Status
 
-This repository is the starting point for the project. Runtime implementation should wait until the Cursor environment setup issue is complete.
+This repository is the starting point for the project. Cursor setup is complete; implementation work should still be selected intentionally through Linear before being assigned.
