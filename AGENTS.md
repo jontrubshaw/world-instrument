@@ -8,7 +8,7 @@ This file is the durable project handoff. Keep it current whenever project conve
 - Linear project: https://linear.app/jtworks/project/world-instrument-1472eb8e5477
 - Linear team: Jtworks
 - Local checkout: `/Users/JonathanTrubshaw/Documents/weathart/world-instrument`
-- Active branch: `jontrubshaw/jtw-14-install-dependencies-and-establish-ci-baseline`
+- Active implementation branch: none locally; `main` is current as of PR #7.
 - Cursor environment setup is complete.
 - Stale pre-setup Cursor draft PRs closed: PR #1 (`cursor/instrument-app-shell-1cf1`) and PR #3 (`cursor/core-contracts-7e26`).
 - Local Node environment: Homebrew `node@24` installed; current shell resolves `node` to `v24.16.0` and `npm` to `11.13.0`.
@@ -18,14 +18,15 @@ This file is the durable project handoff. Keep it current whenever project conve
 - `JTW-11`: Create comprehensive World Instrument project plan. This is the first issue and master planning issue.
 - `JTW-12`: Scaffold repository structure and project documentation. Done.
 - `JTW-13`: Set up Cursor environment for world-instrument. Done.
-- `JTW-14`: Install dependencies and establish CI baseline. In Progress.
-- `JTW-15`: Implement core stream, score, and replay contracts. Backlog, unassigned until ready.
+- `JTW-14`: Install dependencies and establish CI baseline. Done; PR #7 merged.
+- `JTW-15`: Implement core stream, score, and replay contracts. Todo, assigned to Jonny, delegated to Cursor. Released intentionally after setup and CI completed. No fresh Cursor PR or branch existed when checked on 2026-06-14 at about 18:31 UTC.
 - `JTW-16`: Select visual rendering engine and create instrument app shell. Backlog, unassigned until ready.
 - `JTW-17`: Build first weather adapter and deterministic weather score. Backlog, unassigned until ready.
 - `JTW-18`: Add quality coverage thresholds and refactor review cadence. Backlog, unassigned until ready.
 - `JTW-19`: Decide weather provider and credential strategy. Assigned to Jonny.
 - `JTW-20`: Document 15-minute PR review fallback policy. Done.
-- `JTW-21`: Record Cursor setup completion and stale PR cleanup. Current documentation issue.
+- `JTW-21`: Record Cursor setup completion and stale PR cleanup. Done.
+- `JTW-22`: Refresh durable agent handoff after CI baseline and JTW-15 delegation. Current documentation issue.
 
 ## Orchestration Rules
 
@@ -78,13 +79,17 @@ This file is the durable project handoff. Keep it current whenever project conve
 
 There is no longer a global pause on Cursor setup. Pick the next issue deliberately, assign/delegate it only when ready, and avoid starting multiple coding-heavy Cursor tasks unless that concurrency is intentional.
 
+Current coding-heavy work is `JTW-15`, delegated to Cursor. Do not release another coding-heavy Cursor issue until `JTW-15` has either produced a PR/branch or is confirmed blocked/stalled.
+
 ## Source Checks
 
 - Official Node schedule checked on 2026-06-14: Node 20 ended 2026-04-30; Node 24 ends 2028-04-30; Node 26 starts LTS 2026-10-28.
 - `npm run check` passed locally on 2026-06-14 with Node `v24.16.0` and npm `11.13.0`.
 - JTW-14 CI baseline added on 2026-06-14: `.github/workflows/ci.yml` runs `npm ci` and `npm run check`.
+- PR #7 (`JTW-14 add CI quality gate`) merged on 2026-06-14 after CI passed and a Codex thumbs-up review signal appeared.
 - PR #2 Codex review timing observed on 2026-06-14: about 3-5 minutes for early reviews and about 8 minutes for review of commit `fd0eaf4`; latest commit `d0ca86c` still had no latest-head review after 15 minutes. Use 10 minutes as the default review wait and 15 minutes as the merge fallback threshold.
-- PR #1 and PR #3 were closed on 2026-06-14 as stale drafts from the pre-Cursor-setup misfire; their associated issues `JTW-16` and `JTW-15` remain in Backlog.
+- PR #1 and PR #3 were closed on 2026-06-14 as stale drafts from the pre-Cursor-setup misfire; `JTW-16` remains in Backlog, and `JTW-15` was later released intentionally to Cursor.
+- JTW-15 release-to-Cursor check on 2026-06-14: Linear showed `Todo`, assignee `Jonny Trubshaw`, delegate `Cursor`; `gh pr list` showed no fresh open PR; `git ls-remote --heads origin` showed only `main`, old closed Cursor branches, and the merged Cursor setup branch.
 
 ## Cursor Cloud specific instructions
 
