@@ -3,6 +3,11 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "scripts": {
+    "lint": "eslint .",
+    "test": "vitest run --config vitest.config.ts",
+    "typecheck": "tsc --noEmit"
+  },
   "exports": {
     ".": "./src/index.ts"
   }
