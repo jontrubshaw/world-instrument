@@ -27,7 +27,8 @@ This file is the durable project handoff. Keep it current whenever project conve
 - `JTW-20`: Document 15-minute PR review fallback policy. Done.
 - `JTW-21`: Record Cursor setup completion and stale PR cleanup. Done.
 - `JTW-22`: Refresh durable agent handoff after CI baseline and JTW-15 delegation. Done.
-- `JTW-23`: Update execution plan for post-setup orchestration phase. Current documentation issue.
+- `JTW-23`: Update execution plan for post-setup orchestration phase. Done.
+- `JTW-24`: Sync master plan and durable handoff after post-setup planning update. Tracks the latest master-plan and handoff sync.
 
 ## Orchestration Rules
 
@@ -82,8 +83,6 @@ There is no longer a global pause on Cursor setup. Pick the next issue deliberat
 
 Current coding-heavy work is `JTW-15`, delegated to Cursor. Do not release another coding-heavy Cursor issue until `JTW-15` has either produced a PR/branch or is confirmed blocked/stalled.
 
-Current docs work is `JTW-23`: update `docs/PROJECT_PLAN.md` and `docs/ORCHESTRATION.md` so they reflect the post-setup orchestration phase.
-
 ## Source Checks
 
 - Official Node schedule checked on 2026-06-14: Node 20 ended 2026-04-30; Node 24 ends 2028-04-30; Node 26 starts LTS 2026-10-28.
@@ -94,6 +93,8 @@ Current docs work is `JTW-23`: update `docs/PROJECT_PLAN.md` and `docs/ORCHESTRA
 - PR #1 and PR #3 were closed on 2026-06-14 as stale drafts from the pre-Cursor-setup misfire; `JTW-16` remains in Backlog, and `JTW-15` was later released intentionally to Cursor.
 - JTW-15 release-to-Cursor check on 2026-06-14: Linear showed `Todo`, assignee `Jonny Trubshaw`, delegate `Cursor`; `gh pr list` showed no fresh open PR; `git ls-remote --heads origin` showed only `main`, old closed Cursor branches, and the merged Cursor setup branch.
 - PR #8 (`JTW-22 refresh durable handoff state`) merged on 2026-06-14 after CI passed; docs-only review exception applied.
+- PR #9 (`JTW-23 update post-setup execution plan`) merged on 2026-06-14 after CI passed; docs-only review exception applied.
+- JTW-11 master plan issue description was refreshed on 2026-06-14 so Linear no longer describes the project as paused for Cursor setup.
 
 ## Cursor Cloud specific instructions
 
