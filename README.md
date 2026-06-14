@@ -51,14 +51,14 @@ The first prototype should focus on:
 
 ## Repository Status
 
-This repository now has the initial scaffold, quality gates, and shared core contracts in place. The next feature work should build on the `packages/core` stream, score, replay, and deterministic utility boundary.
+This repository now has the initial scaffold, quality gates, shared core contracts, and the first browser instrument app shell in place. The next feature work should build on the `packages/core` stream, score, replay, and deterministic utility boundary.
 
 ## Planned Stack
 
 - TypeScript monorepo with npm workspaces.
 - Vite + React for the browser instrument.
 - Shared packages for stream contracts, deterministic scoring, replay fixtures, and output mappings.
-- WebGL-first visual output, with the rendering library selected before the first visual implementation issue.
+- Three.js-backed WebGL visual output.
 - Web Audio for browser-native sound output.
 - Vitest, Playwright, ESLint, Prettier, and strict TypeScript for quality gates.
 
@@ -69,9 +69,16 @@ Use Node 24 and npm 11 or newer. The repository includes `.nvmrc` and enforces t
 ```bash
 npm ci
 npm run check
+npm run test:smoke
 ```
 
-`npm run check` is the current required quality gate: TypeScript, ESLint, Prettier, and Vitest. `npm run test:e2e` is reserved for the future Playwright browser harness and is not part of CI yet.
+`npm run check` is the current required quality gate: TypeScript, ESLint, Prettier, and Vitest. `npm run test:smoke` runs the Playwright browser smoke test against the Vite-powered instrument app.
+
+Run the app locally with:
+
+```bash
+npm run dev -w @world-instrument/instrument
+```
 
 ## Documentation
 
