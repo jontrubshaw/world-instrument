@@ -1,0 +1,23 @@
+{
+  "name": "world-instrument",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Real-time generative artwork translating live streams into deterministic output.",
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces",
+    "typecheck": "npm run typecheck --workspaces"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.3",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.8"
+  }
+}

@@ -49,6 +49,12 @@ The first prototype should focus on:
 - Optional Web Audio output.
 - A replay mode using recorded input snapshots.
 
+## Packages
+
+- [`@world-instrument/core`](packages/core/README.md) defines the shared TypeScript contracts for
+  normalized stream state, stream adapters, deterministic scores, replay snapshots, and score
+  utility primitives. Other packages should consume it through the package root export.
+
 ## Status
 
 This repository is the starting point for the project.

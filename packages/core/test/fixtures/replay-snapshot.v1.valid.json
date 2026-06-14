@@ -1,0 +1,94 @@
+{
+  "schemaVersion": "world-instrument.replay-snapshot.v1",
+  "replayId": "weather-demo-0001",
+  "capturedAt": "2026-06-14T16:47:00.000Z",
+  "frame": {
+    "frameId": "frame-000001",
+    "frameIndex": 1,
+    "time": "2026-06-14T16:47:00.000Z",
+    "deltaMs": 16.667
+  },
+  "streams": [
+    {
+      "schemaVersion": "world-instrument.normalized-stream-state.v1",
+      "streamId": "weather.london",
+      "adapterId": "weather.adapter.demo",
+      "sourceId": "demo-weather-api",
+      "status": "active",
+      "observedAt": "2026-06-14T16:46:59.000Z",
+      "receivedAt": "2026-06-14T16:47:00.000Z",
+      "sequence": 42,
+      "channels": [
+        {
+          "kind": "scalar",
+          "key": "temperature",
+          "value": 18.4,
+          "unit": "celsius",
+          "confidence": 0.98
+        },
+        {
+          "kind": "rate",
+          "key": "wind",
+          "value": 6.2,
+          "unit": "m/s",
+          "per": "second"
+        },
+        {
+          "kind": "category",
+          "key": "condition",
+          "value": "cloudy",
+          "vocabulary": ["clear", "cloudy", "rain", "storm"]
+        }
+      ],
+      "metadata": {
+        "station": "demo"
+      }
+    }
+  ],
+  "scores": [
+    {
+      "scoreId": "weather-pressure",
+      "scoreVersion": {
+        "scoreId": "weather-pressure",
+        "version": "0.1.0",
+        "deterministicHash": "2f3a9c10",
+        "createdAt": "2026-06-14T16:40:00.000Z"
+      },
+      "output": {
+        "schemaVersion": "world-instrument.score-output.v1",
+        "scoreId": "weather-pressure",
+        "scoreVersion": {
+          "scoreId": "weather-pressure",
+          "version": "0.1.0",
+          "deterministicHash": "2f3a9c10",
+          "createdAt": "2026-06-14T16:40:00.000Z"
+        },
+        "frame": {
+          "frameId": "frame-000001",
+          "frameIndex": 1,
+          "time": "2026-06-14T16:47:00.000Z",
+          "deltaMs": 16.667
+        },
+        "channels": [
+          {
+            "kind": "visual",
+            "key": "diffusion",
+            "value": 0.42,
+            "confidence": 0.98
+          },
+          {
+            "kind": "audio",
+            "key": "harmonicPressure",
+            "value": {
+              "frequency": 220,
+              "gain": 0.17
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "fixture": true
+  }
+}

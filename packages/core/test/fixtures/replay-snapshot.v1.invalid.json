@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "world-instrument.replay-snapshot.v1",
+  "replayId": "broken-weather-demo",
+  "capturedAt": "2026-06-14T16:47:00.000Z",
+  "frame": {
+    "frameId": "frame-000001",
+    "frameIndex": 1,
+    "time": "2026-06-14T16:47:00.000Z",
+    "deltaMs": 16.667
+  },
+  "streams": [
+    {
+      "schemaVersion": "world-instrument.normalized-stream-state.v1",
+      "streamId": "weather.london",
+      "adapterId": "weather.adapter.demo",
+      "status": "active",
+      "observedAt": "2026-06-14T16:46:59.000Z",
+      "sequence": 42,
+      "channels": [
+        {
+          "kind": "scalar",
+          "key": "temperature",
+          "value": "18.4"
+        }
+      ]
+    }
+  ]
+}
