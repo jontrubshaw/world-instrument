@@ -78,11 +78,11 @@ export function InstrumentStage() {
     resizeObserver.observe(mount);
     resize();
 
-    const clock = new THREE.Clock();
+    const startTime = window.performance.now();
     let animationFrameId = 0;
 
     const renderFrame = () => {
-      const elapsed = clock.getElapsedTime();
+      const elapsed = (window.performance.now() - startTime) / 1000;
       const pulse = Math.sin(elapsed * 1.7) * 0.08;
 
       body.rotation.x = elapsed * 0.21;
