@@ -1,0 +1,283 @@
+{
+  "schemaVersion": "replay-snapshot.v1",
+  "snapshotId": "weather-score-v1-london-2026-06-14T21:00:00Z",
+  "createdAt": "2026-06-14T22:00:00.000Z",
+  "score": {
+    "schemaVersion": "score-version.v1",
+    "scoreId": "weather-score",
+    "scoreVersion": "1.0.0",
+    "displayName": "Weather Score v1",
+    "deterministic": true,
+    "supportedStreamSchemas": ["stream-state.v1"],
+    "description": "Maps normalized weather streams into abstract visual, audio, and haptic controls.",
+    "createdAt": "2026-06-14T22:00:00.000Z",
+    "metadata": {
+      "inputKind": "weather",
+      "outputSurface": "abstract-instrument"
+    }
+  },
+  "frames": [
+    {
+      "frameIndex": 0,
+      "elapsedMs": 0,
+      "capturedAt": "2026-06-14T21:00:00.000Z",
+      "seed": "weather-score-v1:london:0",
+      "streams": [
+        {
+          "schemaVersion": "stream-state.v1",
+          "streamId": "weather:london-uk",
+          "source": {
+            "id": "weather.open-meteo:london-uk",
+            "kind": "weather",
+            "label": "London, UK weather",
+            "uri": "https://api.open-meteo.com/v1/forecast?latitude=51.5072&longitude=-0.1276&current=temperature_2m,relative_humidity_2m,precipitation,rain,weather_code,cloud_cover,surface_pressure,wind_speed_10m,wind_direction_10m"
+          },
+          "status": "ok",
+          "observedAt": "2026-06-14T21:00:00.000Z",
+          "receivedAt": "2026-06-14T21:00:01.000Z",
+          "sequence": 0,
+          "samples": [
+            {
+              "kind": "numeric",
+              "key": "temperature",
+              "label": "Temperature",
+              "observedAt": "2026-06-14T21:00:00.000Z",
+              "quality": "measured",
+              "value": 18.4,
+              "unit": "celsius"
+            },
+            {
+              "kind": "numeric",
+              "key": "apparentTemperature",
+              "label": "Apparent temperature",
+              "observedAt": "2026-06-14T21:00:00.000Z",
+              "quality": "measured",
+              "value": 17.9,
+              "unit": "celsius"
+            },
+            {
+              "kind": "numeric",
+              "key": "relativeHumidity",
+              "label": "Relative humidity",
+              "observedAt": "2026-06-14T21:00:00.000Z",
+              "quality": "measured",
+              "value": 72,
+              "unit": "percent"
+            },
+            {
+              "kind": "numeric",
+              "key": "precipitation",
+              "label": "Precipitation",
+              "observedAt": "2026-06-14T21:00:00.000Z",
+              "quality": "measured",
+              "value": 0.1,
+              "unit": "mm"
+            },
+            {
+              "kind": "numeric",
+              "key": "rain",
+              "label": "Rain",
+              "observedAt": "2026-06-14T21:00:00.000Z",
+              "quality": "measured",
+              "value": 0,
+              "unit": "mm"
+            },
+            {
+              "kind": "numeric",
+              "key": "pressure",
+              "label": "Surface pressure",
+              "observedAt": "2026-06-14T21:00:00.000Z",
+              "quality": "measured",
+              "value": 1012.4,
+              "unit": "hPa"
+            },
+            {
+              "kind": "numeric",
+              "key": "cloudCover",
+              "label": "Cloud cover",
+              "observedAt": "2026-06-14T21:00:00.000Z",
+              "quality": "measured",
+              "value": 86,
+              "unit": "percent"
+            },
+            {
+              "kind": "numeric",
+              "key": "windSpeed",
+              "label": "Wind speed",
+              "observedAt": "2026-06-14T21:00:00.000Z",
+              "quality": "measured",
+              "value": 6.8,
+              "unit": "m/s"
+            },
+            {
+              "kind": "categorical",
+              "key": "condition",
+              "label": "Weather condition",
+              "observedAt": "2026-06-14T21:00:00.000Z",
+              "quality": "estimated",
+              "value": "overcast",
+              "confidence": 0.86
+            },
+            {
+              "kind": "boolean",
+              "key": "isRaining",
+              "label": "Is raining",
+              "observedAt": "2026-06-14T21:00:00.000Z",
+              "quality": "measured",
+              "value": true,
+              "confidence": 0.9
+            },
+            {
+              "kind": "vector",
+              "key": "windVector",
+              "label": "Wind vector",
+              "observedAt": "2026-06-14T21:00:00.000Z",
+              "quality": "estimated",
+              "values": [-0.21, -0.085],
+              "axes": ["east", "north"],
+              "unit": "normalized"
+            }
+          ],
+          "metadata": {
+            "provider": "open-meteo",
+            "mode": "fixture",
+            "condition": "overcast",
+            "weatherCode": 3,
+            "location": {
+              "id": "london-uk",
+              "label": "London, UK",
+              "latitude": 51.5072,
+              "longitude": -0.1276,
+              "timezone": "Europe/London"
+            }
+          }
+        }
+      ],
+      "output": {
+        "schemaVersion": "score-output.v1",
+        "scoreId": "weather-score",
+        "scoreVersion": "1.0.0",
+        "frameIndex": 0,
+        "generatedAt": "2026-06-14T21:00:00.000Z",
+        "visual": {
+          "palette": ["#0b1026", "#7fb7ff", "#d8b4fe"],
+          "parameters": [
+            {
+              "key": "warmth",
+              "value": 0.591,
+              "min": 0,
+              "max": 1
+            },
+            {
+              "key": "humidity",
+              "value": 0.72,
+              "min": 0,
+              "max": 1
+            },
+            {
+              "key": "wind",
+              "value": 0.227,
+              "min": 0,
+              "max": 1
+            },
+            {
+              "key": "precipitation",
+              "value": 0.005,
+              "min": 0,
+              "max": 1
+            },
+            {
+              "key": "pressure",
+              "value": 0.616,
+              "min": 0,
+              "max": 1
+            },
+            {
+              "key": "cloudCover",
+              "value": 0.86,
+              "min": 0,
+              "max": 1
+            },
+            {
+              "key": "motion",
+              "value": 0.149,
+              "min": 0,
+              "max": 1
+            },
+            {
+              "key": "diffusion",
+              "value": 0.682,
+              "min": 0,
+              "max": 1
+            },
+            {
+              "key": "tension",
+              "value": 0.234,
+              "min": 0,
+              "max": 1
+            },
+            {
+              "key": "brightness",
+              "value": 0.498,
+              "min": 0,
+              "max": 1
+            }
+          ]
+        },
+        "audio": {
+          "enabled": true,
+          "parameters": [
+            {
+              "key": "harmonicPressure",
+              "value": 0.234,
+              "min": 0,
+              "max": 1
+            },
+            {
+              "key": "grain",
+              "value": 0.072,
+              "min": 0,
+              "max": 1
+            },
+            {
+              "key": "tempo",
+              "value": 0.319,
+              "min": 0,
+              "max": 1
+            }
+          ]
+        },
+        "haptic": {
+          "enabled": true,
+          "parameters": [
+            {
+              "key": "pulseIntensity",
+              "value": 0.083,
+              "min": 0,
+              "max": 1
+            }
+          ]
+        },
+        "trace": [
+          {
+            "key": "inputHash",
+            "value": "8f5c7a72"
+          },
+          {
+            "key": "condition",
+            "value": "overcast"
+          }
+        ],
+        "metadata": {
+          "streamStatus": "ok",
+          "streamId": "weather:london-uk",
+          "condition": "overcast"
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "fixture": true,
+    "provider": "open-meteo"
+  }
+}
