@@ -21,7 +21,7 @@ export function stableStringify(value: JsonValue): string {
     case 'string':
       return stringifyString(value);
     case 'object':
-      if (Array.isArray(value)) {
+      if (isJsonArray(value)) {
         return `[${value.map((item) => stableStringify(item)).join(',')}]`;
       }
 
@@ -98,19 +98,19 @@ export function normalize(value: number, min: number, max: number): number {
 
 function stableStringifyObject(value: JsonObject): string {
   const entries = Object.entries(value).sort(([left], [right]) => left.localeCompare(right));
-  const serialized = entries.map(([key, item]) => `${stringifyString(key)}:${stableStringify(item)}`);
+  const serialized = entries.map(
+    ([key, item]) => `${stringifyString(key)}:${stableStringify(item)}`,
+  );
 
   return `{${serialized.join(',')}}`;
 }
 
+function isJsonArray(value: JsonObject | readonly JsonValue[]): value is readonly JsonValue[] {
+  return Array.isArray(value);
+}
+
 function stringifyString(value: string): string {
-  const serialized = JSON.stringify(value);
-
-  if (serialized === undefined) {
-    throw new TypeError('Unable to serialize string');
-  }
-
-  return serialized;
+  return JSON.stringify(value);
 }
 
 function fnv1a32(input: string): number {

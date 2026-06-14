@@ -80,7 +80,10 @@ export interface ScoreOutput {
   readonly metadata?: JsonObject;
 }
 
-export interface Score<TInput extends ScoreInput = ScoreInput, TOutput extends ScoreOutput = ScoreOutput> {
+export interface Score<
+  TInput extends ScoreInput = ScoreInput,
+  TOutput extends ScoreOutput = ScoreOutput,
+> {
   readonly metadata: ScoreVersionMetadata;
   evaluate(input: TInput): TOutput;
 }

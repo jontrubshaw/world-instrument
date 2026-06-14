@@ -81,7 +81,9 @@ export function validateReplaySnapshot(value: unknown): readonly string[] {
       issues.push('$.frames must include at least one frame');
     }
 
-    frames.forEach((frame, index) => validateReplayFrame(frame, `$.frames[${index}]`, issues));
+    frames.forEach((frame, index) => {
+      validateReplayFrame(frame, `$.frames[${String(index)}]`, issues);
+    });
   }
 
   return issues;
@@ -104,7 +106,9 @@ function validateReplayFrame(value: unknown, path: string, issues: string[]): vo
       issues.push(`${path}.streams must include at least one normalized stream state`);
     }
 
-    streams.forEach((stream, index) => validateNormalizedStreamState(stream, `${path}.streams[${index}]`, issues));
+    streams.forEach((stream, index) => {
+      validateNormalizedStreamState(stream, `${path}.streams[${String(index)}]`, issues);
+    });
   }
 
   const output = optionalRecord(value, 'output', path, issues);
@@ -113,7 +117,11 @@ function validateReplayFrame(value: unknown, path: string, issues: string[]): vo
   }
 }
 
-function validateScoreVersionMetadata(value: Record<string, unknown>, path: string, issues: string[]): void {
+function validateScoreVersionMetadata(
+  value: Record<string, unknown>,
+  path: string,
+  issues: string[],
+): void {
   requireLiteral(value, 'schemaVersion', SCORE_VERSION_SCHEMA_VERSION, path, issues);
   requireString(value, 'scoreId', path, issues);
   requireString(value, 'scoreVersion', path, issues);
@@ -142,11 +150,17 @@ function validateNormalizedStreamState(value: unknown, path: string, issues: str
 
   const samples = requireArray(value, 'samples', path, issues);
   if (samples !== undefined) {
-    samples.forEach((sample, index) => validateStreamSample(sample, `${path}.samples[${index}]`, issues));
+    samples.forEach((sample, index) => {
+      validateStreamSample(sample, `${path}.samples[${String(index)}]`, issues);
+    });
   }
 }
 
-function validateStreamSource(value: Record<string, unknown>, path: string, issues: string[]): void {
+function validateStreamSource(
+  value: Record<string, unknown>,
+  path: string,
+  issues: string[],
+): void {
   const source = requireRecord(value, 'source', path, issues);
 
   if (source === undefined) {
@@ -220,7 +234,9 @@ function validateScoreOutput(value: Record<string, unknown>, path: string, issue
 
   const trace = optionalArray(value, 'trace', path, issues);
   if (trace !== undefined) {
-    trace.forEach((entry, index) => validateTraceEntry(entry, `${path}.trace[${index}]`, issues));
+    trace.forEach((entry, index) => {
+      validateTraceEntry(entry, `${path}.trace[${String(index)}]`, issues);
+    });
   }
 }
 
@@ -253,7 +269,7 @@ function validateNamedParameters(
   }
 
   parameters.forEach((parameter, index) => {
-    const parameterPath = `${path}.${key}[${index}]`;
+    const parameterPath = `${path}.${key}[${String(index)}]`;
 
     if (!isRecord(parameter)) {
       issues.push(`${parameterPath} must be an object`);
@@ -335,10 +351,10 @@ function requireBoolean(
   return item;
 }
 
-function requireLiteral<TLiteral extends boolean | number | string>(
+function requireLiteral(
   value: Record<string, unknown>,
   key: string,
-  expected: TLiteral,
+  expected: boolean | number | string,
   path: string,
   issues: string[],
 ): void {
@@ -347,14 +363,16 @@ function requireLiteral<TLiteral extends boolean | number | string>(
   }
 }
 
-function requireOneOf<TLiteral extends StreamSample['quality'] | StreamSample['kind'] | StreamStatus>(
+type AllowedStringLiteral = StreamSample['kind'] | StreamSample['quality'] | StreamStatus;
+
+function requireOneOf(
   value: Record<string, unknown>,
   key: string,
-  expected: readonly TLiteral[],
+  expected: readonly AllowedStringLiteral[],
   path: string,
   issues: string[],
 ): void {
-  if (!expected.includes(value[key] as TLiteral)) {
+  if (!isAllowedStringLiteral(value[key], expected)) {
     issues.push(`${path}.${key} must be one of ${expected.join(', ')}`);
   }
 }
@@ -488,7 +506,7 @@ function requireArray(
 ): readonly unknown[] | undefined {
   const item = value[key];
 
-  if (!Array.isArray(item)) {
+  if (!isUnknownArray(item)) {
     issues.push(`${path}.${key} must be an array`);
     return undefined;
   }
@@ -508,7 +526,7 @@ function optionalArray(
     return undefined;
   }
 
-  if (!Array.isArray(item)) {
+  if (!isUnknownArray(item)) {
     issues.push(`${path}.${key} must be an array when provided`);
     return undefined;
   }
@@ -516,7 +534,12 @@ function optionalArray(
   return item;
 }
 
-function requireStringArray(value: Record<string, unknown>, key: string, path: string, issues: string[]): void {
+function requireStringArray(
+  value: Record<string, unknown>,
+  key: string,
+  path: string,
+  issues: string[],
+): void {
   const item = requireArray(value, key, path, issues);
   if (item === undefined) {
     return;
@@ -543,7 +566,12 @@ function validateOptionalStringArray(
   }
 }
 
-function validateNumberArray(value: Record<string, unknown>, key: string, path: string, issues: string[]): void {
+function validateNumberArray(
+  value: Record<string, unknown>,
+  key: string,
+  path: string,
+  issues: string[],
+): void {
   const item = requireArray(value, key, path, issues);
   if (item === undefined) {
     return;
@@ -558,14 +586,23 @@ function validateNumberArray(value: Record<string, unknown>, key: string, path: 
   }
 }
 
-function validateOptionalConfidence(value: Record<string, unknown>, path: string, issues: string[]): void {
+function validateOptionalConfidence(
+  value: Record<string, unknown>,
+  path: string,
+  issues: string[],
+): void {
   const confidence = value.confidence;
 
   if (confidence === undefined) {
     return;
   }
 
-  if (typeof confidence !== 'number' || !Number.isFinite(confidence) || confidence < 0 || confidence > 1) {
+  if (
+    typeof confidence !== 'number' ||
+    !Number.isFinite(confidence) ||
+    confidence < 0 ||
+    confidence > 1
+  ) {
     issues.push(`${path}.confidence must be a finite number between 0 and 1 when provided`);
   }
 }
@@ -589,6 +626,17 @@ function validateOptionalJsonObject(
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isUnknownArray(value: unknown): value is readonly unknown[] {
+  return Array.isArray(value);
+}
+
+function isAllowedStringLiteral(
+  value: unknown,
+  expected: readonly AllowedStringLiteral[],
+): value is AllowedStringLiteral {
+  return typeof value === 'string' && expected.includes(value as AllowedStringLiteral);
 }
 
 function isJsonObject(value: unknown): value is JsonObject {

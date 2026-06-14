@@ -69,13 +69,13 @@ class FixtureWeatherAdapter implements StreamAdapter<{ readonly temperature: num
   readonly version = '1.0.0';
   readonly source = weatherState.source;
 
-  async read(): Promise<StreamAdapterResult<{ readonly temperature: number }>> {
-    return {
+  read(): Promise<StreamAdapterResult<{ readonly temperature: number }>> {
+    return Promise.resolve({
       raw: {
         temperature: 18.4,
       },
       state: weatherState,
-    };
+    });
   }
 }
 
@@ -110,7 +110,8 @@ class FixtureWeatherScore implements Score {
           key: 'inputHash',
           value: hashJson({
             seed: input.seed,
-            streams: input.streams,
+            streamId: input.streams[0]?.streamId ?? 'missing',
+            sequence: input.streams[0]?.sequence ?? -1,
           }),
         },
       ],

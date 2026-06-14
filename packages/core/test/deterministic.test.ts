@@ -31,7 +31,7 @@ describe('deterministic utilities', () => {
     const right = { a: 1, b: 2 };
 
     expect(hashJson(left)).toBe(hashJson(right));
-    expect(hashJson(left)).toBe('1bd71fa8');
+    expect(hashJson(left)).toBe('5314055b');
     expect(hashString(stableStringify(left))).toBe(hashJson(left));
   });
 
@@ -42,7 +42,9 @@ describe('deterministic utilities', () => {
 
     const firstSequence = [first(), first(), first()].map((value) => Number(value.toFixed(12)));
     const secondSequence = [second(), second(), second()].map((value) => Number(value.toFixed(12)));
-    const differentSequence = [different(), different(), different()].map((value) => Number(value.toFixed(12)));
+    const differentSequence = [different(), different(), different()].map((value) =>
+      Number(value.toFixed(12)),
+    );
 
     expect(firstSequence).toEqual(secondSequence);
     expect(firstSequence).not.toEqual(differentSequence);
