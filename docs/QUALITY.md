@@ -25,6 +25,7 @@ The current CI gate runs `npm ci` and `npm run check`. Browser smoke tests are i
 ## Review Expectations
 
 - Every implementation PR should reference a Linear issue.
+- Cursor-owned draft PRs should be marked ready for review once Cursor has clearly handed back the initial work and is no longer actively pushing.
 - Automatic Codex PR review should complete before merge, except under the documented low-risk docs and 15-minute fallback rules in `docs/ORCHESTRATION.md`.
 - Cursor-owned PR review findings should be handed back to Cursor through the Linear issue thread, not through a PR comment.
 - Cursor handoff comments should mention `@Cursor`, identify the PR and branch, enumerate actionable findings, request same-branch fixes, and require `npm run check` before handback.

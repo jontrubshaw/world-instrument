@@ -46,6 +46,7 @@ This file is the durable project handoff. Keep it current whenever project conve
 - If a review has not appeared for the latest PR head after 10 minutes, check timestamps and wait another 5 minutes.
 - If no latest-head review appears after 15 minutes total, merge when the PR is clean and all known actionable feedback has been addressed.
 - Jonny has approved Codex to merge reviewed PRs to `main`.
+- Cursor may open coding PRs as drafts. Mark a Cursor draft PR ready for review once Cursor has clearly handed back the initial work and is no longer actively pushing; then begin the normal CI and Codex review wait.
 - When Cursor owns a coding issue, review handoffs to Cursor go in the Linear issue thread, not in GitHub PR comments. Mention `@Cursor`, identify the PR and branch, list actionable findings, require same-branch fixes, and ask for `npm run check` before handback.
 - After docs PRs that reference implementation issue IDs, verify Linear issue state and attachments. PR #8 was docs-only but briefly auto-completed `JTW-15`; `JTW-15` was restored to Todo and still requires a fresh implementation PR.
 - As problems arise, create Linear issues for them.
