@@ -76,6 +76,29 @@ describe('weather adapter', () => {
     });
   });
 
+  it('classifies Open-Meteo snow shower weather codes as snow', async () => {
+    const fixture = await loadFixture();
+
+    for (const weatherCode of [85, 86]) {
+      const state = normalizeWeatherPayload({
+        ...fixture,
+        current: {
+          ...fixture.current,
+          weatherCode,
+        },
+      });
+
+      expect(state.metadata).toMatchObject({
+        condition: 'snow',
+        weatherCode,
+      });
+      expect(state.samples.find((sample) => sample.key === 'condition')).toMatchObject({
+        kind: 'categorical',
+        value: 'snow',
+      });
+    }
+  });
+
   it('maps Open-Meteo live responses into normalized weather state', async () => {
     let requestedUrl: string | undefined;
     const adapter = new WeatherAdapter({

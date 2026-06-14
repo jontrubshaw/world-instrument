@@ -477,7 +477,7 @@ function weatherCodeToCondition(weatherCode: number | undefined): string {
     return 'rain';
   }
 
-  if (weatherCode >= 71 && weatherCode <= 77) {
+  if ((weatherCode >= 71 && weatherCode <= 77) || weatherCode === 85 || weatherCode === 86) {
     return 'snow';
   }
 
