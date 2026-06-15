@@ -118,10 +118,14 @@ export function App() {
   const browserSensorRefreshRef = useRef<number | undefined>(undefined);
   const browserSensorStateRef = useRef(browserSensorState);
   const browserSensorSnapshotRef = useRef(browserSensorState.snapshot);
-  const commitBrowserSensorState = useCallback((nextState: BrowserSensorRuntimeState) => {
+  const publishBrowserSensorState = useCallback((nextState: BrowserSensorRuntimeState) => {
     browserSensorStateRef.current = nextState;
     browserSensorSnapshotRef.current = nextState.snapshot;
     setBrowserSensorState(nextState);
+  }, []);
+  const sampleBrowserSensorState = useCallback((nextState: BrowserSensorRuntimeState) => {
+    browserSensorStateRef.current = nextState;
+    browserSensorSnapshotRef.current = nextState.snapshot;
   }, []);
   const selectedSource = sourceDefinition(selectedSourceId);
   const sourceReplayArchives = useMemo(
@@ -348,20 +352,21 @@ export function App() {
 
       browserSensorRefreshRef.current = window.requestAnimationFrame(() => {
         browserSensorRefreshRef.current = undefined;
+        setBrowserSensorState(browserSensorStateRef.current);
         setSourceRefreshToken((currentToken) => currentToken + 1);
       });
     };
 
     const handlePointer = (event: PointerEvent) => {
-      commitBrowserSensorState(updateBrowserSensorPointer(browserSensorStateRef.current, event));
+      sampleBrowserSensorState(updateBrowserSensorPointer(browserSensorStateRef.current, event));
       refreshSensorSource();
     };
     const handleMotion = (event: DeviceMotionEvent) => {
-      commitBrowserSensorState(updateBrowserSensorMotion(browserSensorStateRef.current, event));
+      sampleBrowserSensorState(updateBrowserSensorMotion(browserSensorStateRef.current, event));
       refreshSensorSource();
     };
     const handleOrientation = (event: DeviceOrientationEvent) => {
-      commitBrowserSensorState(
+      sampleBrowserSensorState(
         updateBrowserSensorOrientation(browserSensorStateRef.current, event),
       );
       refreshSensorSource();
@@ -385,7 +390,7 @@ export function App() {
         browserSensorRefreshRef.current = undefined;
       }
     };
-  }, [commitBrowserSensorState, instrumentMode, selectedSourceId]);
+  }, [instrumentMode, sampleBrowserSensorState, selectedSourceId]);
 
   useEffect(() => {
     if (
@@ -558,7 +563,7 @@ export function App() {
   };
 
   const enableBrowserSensors = async () => {
-    commitBrowserSensorState(await requestBrowserSensorPermission(browserSensorStateRef.current));
+    publishBrowserSensorState(await requestBrowserSensorPermission(browserSensorStateRef.current));
     setSourceRefreshToken((currentToken) => currentToken + 1);
   };
 
