@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import {
   createInitialBrowserSensorRuntimeState,
+  requestBrowserSensorPermission,
   updateBrowserSensorPointer,
 } from '../src/browserSensor.ts';
 
@@ -51,6 +52,48 @@ describe('browser sensor runtime', () => {
     expect(liftedTouch.snapshot.pointer?.active).toBe(false);
     expect(liftedPen.snapshot.pointer?.active).toBe(false);
   });
+
+  it('starts motion and orientation permission prompts before awaiting either result', async () => {
+    const calls: string[] = [];
+    const motion = deferred<PermissionState>();
+    const orientation = deferred<PermissionState>();
+    Object.defineProperty(globalThis, 'window', {
+      configurable: true,
+      value: {
+        DeviceMotionEvent: function DeviceMotionEvent() {},
+        DeviceOrientationEvent: function DeviceOrientationEvent() {},
+        PointerEvent: function PointerEvent() {},
+      },
+    });
+    Object.assign(window.DeviceMotionEvent, {
+      requestPermission: () => {
+        calls.push('motion');
+
+        return motion.promise;
+      },
+    });
+    Object.assign(window.DeviceOrientationEvent, {
+      requestPermission: () => {
+        calls.push('orientation');
+
+        return orientation.promise;
+      },
+    });
+    const initialState = createInitialBrowserSensorRuntimeState(
+      new Date('2026-06-15T12:00:00.000Z'),
+    );
+
+    const permissionRequest = requestBrowserSensorPermission(initialState);
+
+    expect(calls).toEqual(['motion', 'orientation']);
+
+    motion.resolve('granted');
+    orientation.resolve('granted');
+
+    await expect(permissionRequest).resolves.toMatchObject({
+      permissionState: 'granted',
+    });
+  });
 });
 
 function createPointerEvent(options: {
@@ -66,4 +109,16 @@ function createPointerEvent(options: {
     pointerType: options.pointerType,
     pressure: options.buttons > 0 ? 0.7 : 0,
   } as PointerEvent;
+}
+
+function deferred<T>(): {
+  readonly promise: Promise<T>;
+  readonly resolve: (value: T) => void;
+} {
+  let resolve: (value: T) => void = () => undefined;
+  const promise = new Promise<T>((promiseResolve) => {
+    resolve = promiseResolve;
+  });
+
+  return { promise, resolve };
 }

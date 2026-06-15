@@ -165,8 +165,12 @@ export function updateBrowserSensorOrientation(
 export async function requestBrowserSensorPermission(
   current: BrowserSensorRuntimeState,
 ): Promise<BrowserSensorRuntimeState> {
-  const motionPermission = await requestDeviceEventPermission('DeviceMotionEvent');
-  const orientationPermission = await requestDeviceEventPermission('DeviceOrientationEvent');
+  const motionPermissionRequest = requestDeviceEventPermission('DeviceMotionEvent');
+  const orientationPermissionRequest = requestDeviceEventPermission('DeviceOrientationEvent');
+  const [motionPermission, orientationPermission] = await Promise.all([
+    motionPermissionRequest,
+    orientationPermissionRequest,
+  ]);
   const permissionState = combinedPermissionState(motionPermission, orientationPermission);
   const capabilities: BrowserSensorCapabilities = {
     ...current.snapshot.capabilities,
