@@ -229,6 +229,68 @@ describe('stream source registry', () => {
       activeInputs: ['pointer'],
     });
   });
+
+  it('supports live browser sensor adapter snapshots and reconfiguration', async () => {
+    const pointerOnlySnapshot: RecordedBrowserSensorPayload = {
+      provider: sensorFixture.provider,
+      observedAt: sensorFixture.observedAt,
+      device: sensorFixture.device,
+      capabilities: {
+        pointer: 'available',
+        deviceMotion: 'unavailable',
+        deviceOrientation: 'unavailable',
+        permission: 'unsupported',
+        fallback: 'pointer',
+      },
+      pointer: {
+        position: [0.25, 0.75],
+        velocity: [0, 0],
+        pressure: 0,
+      },
+    };
+    const adapter = new BrowserSensorAdapter({
+      mode: 'live',
+      snapshot: pointerOnlySnapshot,
+      now: '2026-06-15T12:00:00.500Z',
+      staleAfterMs: 2_000,
+      sequence: 6,
+    });
+
+    expect(adapter.source).toMatchObject({
+      id: `${BROWSER_SENSOR_ADAPTER_ID}:studio-browser`,
+      kind: 'sensor',
+      label: 'Studio browser sensor',
+      uri: 'browser://local-sensors',
+    });
+
+    const liveResult = await adapter.read();
+
+    expect(liveResult.state).toMatchObject({
+      status: 'degraded',
+      sequence: 6,
+      metadata: {
+        activeInputs: ['pointer'],
+      },
+    });
+    expect(
+      liveResult.state.samples.find((sample) => sample.key === 'interactionActive'),
+    ).toMatchObject({
+      kind: 'boolean',
+      quality: 'missing',
+      value: false,
+    });
+
+    adapter.configure({
+      mode: 'fixture',
+      fixture: sensorFixture,
+      sequence: 7,
+    });
+
+    expect((await adapter.read()).state).toMatchObject({
+      status: 'ok',
+      sequence: 7,
+    });
+  });
 });
 
 const weatherScoreMetadata: ScoreVersionMetadata = {
