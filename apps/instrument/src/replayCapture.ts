@@ -49,6 +49,11 @@ export interface CreateReplayCaptureSessionOptions {
   readonly startedAt: string;
 }
 
+export interface CreateReplayCaptureSessionForFrameOptions {
+  readonly startedAt: string;
+  readonly frame: ReplayCaptureFrameInput;
+}
+
 export interface BuildReplaySnapshotOptions {
   readonly createdAt: string;
   readonly description?: string;
@@ -69,6 +74,26 @@ export function createReplayCaptureSession(
     status: 'recording',
     frames: [],
   };
+}
+
+export function createReplayCaptureSessionForFrame(
+  options: CreateReplayCaptureSessionForFrameOptions,
+): ReplayCaptureSession {
+  const sourceKind = captureSourceKind(options.frame);
+  const sourceLabel = options.frame.sourceLabel ?? sourceKind;
+
+  return createReplayCaptureSession({
+    sessionId: createReplayCaptureSessionId(
+      options.startedAt,
+      options.frame.sourceMode,
+      sourceKind,
+    ),
+    title:
+      options.frame.sourceMode === 'replay'
+        ? `${sourceLabel} generated replay capture`
+        : `${sourceLabel} ${options.frame.sourceMode} session`,
+    startedAt: options.startedAt,
+  });
 }
 
 export function stopReplayCaptureSession(
@@ -307,6 +332,10 @@ function sourceModeSummary(frames: readonly CapturedReplayFrame[]): string {
   }
 
   return 'mixed';
+}
+
+function captureSourceKind(frame: ReplayCaptureFrameInput): string {
+  return frame.streams[0]?.source.kind ?? 'stream';
 }
 
 function elapsedFromSessionStart(startedAt: string, capturedAt: string): number {

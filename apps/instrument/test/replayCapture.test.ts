@@ -6,6 +6,7 @@ import {
   buildReplaySnapshot,
   createReplayCaptureFrameFromArchive,
   createReplayCaptureSession,
+  createReplayCaptureSessionForFrame,
   createReplayCaptureSessionId,
   createReplayDownloadFilename,
   prepareFrameForCaptureClock,
@@ -159,6 +160,22 @@ describe('instrument replay capture', () => {
     expect(createReplayDownloadFilename(snapshot)).toBe(
       'world-instrument-captured-live-weather-2026-06-14T21-05-00Z.replay.json',
     );
+  });
+
+  it('derives capture session metadata from replay fallback frames', () => {
+    const archive = firstReplayArchive();
+    const replayFallbackFrame = captureInputForReplayFrame(archive, 0);
+    const session = createReplayCaptureSessionForFrame({
+      startedAt: '2026-06-14T21:05:00.000Z',
+      frame: replayFallbackFrame,
+    });
+
+    expect(session).toMatchObject({
+      sessionId: 'captured-replay-weather-2026-06-14T21-05-00Z',
+      title: 'London, UK weather generated replay capture',
+      startedAt: '2026-06-14T21:05:00.000Z',
+    });
+    expect(session.sessionId).not.toContain('sensor');
   });
 
   it('uses capture-clock elapsed times for live frames with older observations', () => {

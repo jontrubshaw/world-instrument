@@ -18,8 +18,7 @@ import {
   appendCapturedReplayFrame,
   buildReplaySnapshot,
   createReplayCaptureFrameFromArchive,
-  createReplayCaptureSession,
-  createReplayCaptureSessionId,
+  createReplayCaptureSessionForFrame,
   createReplayDownloadFilename,
   prepareFrameForCaptureClock,
   replayCaptureFrameKey,
@@ -445,16 +444,16 @@ export function App() {
   const startCapture = () => {
     const startedAt = new Date().toISOString();
 
+    if (currentCaptureFrame === undefined) {
+      return;
+    }
+
     captureLastFrameKeyRef.current = undefined;
     setCaptureExportFilename('');
     setCaptureSession(
-      createReplayCaptureSession({
-        sessionId: createReplayCaptureSessionId(startedAt, instrumentMode, selectedSource.kind),
-        title:
-          instrumentMode === 'replay'
-            ? `${replayViewState.archiveLabel} generated replay capture`
-            : `${selectedSource.displayName} ${instrumentMode} session`,
+      createReplayCaptureSessionForFrame({
         startedAt,
+        frame: currentCaptureFrame,
       }),
     );
   };
@@ -742,7 +741,11 @@ export function App() {
             data-capture-frame-count={String(captureFrameCount)}
           >
             <div className="transport-controls">
-              <button type="button" onClick={startCapture} disabled={captureIsRecording}>
+              <button
+                type="button"
+                onClick={startCapture}
+                disabled={captureIsRecording || currentCaptureFrame === undefined}
+              >
                 Start capture
               </button>
               <button type="button" onClick={stopCapture} disabled={!captureIsRecording}>
