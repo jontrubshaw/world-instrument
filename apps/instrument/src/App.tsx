@@ -116,6 +116,7 @@ export function App() {
   const sourceSequenceRef = useRef<number | undefined>(undefined);
   const captureLastFrameKeyRef = useRef<string | undefined>(undefined);
   const browserSensorRefreshRef = useRef<number | undefined>(undefined);
+  const browserSensorTrailingRefreshRef = useRef<number | undefined>(undefined);
   const browserSensorStateRef = useRef(browserSensorState);
   const browserSensorSnapshotRef = useRef(browserSensorState.snapshot);
   const publishBrowserSensorState = useCallback((nextState: BrowserSensorRuntimeState) => {
@@ -337,15 +338,7 @@ export function App() {
 
     let lastRefreshAt = 0;
 
-    const refreshSensorSource = () => {
-      const now = window.performance.now();
-
-      if (now - lastRefreshAt < BROWSER_SENSOR_POINTER_REFRESH_MS) {
-        return;
-      }
-
-      lastRefreshAt = now;
-
+    const requestSensorSourceRefresh = () => {
       if (browserSensorRefreshRef.current !== undefined) {
         return;
       }
@@ -355,6 +348,30 @@ export function App() {
         setBrowserSensorState(browserSensorStateRef.current);
         setSourceRefreshToken((currentToken) => currentToken + 1);
       });
+    };
+
+    const refreshSensorSource = () => {
+      const now = window.performance.now();
+      const elapsedMs = now - lastRefreshAt;
+
+      if (elapsedMs < BROWSER_SENSOR_POINTER_REFRESH_MS) {
+        if (browserSensorTrailingRefreshRef.current === undefined) {
+          browserSensorTrailingRefreshRef.current = window.setTimeout(() => {
+            browserSensorTrailingRefreshRef.current = undefined;
+            refreshSensorSource();
+          }, BROWSER_SENSOR_POINTER_REFRESH_MS - elapsedMs);
+        }
+
+        return;
+      }
+
+      if (browserSensorTrailingRefreshRef.current !== undefined) {
+        window.clearTimeout(browserSensorTrailingRefreshRef.current);
+        browserSensorTrailingRefreshRef.current = undefined;
+      }
+
+      lastRefreshAt = now;
+      requestSensorSourceRefresh();
     };
 
     const handlePointer = (event: PointerEvent) => {
@@ -390,6 +407,11 @@ export function App() {
       if (browserSensorRefreshRef.current !== undefined) {
         window.cancelAnimationFrame(browserSensorRefreshRef.current);
         browserSensorRefreshRef.current = undefined;
+      }
+
+      if (browserSensorTrailingRefreshRef.current !== undefined) {
+        window.clearTimeout(browserSensorTrailingRefreshRef.current);
+        browserSensorTrailingRefreshRef.current = undefined;
       }
     };
   }, [instrumentMode, sampleBrowserSensorState, selectedSourceId]);
