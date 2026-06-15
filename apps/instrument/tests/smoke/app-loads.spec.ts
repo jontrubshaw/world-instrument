@@ -215,23 +215,22 @@ test('loads the instrument shell', async ({ page }) => {
     capture: {
       sourceMode: 'live',
     },
-    frames: [
-      {
-        provenance: {
-          registeredSourceId: 'sensor.browser-interaction',
-          sourceIdentity: 'Local browser sensor',
-          sourceMode: 'live',
-          status: 'ready',
-          uiMode: 'live',
-        },
-      },
-    ],
     sources: [
       {
         kind: 'sensor',
       },
     ],
   });
+  expect(
+    sensorReplay.metadata.frames.some(
+      (frame) =>
+        frame.provenance.registeredSourceId === 'sensor.browser-interaction' &&
+        frame.provenance.sourceIdentity === 'Local browser sensor' &&
+        frame.provenance.sourceMode === 'live' &&
+        frame.provenance.status === 'ready' &&
+        frame.provenance.uiMode === 'live',
+    ),
+  ).toBe(true);
 
   await sourceSelector.selectOption('weather.open-meteo');
   await page.getByRole('button', { name: 'Live', exact: true }).click();
