@@ -138,6 +138,11 @@ test('loads the instrument shell', async ({ page }) => {
       repeatCount: 2,
       pattern: [59, 131, 59],
     });
+  await page.evaluate(() => {
+    (
+      window as unknown as { readonly __worldInstrumentVibrations: VibratePattern[] }
+    ).__worldInstrumentVibrations.length = 0;
+  });
   await page.getByRole('button', { name: 'Enable haptics' }).click();
   await expect(hapticControls).toHaveAttribute('data-haptic-enabled', 'true');
   await expect
