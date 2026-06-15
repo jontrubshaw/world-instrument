@@ -7,6 +7,7 @@ import {
   type ReplaySnapshot,
   type ScoreOutput,
   type StreamSourceMode,
+  stableStringify,
 } from '@world-instrument/core';
 import { weatherScoreV1 } from '@world-instrument/scores';
 
@@ -222,6 +223,7 @@ export function replayCaptureFrameKey(frame: ReplayCaptureFrameInput): string {
   const streamKeys = frame.streams
     .map((stream) => `${stream.streamId}:${String(stream.sequence)}:${stream.observedAt}`)
     .join(',');
+  const provenanceKey = captureProvenanceKey(frame.provenance);
 
   return [
     frame.sourceMode,
@@ -230,7 +232,20 @@ export function replayCaptureFrameKey(frame: ReplayCaptureFrameInput): string {
     frame.seed,
     frame.visualSignature,
     streamKeys,
+    provenanceKey,
   ].join('|');
+}
+
+function captureProvenanceKey(provenance: JsonObject | undefined): string {
+  if (provenance === undefined) {
+    return '';
+  }
+
+  const stableProvenance = Object.fromEntries(
+    Object.entries(provenance).filter(([key]) => key !== 'frameAgeMs'),
+  ) as JsonObject;
+
+  return stableStringify(stableProvenance);
 }
 
 function toReplayFrame(frame: CapturedReplayFrame): ReplayFrame {

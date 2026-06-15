@@ -10,6 +10,7 @@ import {
   createReplayCaptureSessionId,
   createReplayDownloadFilename,
   prepareFrameForCaptureClock,
+  replayCaptureFrameKey,
   serializeReplaySnapshot,
   type ReplayCaptureFrameInput,
 } from '../src/replayCapture.ts';
@@ -159,6 +160,46 @@ describe('instrument replay capture', () => {
     expect(sessionId).toBe('captured-live-weather-2026-06-14T21-05-00Z');
     expect(createReplayDownloadFilename(snapshot)).toBe(
       'world-instrument-captured-live-weather-2026-06-14T21-05-00Z.replay.json',
+    );
+  });
+
+  it('keys capture frames by persisted provenance changes without clock-only churn', () => {
+    const replayInput = captureInputForReplayFrame(firstReplayArchive(), 0);
+    const readyLiveInput = {
+      ...replayInput,
+      sourceMode: 'live' as const,
+      provenance: {
+        uiMode: 'live',
+        sourceMode: 'live',
+        status: 'ready',
+        streamStatus: 'ready',
+        registeredSourceId: 'weather.open-meteo',
+        sourceIdentity: 'London, UK weather',
+        sourceId: 'weather.open-meteo:london-uk',
+        frameAgeMs: 1000,
+      },
+    } satisfies ReplayCaptureFrameInput;
+    const agedLiveInput = {
+      ...readyLiveInput,
+      provenance: {
+        ...readyLiveInput.provenance,
+        frameAgeMs: 16000,
+      },
+    } satisfies ReplayCaptureFrameInput;
+    const offlineLiveInput = {
+      ...readyLiveInput,
+      provenance: {
+        ...readyLiveInput.provenance,
+        uiMode: 'replay-fallback',
+        sourceMode: 'replay',
+        status: 'offline',
+        streamStatus: 'ready',
+      },
+    } satisfies ReplayCaptureFrameInput;
+
+    expect(replayCaptureFrameKey(agedLiveInput)).toBe(replayCaptureFrameKey(readyLiveInput));
+    expect(replayCaptureFrameKey(offlineLiveInput)).not.toBe(
+      replayCaptureFrameKey(readyLiveInput),
     );
   });
 
