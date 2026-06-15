@@ -8,7 +8,7 @@ This file is the durable project handoff. Keep it current whenever project conve
 - Linear project: https://linear.app/jtworks/project/world-instrument-1472eb8e5477
 - Linear team: Jtworks
 - Local checkout: `/Users/JonathanTrubshaw/Documents/weathart/world-instrument`
-- Active implementation branch: none. `JTW-43` merged via PR #42; `JTW-44` is the next ready backlog item.
+- Active implementation branch: none confirmed yet for `JTW-44`; watch for a fresh Cursor PR/branch after release.
 - Cursor environment setup is complete.
 - Stale pre-setup Cursor draft PRs closed: PR #1 (`cursor/instrument-app-shell-1cf1`) and PR #3 (`cursor/core-contracts-7e26`).
 - Local Node environment: Homebrew `node@24` installed; current shell resolves `node` to `v24.16.0` and `npm` to `11.13.0`.
@@ -47,12 +47,13 @@ This file is the durable project handoff. Keep it current whenever project conve
 - `JTW-41`: Connect live weather stream mode to the instrument pipeline. Done; PR #36 merged. Duplicate Cursor PR #37 closed as superseded.
 - `JTW-42`: Add replay capture and provenance export for generated sessions. Done; PR #40 merged. Duplicate Cursor PR #39 closed as superseded.
 - `JTW-43`: Define stream source registry for additional realtime inputs. Done; PR #42 merged.
-- `JTW-44`: Update Cursor Cloud environment to install Playwright Chromium. Backlog.
+- `JTW-44`: Update Cursor Cloud environment to install Playwright Chromium. In Progress, delegated to Cursor.
 - `JTW-45`: Refresh durable docs after haptics merge and live-weather release. Done; PR #35 merged.
 - `JTW-46`: Refresh durable docs after live-weather merge and replay-capture release. Done; PR #38 merged.
 - `JTW-47`: Refresh durable docs after replay-capture merge and registry release. Done; PR #41 merged.
 - `JTW-48`: Enable Cursor Cloud Agent on-demand usage. Done.
-- `JTW-49`: Refresh durable docs after stream registry merge and Cursor env release. Current docs issue.
+- `JTW-49`: Refresh durable docs after stream registry merge and Cursor env release. Done; PR #43 merged.
+- `JTW-50`: Refresh durable docs after JTW-44 release. Current docs issue.
 
 ## Orchestration Rules
 
@@ -109,7 +110,7 @@ This file is the durable project handoff. Keep it current whenever project conve
 
 There is no longer a global pause on Cursor setup. Pick the next issue deliberately, assign/delegate it only when ready, and avoid starting multiple coding-heavy Cursor tasks unless that concurrency is intentional.
 
-No coding-heavy Cursor implementation is currently active. `JTW-43` merged through PR #42. The next ready backlog item is `JTW-44`, which is Cursor Cloud environment setup for Playwright Chromium rather than product runtime work.
+Current Cursor-delegated work is `JTW-44`, the Cursor Cloud environment setup issue for Playwright Chromium. This is environment setup rather than product runtime work. Watch for a fresh Cursor branch/PR, and do not release additional coding-heavy Cursor work until this is resolved, merged, or explicitly paused.
 
 ## Source Checks
 
@@ -161,6 +162,8 @@ No coding-heavy Cursor implementation is currently active. `JTW-43` merged throu
 - PR #40 (`JTW-42 add replay capture export`) merged on 2026-06-15 after CI passed and the documented latest-head Codex review fallback window elapsed with all known replay timing, live stream/frame pairing, output consistency, and fallback capture feedback addressed. `JTW-42` was marked Done.
 - JTW-43 was released to Cursor on 2026-06-15 after PR #40 merged. Scope was the stream-source registry/extensibility boundary: source metadata, capabilities, fixture/live/replay support, score compatibility, normalized-stream mapping documentation, tests for registry behavior, and minimal non-weather fixture proof only if useful.
 - PR #42 (`JTW-43 define stream source registry`) merged on 2026-06-15 after CI passed, the branch was clean, and the documented latest-head Codex review fallback window elapsed with no review appearing. `JTW-43` was marked Done.
+- PR #43 (`JTW-49 refresh durable docs after registry merge`) merged on 2026-06-15 after CI passed; docs-only review exception applied. `JTW-49` was marked Done.
+- JTW-44 was released to Cursor on 2026-06-15 after PR #43 merged. Scope is Cursor Cloud setup only: install Playwright Chromium under Node 24 so `npm run test:smoke` works without manual browser installation, preserve `engine-strict`, and document durable setup conventions.
 
 ## Cursor Cloud specific instructions
 
