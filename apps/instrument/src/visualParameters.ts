@@ -106,9 +106,7 @@ export function mapScoreOutputToVisualParameters(output: ScoreOutput): Instrumen
   };
 }
 
-export function serializeVisualParametersForCanvas(
-  parameters: InstrumentVisualParameters,
-): string {
+export function serializeVisualParametersForCanvas(parameters: InstrumentVisualParameters): string {
   return JSON.stringify({
     condition: parameters.condition,
     signature: parameters.signature,

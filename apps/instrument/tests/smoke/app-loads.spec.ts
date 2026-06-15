@@ -12,9 +12,15 @@ test('loads the instrument shell', async ({ page }) => {
   await expect(canvas).toBeVisible();
   await expect.poll(() => canvas.evaluate((element) => element.clientWidth > 0)).toBe(true);
   await expect.poll(() => canvas.evaluate((element) => element.clientHeight > 0)).toBe(true);
-  await expect.poll(() => canvas.evaluate((element) => element.dataset.scoreId)).toBe('weather-score');
-  await expect.poll(() => canvas.evaluate((element) => element.dataset.scoreSignature)).toBe('8f5c7a72');
-  await expect.poll(() => canvas.evaluate((element) => element.dataset.weatherCondition)).toBe('overcast');
+  await expect
+    .poll(() => canvas.evaluate((element) => element.dataset.scoreId))
+    .toBe('weather-score');
+  await expect
+    .poll(() => canvas.evaluate((element) => element.dataset.scoreSignature))
+    .toBe('8f5c7a72');
+  await expect
+    .poll(() => canvas.evaluate((element) => element.dataset.weatherCondition))
+    .toBe('overcast');
   await expect
     .poll(() =>
       canvas.evaluate((element) => {
