@@ -75,7 +75,7 @@ export function updateBrowserSensorPointer(
     ],
     pressure: round(clamp(event.pressure, 0, 1)),
     buttons: event.buttons,
-    active: event.buttons > 0 || event.pointerType === 'touch' || event.pointerType === 'pen',
+    active: event.buttons > 0,
   };
   const capabilities: BrowserSensorCapabilities = {
     ...current.snapshot.capabilities,

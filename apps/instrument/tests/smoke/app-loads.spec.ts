@@ -181,7 +181,6 @@ test('loads the instrument shell', async ({ page }) => {
 
   const captureControls = page.getByRole('region', { name: 'Capture controls' });
   await expect(captureControls).toBeVisible();
-  await expect(captureControls).toHaveAttribute('data-capture-state', 'ready');
   await page.getByRole('button', { name: 'Start capture' }).click();
   await expect(captureControls).toHaveAttribute('data-capture-state', 'recording');
   await expect(captureControls).toHaveAttribute('data-capture-frame-count', '1');

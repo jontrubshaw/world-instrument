@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -19,6 +20,7 @@ import {
   updateBrowserSensorMotion,
   updateBrowserSensorOrientation,
   updateBrowserSensorPointer,
+  type BrowserSensorRuntimeState,
 } from './browserSensor.ts';
 import { InstrumentStage } from './components/InstrumentStage.tsx';
 import { BrowserVibrationHapticEngine, type HapticPlaybackState } from './hapticEngine.ts';
@@ -113,7 +115,13 @@ export function App() {
   const sourceSequenceRef = useRef<number | undefined>(undefined);
   const captureLastFrameKeyRef = useRef<string | undefined>(undefined);
   const browserSensorRefreshRef = useRef<number | undefined>(undefined);
+  const browserSensorStateRef = useRef(browserSensorState);
   const browserSensorSnapshotRef = useRef(browserSensorState.snapshot);
+  const commitBrowserSensorState = useCallback((nextState: BrowserSensorRuntimeState) => {
+    browserSensorStateRef.current = nextState;
+    browserSensorSnapshotRef.current = nextState.snapshot;
+    setBrowserSensorState(nextState);
+  }, []);
   const selectedSource = sourceDefinition(selectedSourceId);
   const sourceReplayArchives = useMemo(
     () => archives.filter((archive) => archiveMatchesSource(archive, selectedSource.kind)),
@@ -289,8 +297,9 @@ export function App() {
   }, [instrumentMode, selectedSourceId, sourceRefreshToken]);
 
   useEffect(() => {
+    browserSensorStateRef.current = browserSensorState;
     browserSensorSnapshotRef.current = browserSensorState.snapshot;
-  }, [browserSensorState.snapshot]);
+  }, [browserSensorState]);
 
   useEffect(() => {
     if (instrumentMode !== 'live') {
@@ -343,15 +352,15 @@ export function App() {
     };
 
     const handlePointer = (event: PointerEvent) => {
-      setBrowserSensorState((currentState) => updateBrowserSensorPointer(currentState, event));
+      commitBrowserSensorState(updateBrowserSensorPointer(browserSensorStateRef.current, event));
       refreshSensorSource();
     };
     const handleMotion = (event: DeviceMotionEvent) => {
-      setBrowserSensorState((currentState) => updateBrowserSensorMotion(currentState, event));
+      commitBrowserSensorState(updateBrowserSensorMotion(browserSensorStateRef.current, event));
       refreshSensorSource();
     };
     const handleOrientation = (event: DeviceOrientationEvent) => {
-      setBrowserSensorState((currentState) => updateBrowserSensorOrientation(currentState, event));
+      commitBrowserSensorState(updateBrowserSensorOrientation(browserSensorStateRef.current, event));
       refreshSensorSource();
     };
 
@@ -373,7 +382,7 @@ export function App() {
         browserSensorRefreshRef.current = undefined;
       }
     };
-  }, [instrumentMode, selectedSourceId]);
+  }, [commitBrowserSensorState, instrumentMode, selectedSourceId]);
 
   useEffect(() => {
     audioEngineRef.current?.applyParameters(viewState.audioParameters);
@@ -510,7 +519,7 @@ export function App() {
   };
 
   const enableBrowserSensors = async () => {
-    setBrowserSensorState(await requestBrowserSensorPermission(browserSensorState));
+    commitBrowserSensorState(await requestBrowserSensorPermission(browserSensorStateRef.current));
     setSourceRefreshToken((currentToken) => currentToken + 1);
   };
 
