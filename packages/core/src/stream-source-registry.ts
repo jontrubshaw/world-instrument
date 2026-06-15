@@ -1,6 +1,6 @@
 import type { JsonObject } from './json.ts';
 import type { ScoreVersionMetadata } from './score.ts';
-import type { StreamSample, StreamStateSchemaVersion } from './stream.ts';
+import type { StreamSample } from './stream.ts';
 
 export const STREAM_SOURCE_REGISTRY_SCHEMA_VERSION = 'stream-source-registry.v1' as const;
 
@@ -31,7 +31,7 @@ export interface StreamSourceSampleDefinition {
 export interface StreamSourceNormalizedMapping {
   readonly streamKind: string;
   readonly streamIdPrefix: string;
-  readonly streamSchema: StreamStateSchemaVersion | string;
+  readonly streamSchema: string;
   readonly samples: readonly StreamSourceSampleDefinition[];
   readonly metadataKeys?: readonly string[];
   readonly description: string;

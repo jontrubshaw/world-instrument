@@ -73,21 +73,19 @@ export class MockSensorAdapter implements StreamAdapter<
     this.#config = config;
   }
 
-  async read(
-    request: StreamReadRequest = {},
-  ): Promise<StreamAdapterResult<RecordedMockSensorPayload>> {
+  read(request: StreamReadRequest = {}): Promise<StreamAdapterResult<RecordedMockSensorPayload>> {
     const sequence =
       this.#config.sequence ??
       (request.afterSequence === undefined ? 0 : request.afterSequence + 1);
 
-    return {
+    return Promise.resolve({
       raw: this.#config.fixture,
       state: normalizeMockSensorPayload(this.#config.fixture, {
         sequence,
         ...(this.#config.sourceId === undefined ? {} : { sourceId: this.#config.sourceId }),
         ...(this.#config.streamId === undefined ? {} : { streamId: this.#config.streamId }),
       }),
-    };
+    });
   }
 }
 
