@@ -8,7 +8,7 @@ This file is the durable project handoff. Keep it current whenever project conve
 - Linear project: https://linear.app/jtworks/project/world-instrument-1472eb8e5477
 - Linear team: Jtworks
 - Local checkout: `/Users/JonathanTrubshaw/Documents/weathart/world-instrument`
-- Active implementation branch: none. `JTW-43` merged via PR #42; `JTW-44` is the next ready backlog item.
+- Active implementation branch: `cursor/playwright-chromium-setup-6dfd` for `JTW-44`.
 - Cursor environment setup is complete.
 - Stale pre-setup Cursor draft PRs closed: PR #1 (`cursor/instrument-app-shell-1cf1`) and PR #3 (`cursor/core-contracts-7e26`).
 - Local Node environment: Homebrew `node@24` installed; current shell resolves `node` to `v24.16.0` and `npm` to `11.13.0`.
@@ -47,7 +47,7 @@ This file is the durable project handoff. Keep it current whenever project conve
 - `JTW-41`: Connect live weather stream mode to the instrument pipeline. Done; PR #36 merged. Duplicate Cursor PR #37 closed as superseded.
 - `JTW-42`: Add replay capture and provenance export for generated sessions. Done; PR #40 merged. Duplicate Cursor PR #39 closed as superseded.
 - `JTW-43`: Define stream source registry for additional realtime inputs. Done; PR #42 merged.
-- `JTW-44`: Update Cursor Cloud environment to install Playwright Chromium. Backlog.
+- `JTW-44`: Update Cursor Cloud environment to install Playwright Chromium. In Progress.
 - `JTW-45`: Refresh durable docs after haptics merge and live-weather release. Done; PR #35 merged.
 - `JTW-46`: Refresh durable docs after live-weather merge and replay-capture release. Done; PR #38 merged.
 - `JTW-47`: Refresh durable docs after replay-capture merge and registry release. Done; PR #41 merged.
@@ -109,7 +109,7 @@ This file is the durable project handoff. Keep it current whenever project conve
 
 There is no longer a global pause on Cursor setup. Pick the next issue deliberately, assign/delegate it only when ready, and avoid starting multiple coding-heavy Cursor tasks unless that concurrency is intentional.
 
-No coding-heavy Cursor implementation is currently active. `JTW-43` merged through PR #42. The next ready backlog item is `JTW-44`, which is Cursor Cloud environment setup for Playwright Chromium rather than product runtime work.
+`JTW-44` is active on branch `cursor/playwright-chromium-setup-6dfd`. Scope is Cursor Cloud environment setup for Playwright Chromium rather than product runtime work.
 
 ## Source Checks
 
@@ -164,7 +164,8 @@ No coding-heavy Cursor implementation is currently active. `JTW-43` merged throu
 
 ## Cursor Cloud specific instructions
 
-- Node 24 is required (`.npmrc` sets `engine-strict=true`, so npm refuses to run under the wrong major). It is installed via `nvm` and the startup update script already runs `npm install` under Node 24.
+- Node 24 is required (`.npmrc` sets `engine-strict=true`, so npm refuses to run under the wrong major). It is installed via `nvm`; the repo-level Cursor Cloud install command runs `.cursor/install.sh`, which selects Node 24 before running `npm install`.
+- Repo-level Cursor Cloud setup lives in `.cursor/environment.json`. Keep Playwright browser setup in `.cursor/install.sh` after `npm install` so `npx playwright install --with-deps chromium` uses the workspace's pinned Playwright package under Node 24.
 - Gotcha: the non-interactive shell used by the agent resolves `node` to a baseline `v22` from `/exec-daemon` that shadows nvm, so commands fail engine-strict checks. A login shell that sources `~/.bashrc` (nvm) already defaults to Node 24. For non-login shells, select Node 24 first, e.g. run `export PATH="$HOME/.nvm/versions/node/v24.16.0/bin:$PATH"` (or `. "$HOME/.nvm/nvm.sh" && nvm use 24`) at the start of a session before any `npm`/`npx` command. Verify with `node --version` showing `v24.x`.
 - The instrument app shell runs via Vite in `apps/instrument` with `npm run dev -w @world-instrument/instrument`.
 - `npm run check` runs typecheck + lint + format:check + Vitest. Browser smoke coverage runs separately with `npm run test:smoke`, which starts the Vite app through Playwright.
