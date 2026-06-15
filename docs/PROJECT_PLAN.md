@@ -84,10 +84,10 @@ The project should be built as a high-quality creative system, not an MVP. Deter
 
 ## Current Sequence
 
-1. Finish `JTW-64`, the durable docs refresh after the `JTW-59` merge.
-2. Keep coding-heavy issues in Backlog until one is deliberately selected and the duplicate-session pre-flight check confirms there is no active Cursor session, open PR, or branch for the target issue.
-3. Treat `JTW-55` as the human-owned realtime pipeline hygiene review before or alongside the next implementation slice.
-4. Use `JTW-61` to decide the next external world stream before adding another source domain.
-5. Keep `JTW-60` as the next replay archive import implementation candidate unless the human-owned hygiene review or next-stream decision changes priority.
+1. Monitor `JTW-60`, the active Cursor-delegated implementation issue for imported replay archives.
+2. Do not release another coding-heavy Cursor issue until `JTW-60` lands, is explicitly paused, or is confirmed blocked.
+3. Review the `JTW-60` PR when it appears, wait for automatic Codex review unless a documented exception applies, and merge only after checks and actionable feedback are handled.
+4. Treat `JTW-55` as the human-owned realtime pipeline hygiene review before or alongside the next implementation slice.
+5. Use `JTW-61` to decide the next external world stream before adding another source domain.
 6. Continue creating Linear issues for new problems, follow-on implementation work, refactor reviews, and human decisions as they arise.
 7. If the explicit backlog runs out again, evaluate the built app against the product vision and create new scoped Linear issues for the next concrete gaps rather than pausing the project.
