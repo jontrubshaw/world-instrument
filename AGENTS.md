@@ -47,12 +47,13 @@ This file is the durable project handoff. Keep it current whenever project conve
 - `JTW-41`: Connect live weather stream mode to the instrument pipeline. Done; PR #36 merged. Duplicate Cursor PR #37 closed as superseded.
 - `JTW-42`: Add replay capture and provenance export for generated sessions. Done; PR #40 merged. Duplicate Cursor PR #39 closed as superseded.
 - `JTW-43`: Define stream source registry for additional realtime inputs. Done; PR #42 merged.
-- `JTW-44`: Update Cursor Cloud environment to install Playwright Chromium. In Progress.
+- `JTW-44`: Update Cursor Cloud environment to install Playwright Chromium. In Progress on branch `cursor/playwright-chromium-setup-6dfd`.
 - `JTW-45`: Refresh durable docs after haptics merge and live-weather release. Done; PR #35 merged.
 - `JTW-46`: Refresh durable docs after live-weather merge and replay-capture release. Done; PR #38 merged.
 - `JTW-47`: Refresh durable docs after replay-capture merge and registry release. Done; PR #41 merged.
 - `JTW-48`: Enable Cursor Cloud Agent on-demand usage. Done.
-- `JTW-49`: Refresh durable docs after stream registry merge and Cursor env release. Current docs issue.
+- `JTW-49`: Refresh durable docs after stream registry merge and Cursor env release. Done; PR #43 merged.
+- `JTW-50`: Refresh durable docs after JTW-44 release. Current docs issue.
 
 ## Orchestration Rules
 
@@ -161,10 +162,12 @@ There is no longer a global pause on Cursor setup. Pick the next issue deliberat
 - PR #40 (`JTW-42 add replay capture export`) merged on 2026-06-15 after CI passed and the documented latest-head Codex review fallback window elapsed with all known replay timing, live stream/frame pairing, output consistency, and fallback capture feedback addressed. `JTW-42` was marked Done.
 - JTW-43 was released to Cursor on 2026-06-15 after PR #40 merged. Scope was the stream-source registry/extensibility boundary: source metadata, capabilities, fixture/live/replay support, score compatibility, normalized-stream mapping documentation, tests for registry behavior, and minimal non-weather fixture proof only if useful.
 - PR #42 (`JTW-43 define stream source registry`) merged on 2026-06-15 after CI passed, the branch was clean, and the documented latest-head Codex review fallback window elapsed with no review appearing. `JTW-43` was marked Done.
+- PR #43 (`JTW-49 refresh durable docs after registry merge`) merged on 2026-06-15 after CI passed; docs-only review exception applied. `JTW-49` was marked Done.
+- JTW-44 was released to Cursor on 2026-06-15 after PR #43 merged. Scope is Cursor Cloud setup only: install Playwright Chromium under Node 24 so `npm run test:smoke` works without manual browser installation, preserve `engine-strict`, and document durable setup conventions.
 
 ## Cursor Cloud specific instructions
 
-- Node 24 is required (`.npmrc` sets `engine-strict=true`, so npm refuses to run under the wrong major). It is installed via `nvm`; the repo-level Cursor Cloud install command runs `.cursor/install.sh`, which selects Node 24 before running `npm install`.
+- Node 24 is required (`.npmrc` sets `engine-strict=true`, so npm refuses to run under the wrong major). It is installed via `nvm`; the repo-level Cursor Cloud install command runs `.cursor/install.sh`, which installs/uses Node 24 before running `npm install`.
 - Repo-level Cursor Cloud setup lives in `.cursor/environment.json`. Keep Playwright browser setup in `.cursor/install.sh` after `npm install` so `npx playwright install --with-deps chromium` uses the workspace's pinned Playwright package under Node 24. After `nvm use 24`, explicitly prepend `$NVM_BIN` because `/exec-daemon` can otherwise remain ahead of nvm on `PATH`.
 - Gotcha: the non-interactive shell used by the agent resolves `node` to a baseline `v22` from `/exec-daemon` that shadows nvm, so commands fail engine-strict checks. A login shell that sources `~/.bashrc` (nvm) already defaults to Node 24. For non-login shells, select Node 24 first, e.g. run `export PATH="$HOME/.nvm/versions/node/v24.16.0/bin:$PATH"` (or `. "$HOME/.nvm/nvm.sh" && nvm use 24`) at the start of a session before any `npm`/`npx` command. Verify with `node --version` showing `v24.x`.
 - The instrument app shell runs via Vite in `apps/instrument` with `npm run dev -w @world-instrument/instrument`.
