@@ -58,7 +58,9 @@ test('loads the instrument shell', async ({ page }) => {
   await expect(streamControls).toBeVisible();
   await expect(streamControls).toHaveAttribute('data-instrument-mode', 'live');
   await expect(streamControls).toHaveAttribute('data-live-state', 'ready');
-  await expect(page.getByRole('status')).toHaveText('Live weather is driving the instrument.');
+  await expect(streamControls.getByRole('status')).toHaveText(
+    'Live weather is driving the instrument.',
+  );
   await expect
     .poll(() => canvas.evaluate((element) => element.dataset.scoreId))
     .toBe('weather-score');
