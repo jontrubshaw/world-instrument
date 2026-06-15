@@ -1,5 +1,7 @@
 import type { InstrumentAudioParameters } from './audioParameters.ts';
 
+const TEXTURE_FILTER_DEPTH_HZ = 2_400;
+
 interface AudioContextConstructor {
   new (): AudioContext;
 }
@@ -71,7 +73,11 @@ export class InstrumentAudioEngine {
     this.texture?.frequency.setTargetAtTime(parameters.modulationFrequencyHz, now, 0.025);
     this.filter?.frequency.setTargetAtTime(parameters.filterFrequencyHz, now, 0.04);
     this.carrierGain?.gain.setTargetAtTime(parameters.gain, now, 0.04);
-    this.textureGain?.gain.setTargetAtTime(parameters.textureGain, now, 0.04);
+    this.textureGain?.gain.setTargetAtTime(
+      parameters.textureGain * TEXTURE_FILTER_DEPTH_HZ,
+      now,
+      0.04,
+    );
     this.masterGain?.gain.setTargetAtTime(this.muted ? 0 : 1, now, 0.015);
   }
 
@@ -127,7 +133,7 @@ export class InstrumentAudioEngine {
     masterGain.gain.value = this.muted ? 0 : 1;
 
     carrier.connect(carrierGain).connect(filter);
-    texture.connect(textureGain).connect(filter);
+    texture.connect(textureGain).connect(filter.frequency);
     filter.connect(masterGain).connect(context.destination);
 
     carrier.start();
