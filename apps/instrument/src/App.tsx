@@ -4,6 +4,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type ChangeEvent,
   type CSSProperties,
   type Dispatch,
   type SetStateAction,
@@ -43,8 +44,10 @@ import {
 } from './replayCapture.ts';
 import {
   REPLAY_PLAYBACK_INTERVAL_MS,
+  createImportedReplayArchive,
   evaluateReplayFrame,
   loadReplayArchives,
+  replayArchiveSourceKinds,
   type ReplayArchive,
   type ReplayInstrumentFrameState,
 } from './replayArchive.ts';
@@ -76,6 +79,20 @@ type HapticControlState = 'checking' | 'unsupported' | 'disabled' | 'enabled' | 
 
 type InstrumentMode = 'fixture' | 'live' | 'replay';
 type ProvenanceDisplayMode = InstrumentMode | 'replay-fallback';
+type ReplayImportState =
+  | {
+      readonly status: 'idle';
+      readonly message: string;
+    }
+  | {
+      readonly status: 'ready';
+      readonly message: string;
+      readonly archiveId: string;
+    }
+  | {
+      readonly status: 'error';
+      readonly message: string;
+    };
 type SourceUiState =
   | SourceReadState
   | {
@@ -92,7 +109,7 @@ type SourceUiState =
 const PROVENANCE_CLOCK_INTERVAL_MS = 15_000;
 
 export function App() {
-  const [archives] = useState(() => loadReplayArchives());
+  const [archives, setArchives] = useState(() => loadReplayArchives());
   const [selectedSourceId, setSelectedSourceId] = useState(DEFAULT_INSTRUMENT_SOURCE_ID);
   const [instrumentMode, setInstrumentMode] = useState<InstrumentMode>(
     DEFAULT_INSTRUMENT_SOURCE_MODE,
@@ -118,6 +135,10 @@ export function App() {
   const [hapticsEnabled, setHapticsEnabled] = useState(false);
   const [captureSession, setCaptureSession] = useState<ReplayCaptureSession | undefined>(undefined);
   const [captureExportFilename, setCaptureExportFilename] = useState('');
+  const [replayImportState, setReplayImportState] = useState<ReplayImportState>({
+    status: 'idle',
+    message: 'Import an exported replay JSON to add it to this session.',
+  });
   const audioEngineRef = useRef<InstrumentAudioEngine | undefined>(undefined);
   const hapticEngineRef = useRef<BrowserVibrationHapticEngine | undefined>(undefined);
   const hapticActivationPatternKeyRef = useRef<string | undefined>(undefined);
@@ -650,6 +671,49 @@ export function App() {
     setInstrumentMode('replay');
   };
 
+  const importReplayArchive = async (event: ChangeEvent<HTMLInputElement>) => {
+    const input = event.currentTarget;
+    const file = input.files?.[0];
+
+    if (file === undefined) {
+      return;
+    }
+
+    try {
+      const importedArchive = createImportedReplayArchive(await parseReplayImportFile(file), {
+        existingArchives: archives,
+        fileName: file.name,
+        importedAt: new Date().toISOString(),
+      });
+      const importSource = sourceDefinitionForArchive(importedArchive);
+
+      if (importSource === undefined) {
+        throw new Error(
+          `Replay source kind ${replayArchiveSourceKinds(importedArchive).join(', ') || 'unknown'} is not registered for replay in this instrument.`,
+        );
+      }
+
+      setArchives((currentArchives) => [...currentArchives, importedArchive]);
+      setSelectedSourceId(importSource.id);
+      setArchiveId(importedArchive.id);
+      setFramePosition(0);
+      setIsPlaying(false);
+      setInstrumentMode('replay');
+      setReplayImportState({
+        status: 'ready',
+        archiveId: importedArchive.id,
+        message: `Imported ${importedArchive.label} from ${file.name}.`,
+      });
+    } catch (error) {
+      setReplayImportState({
+        status: 'error',
+        message: `Replay import failed: ${errorMessage(error)}`,
+      });
+    } finally {
+      input.value = '';
+    }
+  };
+
   const refreshSource = () => {
     if (instrumentMode === 'replay') {
       return;
@@ -972,6 +1036,32 @@ export function App() {
                 ))}
               </select>
             </label>
+
+            <div
+              className="replay-import-control"
+              data-replay-import-state={replayImportState.status}
+              data-replay-import-archive-id={
+                replayImportState.status === 'ready' ? replayImportState.archiveId : ''
+              }
+            >
+              <label className="replay-import-picker">
+                <span>Import replay JSON</span>
+                <input
+                  type="file"
+                  accept="application/json,.json,.replay.json"
+                  onChange={(event) => {
+                    void importReplayArchive(event);
+                  }}
+                />
+              </label>
+              <p
+                className="replay-import-status"
+                role={replayImportState.status === 'error' ? 'alert' : 'status'}
+                aria-live="polite"
+              >
+                {replayImportState.message}
+              </p>
+            </div>
 
             <div className="transport-controls">
               <button
@@ -1441,6 +1531,28 @@ function downloadReplayJson(contents: string, filename: string): void {
   window.setTimeout(() => {
     URL.revokeObjectURL(url);
   }, 0);
+}
+
+async function parseReplayImportFile(file: File): Promise<unknown> {
+  const contents = await file.text();
+
+  try {
+    return JSON.parse(contents) as unknown;
+  } catch {
+    throw new Error('Replay file must be valid JSON.');
+  }
+}
+
+function sourceDefinitionForArchive(archive: ReplayArchive) {
+  const archiveSourceKinds = new Set(replayArchiveSourceKinds(archive));
+
+  return instrumentSourceDefinitions.find(
+    (definition) => archiveSourceKinds.has(definition.kind) && sourceSupportsMode(definition.id, 'replay'),
+  );
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : 'Unknown import error.';
 }
 
 function markSourceLoading(

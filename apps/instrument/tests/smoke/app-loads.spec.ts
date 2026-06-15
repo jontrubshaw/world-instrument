@@ -465,6 +465,24 @@ test('loads the instrument shell', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Pause', exact: true })).toBeVisible();
   await expect.poll(() => canvas.evaluate((element) => element.dataset.scoreFrameIndex)).toBe('0');
   await page.getByRole('button', { name: 'Pause', exact: true }).click();
+
+  const replayControls = page.getByRole('region', { name: 'Replay controls' });
+  await page.getByLabel('Import replay JSON').setInputFiles(downloadPath);
+  await expect(replayControls).toHaveAttribute('data-replay-import-state', 'ready');
+  await expect(replayControls.locator('.replay-import-status')).toContainText(
+    'Imported Imported: London, UK weather live session',
+  );
+  await expect(page.getByLabel('Archive')).toHaveValue(/^imported-captured-live-weather-/);
+  await expect(streamControls).toHaveAttribute('data-instrument-mode', 'replay');
+  await expect(streamControls).toHaveAttribute('data-provenance-mode', 'replay');
+  await expect(streamControls).toHaveAttribute('data-provenance-status', 'ready');
+  await expect(provenance.locator('.provenance-summary')).toContainText(
+    'Replay archive is driving output from London, UK weather.',
+  );
+  await expect.poll(() => canvas.evaluate((element) => element.dataset.scoreFrameIndex)).toBe('0');
+  await expect
+    .poll(() => canvas.evaluate((element) => element.dataset.scoreId))
+    .toBe('weather-score');
 });
 
 test('captures the visible replay fallback when live weather fails before first frame', async ({
@@ -535,6 +553,54 @@ test('captures the visible replay fallback when live weather fails before first 
       ],
     },
   });
+});
+
+test('rejects invalid replay imports without breaking live mode', async ({ page }) => {
+  await page.route('https://api.open-meteo.com/v1/forecast**', async (route) => {
+    const observedAt = new Date().toISOString();
+
+    await route.fulfill({
+      json: {
+        latitude: 51.5,
+        longitude: -0.12,
+        timezone: 'GMT',
+        current: {
+          time: observedAt,
+          temperature_2m: 18.4,
+          apparent_temperature: 17.9,
+          relative_humidity_2m: 72,
+          precipitation: 0.1,
+          rain: 0,
+          weather_code: 3,
+          cloud_cover: 86,
+          surface_pressure: 1012.4,
+          wind_speed_10m: 6.8,
+          wind_direction_10m: 248,
+        },
+      },
+    });
+  });
+
+  await page.goto('/');
+
+  const streamControls = page.getByRole('region', { name: 'Stream controls' });
+  const replayControls = page.getByRole('region', { name: 'Replay controls' });
+  await expect(streamControls).toHaveAttribute('data-instrument-mode', 'live');
+  await expect(streamControls).toHaveAttribute('data-live-state', 'ready');
+
+  await page.getByLabel('Import replay JSON').setInputFiles({
+    name: 'invalid.replay.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from('{"schemaVersion":"not-a-replay-snapshot"}'),
+  });
+
+  await expect(replayControls).toHaveAttribute('data-replay-import-state', 'error');
+  await expect(replayControls.locator('.replay-import-status')).toContainText(
+    'Replay import failed: Invalid replay snapshot:',
+  );
+  await expect(streamControls).toHaveAttribute('data-instrument-mode', 'live');
+  await expect(streamControls).toHaveAttribute('data-live-state', 'ready');
+  await expect(page.getByTestId('instrument-canvas')).toBeVisible();
 });
 
 test('marks stale and offline provenance without raw feed details', async ({ page }) => {

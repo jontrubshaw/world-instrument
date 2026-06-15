@@ -160,6 +160,7 @@ h1 {
 
 .source-picker,
 .archive-picker,
+.replay-import-picker,
 .time-scrubber,
 .audio-controls,
 .capture-controls,
@@ -285,6 +286,45 @@ h1 {
   padding: 0 0.9rem;
 }
 
+.replay-import-control {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.replay-import-picker input {
+  width: 100%;
+  color: rgba(248, 251, 255, 0.72);
+  font-size: 0.72rem;
+}
+
+.replay-import-picker input::file-selector-button {
+  min-height: 2.2rem;
+  margin-right: 0.7rem;
+  padding: 0 0.85rem;
+  color: #f8fbff;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  background: rgba(110, 231, 249, 0.12);
+}
+
+.replay-import-status {
+  margin: 0;
+  color: rgba(248, 251, 255, 0.72);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.45;
+}
+
+.replay-import-control[data-replay-import-state='error'] .replay-import-status {
+  color: #fecdd3;
+}
+
 .transport-controls {
   display: flex;
   flex-wrap: wrap;
@@ -335,6 +375,7 @@ h1 {
 .mode-switch button:focus-visible,
 .source-picker select:focus-visible,
 .archive-picker select:focus-visible,
+.replay-import-picker input:focus-visible,
 .capture-controls button:focus-visible,
 .time-scrubber input:focus-visible {
   outline: 2px solid #8eeaff;

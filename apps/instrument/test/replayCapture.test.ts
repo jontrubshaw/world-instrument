@@ -114,6 +114,7 @@ describe('instrument replay capture', () => {
       id: 'captured-replay-round-trip',
       label: 'Captured replay round trip',
       snapshot,
+      origin: 'imported',
     };
 
     expect(createReplayScoreSequence(capturedArchive)).toEqual(
@@ -172,6 +173,7 @@ describe('instrument replay capture', () => {
       id: 'captured-fixture-sensor-score',
       label: 'Captured sensor score fixture',
       snapshot,
+      origin: 'imported',
     };
 
     expect(parseReplaySnapshot(snapshot)).toMatchObject({
@@ -426,6 +428,7 @@ describe('instrument replay capture', () => {
       id: 'captured-live-rescore-regression',
       label: 'Captured live rescore regression',
       snapshot,
+      origin: 'imported',
     };
 
     expect(preparedFrame.output.generatedAt).toBe(preparedFrame.capturedAt);
