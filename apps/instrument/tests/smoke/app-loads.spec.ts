@@ -36,8 +36,8 @@ test('loads the instrument shell', async ({ page }) => {
       signature: '8f5c7a72',
       bodyColor: '#7fb7ff',
       accentColor: '#d8b4fe',
-      rotationSpeedY: 0.256,
-      pulseAmplitude: 0.054,
+      rotationSpeedY: 0.388,
+      pulseAmplitude: 0.083,
       wireOpacity: 0.372,
       glowOpacity: 0.24,
     });
