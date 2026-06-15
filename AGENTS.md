@@ -8,7 +8,7 @@ This file is the durable project handoff. Keep it current whenever project conve
 - Linear project: https://linear.app/jtworks/project/world-instrument-1472eb8e5477
 - Linear team: Jtworks
 - Local checkout: `/Users/JonathanTrubshaw/Documents/weathart/world-instrument`
-- Active implementation issue: `JTW-53` is delegated to Cursor; watch for a fresh Cursor branch/PR.
+- Active implementation issue: `JTW-52` is delegated to Cursor; watch for a fresh Cursor branch/PR.
 - Cursor environment setup is complete.
 - Stale pre-setup Cursor draft PRs closed: PR #1 (`cursor/instrument-app-shell-1cf1`) and PR #3 (`cursor/core-contracts-7e26`).
 - Local Node environment: Homebrew `node@24` installed; current shell resolves `node` to `v24.16.0` and `npm` to `11.13.0`.
@@ -54,12 +54,13 @@ This file is the durable project handoff. Keep it current whenever project conve
 - `JTW-48`: Enable Cursor Cloud Agent on-demand usage. Done.
 - `JTW-49`: Refresh durable docs after stream registry merge and Cursor env release. Done; PR #43 merged.
 - `JTW-50`: Refresh durable docs after JTW-44 release. Done; PR #44 merged.
-- `JTW-51`: Refresh durable docs after JTW-44 merge and next-gap planning. Current docs issue.
-- `JTW-52`: Add browser sensor stream source and route it through the instrument. Backlog; blocked by `JTW-53`.
-- `JTW-53`: Expose source registry selection in the instrument app. In Progress, delegated to Cursor.
-- `JTW-54`: Make live-data provenance legible in the instrument UI. Backlog; blocked by `JTW-53`.
+- `JTW-51`: Refresh durable docs after JTW-44 merge and next-gap planning. Done; PR #48 merged.
+- `JTW-52`: Add browser sensor stream source and route it through the instrument. In Progress, delegated to Cursor.
+- `JTW-53`: Expose source registry selection in the instrument app. Done; PR #49 merged.
+- `JTW-54`: Make live-data provenance legible in the instrument UI. Backlog; blocked by `JTW-52`.
 - `JTW-55`: Run realtime pipeline refactor and hygiene review. Backlog; human-owned hygiene review.
-- `JTW-57`: Harden Cursor duplicate-session release gate. Current docs issue.
+- `JTW-57`: Harden Cursor duplicate-session release gate. Done; PR #50 merged.
+- `JTW-58`: Refresh durable docs after JTW-53 merge and JTW-52 release. Current docs issue.
 
 ## Orchestration Rules
 
@@ -122,12 +123,11 @@ This file is the durable project handoff. Keep it current whenever project conve
 
 There is no longer a global pause on Cursor setup. Pick the next issue deliberately, assign/delegate it only when ready, and avoid starting multiple coding-heavy Cursor tasks unless that concurrency is intentional.
 
-`JTW-53` is the active Cursor-delegated implementation issue. Scope is registry-backed source selection in the instrument app. Do not start `JTW-52` browser sensor source work until the selector/routing boundary from `JTW-53` lands or is explicitly paused.
+`JTW-52` is the active Cursor-delegated implementation issue. Scope is the browser sensor/interaction stream source using the registry-backed source-selection boundary that landed in `JTW-53`. Do not start another coding-heavy Cursor issue until `JTW-52` lands, is explicitly paused, or is confirmed blocked with a documented decision.
 
 Current gap-driven backlog:
 
-- `JTW-52`: browser sensor/interaction stream source, blocked by `JTW-53`.
-- `JTW-54`: live/fixture/replay provenance legibility, blocked by `JTW-53`.
+- `JTW-54`: live/fixture/replay provenance legibility, blocked by `JTW-52`.
 - `JTW-55`: realtime pipeline refactor and hygiene review, human-owned.
 
 ## Source Checks
@@ -187,6 +187,8 @@ Current gap-driven backlog:
 - The explicit backlog was empty after JTW-44, so on 2026-06-15 the monitor evaluated the app against the World Instrument intent and created `JTW-52` through `JTW-55`: browser sensor stream source, registry-backed source selection, provenance legibility, and realtime pipeline hygiene review.
 - JTW-53 was released to Cursor on 2026-06-15 before JTW-52 because registry-backed source selection should land before adding another live source path. Scope is source selector/routing only; do not start browser sensor source implementation as part of JTW-53.
 - JTW-57 hardened the Cursor release gate on 2026-06-15 after duplicate session patterns: before launching or re-pinging Cursor, check Linear comments/attachments and open PRs for an existing Cursor session on the same issue. Stopped or unavailable sessions require restart/reassignment or documented supersession, not an independent duplicate.
+- PR #49 (`JTW-53 expose source registry selection in app`) merged on 2026-06-15 after CI passed, the branch was clean, and no latest-head Codex review appeared after the 15-minute fallback window for follow-up commit `14e4548`. `JTW-53` was marked Done.
+- JTW-52 was released to Cursor on 2026-06-15 after a duplicate-session pre-flight check found no existing Cursor comments/sessions, no PR attachments, no open PRs, and clean local `main`. Scope is the browser sensor/interaction stream source using the registry-backed source-selection boundary from `JTW-53`.
 
 ## Cursor Cloud specific instructions
 
