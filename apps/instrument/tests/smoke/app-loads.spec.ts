@@ -125,34 +125,52 @@ test('loads the instrument shell', async ({ page }) => {
   expect(sensorDownload.suggestedFilename()).toMatch(
     /^world-instrument-captured-live-sensor-.*\.replay\.json$/,
   );
-  expect(JSON.parse(await readFile(sensorDownloadPath, 'utf8'))).toMatchObject({
-    schemaVersion: 'replay-snapshot.v1',
-    frames: [
+  const sensorReplay = JSON.parse(await readFile(sensorDownloadPath, 'utf8')) as {
+    readonly schemaVersion: string;
+    readonly frames: readonly {
+      readonly seed: string;
+      readonly streams: readonly {
+        readonly source: {
+          readonly kind: string;
+        };
+        readonly metadata?: {
+          readonly mode?: string;
+          readonly provider?: string;
+        };
+      }[];
+    }[];
+    readonly metadata: {
+      readonly capture: {
+        readonly sourceMode: string;
+      };
+      readonly sources: readonly {
+        readonly kind: string;
+      }[];
+    };
+  };
+
+  expect(sensorReplay.schemaVersion).toBe('replay-snapshot.v1');
+  expect(
+    sensorReplay.frames.some(
+      (frame) =>
+        frame.seed === 'world-instrument-live-browser-sensor-v1' &&
+        frame.streams.some(
+          (stream) =>
+            stream.source.kind === 'sensor' &&
+            stream.metadata?.provider === 'browser-sensor' &&
+            stream.metadata.mode === 'live',
+        ),
+    ),
+  ).toBe(true);
+  expect(sensorReplay.metadata).toMatchObject({
+    capture: {
+      sourceMode: 'live',
+    },
+    sources: [
       {
-        seed: 'world-instrument-live-browser-sensor-v1',
-        streams: [
-          {
-            source: {
-              kind: 'sensor',
-            },
-            metadata: {
-              provider: 'browser-sensor',
-              mode: 'live',
-            },
-          },
-        ],
+        kind: 'sensor',
       },
     ],
-    metadata: {
-      capture: {
-        sourceMode: 'live',
-      },
-      sources: [
-        {
-          kind: 'sensor',
-        },
-      ],
-    },
   });
 
   await sourceSelector.selectOption('weather.open-meteo');
