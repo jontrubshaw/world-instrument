@@ -31,29 +31,26 @@ export function App() {
   } as CSSProperties;
 
   useEffect(() => {
-    if (currentFrameIndex !== frameIndex) {
-      setFrameIndex(currentFrameIndex);
-    }
-  }, [currentFrameIndex, frameIndex]);
-
-  useEffect(() => {
     if (!isPlaying) {
       return;
     }
 
-    if (isLastFrame) {
-      setIsPlaying(false);
-      return;
-    }
-
     const timeoutId = window.setTimeout(() => {
-      setFrameIndex((current) => nextReplayFrameIndex(replaySnapshot, current));
+      setFrameIndex((current) => {
+        const nextFrameIndex = nextReplayFrameIndex(replaySnapshot, current);
+
+        if (nextFrameIndex >= replaySnapshot.frames.length - 1) {
+          setIsPlaying(false);
+        }
+
+        return nextFrameIndex;
+      });
     }, replayPlaybackDelayMs(replaySnapshot, currentFrameIndex));
 
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [currentFrameIndex, isLastFrame, isPlaying, replaySnapshot]);
+  }, [currentFrameIndex, isPlaying, replaySnapshot]);
 
   const handleArchiveChange = (event: ChangeEvent<HTMLSelectElement>) => {
     setSelectedArchiveId(event.currentTarget.value);

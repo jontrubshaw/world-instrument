@@ -37,7 +37,7 @@ export interface WeatherInstrumentState {
   readonly scoreSignature: string;
 }
 
-const openMeteoLondonReplay = parseReplaySnapshot(openMeteoLondonScoreV1Replay as unknown);
+const openMeteoLondonReplay = parseReplaySnapshot(openMeteoLondonScoreV1Replay);
 
 export const WEATHER_REPLAY_ARCHIVE = [
   {
