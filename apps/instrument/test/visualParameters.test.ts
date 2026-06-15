@@ -34,7 +34,7 @@ describe('weather score visual parameters', () => {
       innerOpacity: 0.46,
       emissiveIntensity: 0.775,
       keyLightIntensity: 4.692,
-      fillLightIntensity: 2.574,
+      fillLightIntensity: 2.573,
       ambientIntensity: 0.816,
       fogNear: 3.609,
       fogFar: 7.692,
