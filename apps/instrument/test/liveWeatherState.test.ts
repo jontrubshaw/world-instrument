@@ -10,6 +10,12 @@ describe('live weather UI state', () => {
       now: new Date('2026-06-14T21:05:00.000Z'),
       online: true,
     });
+    const previousSequence = readyState.frame?.streamSequence;
+
+    if (previousSequence === undefined) {
+      throw new Error('Expected ready live weather state to produce a frame.');
+    }
+
     const errorState = await readLiveWeatherFrame({
       fetchWeather: () =>
         Promise.resolve({
@@ -19,7 +25,7 @@ describe('live weather UI state', () => {
         }),
       now: new Date('2026-06-14T21:15:00.000Z'),
       online: true,
-      previousSequence: readyState.frame?.streamSequence,
+      previousSequence,
     });
     const mergedState = mergeLiveWeatherUiState(asUiState(readyState), errorState);
 
