@@ -143,11 +143,10 @@ export function updateBrowserSensorMotion(
       ? { intervalMs: round(event.interval) }
       : {}),
   };
-  const capabilities = permissionedCapabilities(current.snapshot.capabilities, {
-    deviceMotion: hasMotionPayload(motion)
-      ? 'available'
-      : current.snapshot.capabilities.deviceMotion,
-  });
+  const capabilities = permissionedCapabilities(
+    current.snapshot.capabilities,
+    hasMotionPayload(motion) ? { deviceMotion: 'available' } : {},
+  );
 
   return {
     ...current,
@@ -180,12 +179,10 @@ export function updateBrowserSensorOrientation(
     ...(angles === undefined ? {} : { angles }),
     absolute: event.absolute,
   };
-  const capabilities = permissionedCapabilities(current.snapshot.capabilities, {
-    deviceOrientation:
-      orientation.angles === undefined
-        ? current.snapshot.capabilities.deviceOrientation
-        : 'available',
-  });
+  const capabilities = permissionedCapabilities(
+    current.snapshot.capabilities,
+    orientation.angles === undefined ? {} : { deviceOrientation: 'available' },
+  );
 
   return {
     ...current,
