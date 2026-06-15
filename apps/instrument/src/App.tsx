@@ -363,19 +363,27 @@ export function App() {
             </button>
           </div>
 
-          <p className="live-status" role="status" aria-live="polite">
-            {liveWeatherStatusText(liveWeatherState, liveFallbackActive)}
-          </p>
+          {instrumentMode === 'live' ? (
+            <>
+              <p className="live-status mode-status" role="status" aria-live="polite">
+                {liveWeatherStatusText(liveWeatherState, liveFallbackActive)}
+              </p>
 
-          <div className="transport-controls">
-            <button
-              type="button"
-              onClick={refreshLiveWeather}
-              disabled={liveWeatherState.status === 'loading'}
-            >
-              {liveWeatherState.status === 'loading' ? 'Refreshing live' : 'Refresh live'}
-            </button>
-          </div>
+              <div className="transport-controls">
+                <button
+                  type="button"
+                  onClick={refreshLiveWeather}
+                  disabled={liveWeatherState.status === 'loading'}
+                >
+                  {liveWeatherState.status === 'loading' ? 'Refreshing live' : 'Refresh live'}
+                </button>
+              </div>
+            </>
+          ) : (
+            <p className="mode-status" role="status" aria-live="polite">
+              Replay archive is driving the instrument.
+            </p>
+          )}
 
           <section className="replay-controls" aria-label="Replay controls">
             <label className="archive-picker">
