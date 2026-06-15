@@ -8,6 +8,8 @@ import {
   type SetStateAction,
 } from 'react';
 
+import type { NormalizedStreamState } from '@world-instrument/core';
+
 import { InstrumentAudioEngine } from './audioEngine.ts';
 import { serializeAudioParametersForDom } from './audioParameters.ts';
 import { InstrumentStage } from './components/InstrumentStage.tsx';
@@ -19,6 +21,15 @@ import {
   type LiveWeatherInstrumentFrameState,
   type LiveWeatherReadStatus,
 } from './liveWeather.ts';
+import {
+  appendCapturedFrame,
+  createCapturedLiveFrame,
+  createCapturedReplayFrame,
+  createReplaySnapshotFromCapturedFrames,
+  replaySnapshotDownloadFilename,
+  serializeReplaySnapshot,
+  type CapturedInstrumentFrame,
+} from './replayCapture.ts';
 import {
   REPLAY_PLAYBACK_INTERVAL_MS,
   evaluateReplayFrame,
@@ -43,6 +54,7 @@ interface LiveWeatherUiState {
   readonly status: LiveWeatherUiStatus;
   readonly message: string;
   readonly frame?: LiveWeatherInstrumentFrameState;
+  readonly streamState?: NormalizedStreamState;
 }
 
 export function App() {
@@ -60,6 +72,7 @@ export function App() {
   const [isAudioMuted, setIsAudioMuted] = useState(false);
   const [hapticControlState, setHapticControlState] = useState(initialHapticControlState);
   const [hapticsEnabled, setHapticsEnabled] = useState(false);
+  const [capturedFrames, setCapturedFrames] = useState<readonly CapturedInstrumentFrame[]>([]);
   const audioEngineRef = useRef<InstrumentAudioEngine | undefined>(undefined);
   const hapticEngineRef = useRef<BrowserVibrationHapticEngine | undefined>(undefined);
   const hapticActivationPatternKeyRef = useRef<string | undefined>(undefined);
@@ -143,11 +156,14 @@ export function App() {
 
         setLiveWeatherState((currentState) => {
           const frame = nextState.frame ?? currentState.frame;
+          const streamState =
+            nextState.frame === undefined ? currentState.streamState : nextState.streamState;
 
           return {
             status: nextState.status,
             message: nextState.message,
             ...(frame === undefined ? {} : { frame }),
+            ...(streamState === undefined ? {} : { streamState }),
           };
         });
       })
@@ -219,6 +235,36 @@ export function App() {
       hapticEngineRef.current?.stop();
     };
   }, []);
+
+  useEffect(() => {
+    if (instrumentMode === 'live') {
+      if (liveWeatherState.frame === undefined || liveWeatherState.streamState === undefined) {
+        return;
+      }
+
+      const capturedFrame = createCapturedLiveFrame(
+        liveWeatherState.streamState,
+        liveWeatherState.frame,
+      );
+      setCapturedFrames((currentFrames) => appendCapturedFrame(currentFrames, capturedFrame));
+
+      return;
+    }
+
+    const capturedFrame = createCapturedReplayFrame(
+      activeArchive,
+      framePosition,
+      replayViewState.output,
+    );
+    setCapturedFrames((currentFrames) => appendCapturedFrame(currentFrames, capturedFrame));
+  }, [
+    activeArchive,
+    framePosition,
+    instrumentMode,
+    liveWeatherState.frame,
+    liveWeatherState.streamState,
+    replayViewState.output,
+  ]);
 
   const selectInstrumentMode = (nextMode: InstrumentMode) => {
     if (nextMode === instrumentMode) {
@@ -324,6 +370,26 @@ export function App() {
     setHapticControlState(hapticControlStateFromPlayback(engine.play(viewState.hapticPattern)));
     hapticActivationPatternKeyRef.current = hapticPatternPlaybackKey(viewState.hapticPattern);
     setHapticsEnabled(true);
+  };
+
+  const exportCapturedReplay = () => {
+    if (capturedFrames.length === 0) {
+      return;
+    }
+
+    const snapshot = createReplaySnapshotFromCapturedFrames(capturedFrames);
+    const blob = new Blob([serializeReplaySnapshot(snapshot)], {
+      type: 'application/json',
+    });
+    const objectUrl = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+
+    anchor.href = objectUrl;
+    anchor.download = replaySnapshotDownloadFilename(snapshot);
+    anchor.click();
+    window.setTimeout(() => {
+      URL.revokeObjectURL(objectUrl);
+    }, 0);
   };
 
   return (
@@ -461,6 +527,23 @@ export function App() {
           </section>
 
           <section
+            className="capture-controls"
+            aria-label="Replay capture controls"
+            data-capture-frame-count={String(capturedFrames.length)}
+          >
+            <div className="transport-controls">
+              <button
+                type="button"
+                onClick={exportCapturedReplay}
+                disabled={capturedFrames.length === 0}
+              >
+                Export replay JSON
+              </button>
+            </div>
+            <p aria-live="polite">{captureStatusText(capturedFrames)}</p>
+          </section>
+
+          <section
             className="audio-controls"
             aria-label="Audio controls"
             data-audio-state={audioControlState}
@@ -561,6 +644,28 @@ function markLiveWeatherLoading(
         ? 'Loading current weather...'
         : 'Refreshing current weather...',
   }));
+}
+
+function captureStatusText(capturedFrames: readonly CapturedInstrumentFrame[]): string {
+  if (capturedFrames.length === 0) {
+    return 'Replay capture starts when live or replay frames are generated.';
+  }
+
+  const frameLabel = capturedFrames.length === 1 ? 'frame' : 'frames';
+
+  return `${String(capturedFrames.length)} generated ${frameLabel} captured from ${captureModeSummary(
+    capturedFrames,
+  )}.`;
+}
+
+function captureModeSummary(capturedFrames: readonly CapturedInstrumentFrame[]): string {
+  const modes = new Set(capturedFrames.map((frame) => frame.source.mode));
+
+  if (modes.has('live') && modes.has('replay')) {
+    return 'live and replay';
+  }
+
+  return modes.has('live') ? 'live weather' : 'replay playback';
 }
 
 function audioStatusText(state: AudioControlState, isMuted: boolean): string {

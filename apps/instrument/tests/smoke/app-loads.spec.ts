@@ -1,3 +1,5 @@
+import { readFile } from 'node:fs/promises';
+
 import { expect, test } from '@playwright/test';
 
 test('loads the instrument shell', async ({ page }) => {
@@ -76,8 +78,45 @@ test('loads the instrument shell', async ({ page }) => {
     .poll(() => canvas.evaluate((element) => element.dataset.weatherCondition))
     .toBe('overcast');
 
+  const captureControls = page.getByRole('region', { name: 'Replay capture controls' });
+  await expect(captureControls).toBeVisible();
+  await expect(captureControls).toHaveAttribute('data-capture-frame-count', '1');
+  await expect(captureControls).toContainText('1 generated frame captured from live weather.');
+
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Export replay JSON' }).click();
+  const download = await downloadPromise;
+  const downloadPath = await download.path();
+
+  if (downloadPath === null) {
+    throw new Error('Expected exported replay JSON to be available as a Playwright download.');
+  }
+
+  expect(download.suggestedFilename()).toMatch(/^generated-weather-session-.+\.replay\.json$/);
+
+  const exportedReplay = JSON.parse(await readFile(downloadPath, 'utf8')) as {
+    readonly schemaVersion?: unknown;
+    readonly score?: { readonly scoreId?: unknown; readonly scoreVersion?: unknown };
+    readonly frames?: readonly unknown[];
+    readonly metadata?: { readonly captureVersion?: unknown; readonly modes?: readonly unknown[] };
+  };
+
+  expect(exportedReplay).toMatchObject({
+    schemaVersion: 'replay-snapshot.v1',
+    score: {
+      scoreId: 'weather-score',
+      scoreVersion: '1.0.0',
+    },
+    metadata: {
+      captureVersion: 'replay-capture.v1',
+      modes: ['live'],
+    },
+  });
+  expect(exportedReplay.frames).toHaveLength(1);
+
   await page.getByRole('button', { name: 'Replay archive' }).click();
   await expect(streamControls).toHaveAttribute('data-instrument-mode', 'replay');
+  await expect(captureControls).toHaveAttribute('data-capture-frame-count', '2');
   await expect
     .poll(() => canvas.evaluate((element) => element.dataset.scoreSignature))
     .toBe('8f5c7a72');
@@ -133,6 +172,7 @@ test('loads the instrument shell', async ({ page }) => {
     });
 
   await page.getByRole('button', { name: 'Step forward' }).click();
+  await expect(captureControls).toHaveAttribute('data-capture-frame-count', '3');
   await expect.poll(() => canvas.evaluate((element) => element.dataset.scoreFrameIndex)).toBe('1');
   await expect
     .poll(() => canvas.evaluate((element) => element.dataset.weatherCondition))
