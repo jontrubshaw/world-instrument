@@ -60,12 +60,8 @@ test('loads the instrument shell', async ({ page }) => {
     .toBe('8f5c7a72');
 
   const replayTime = page.getByLabel('Replay time');
-  await replayTime.evaluate((element) => {
-    const input = element as HTMLInputElement;
-    input.value = '2';
-    input.dispatchEvent(new Event('input', { bubbles: true }));
-    input.dispatchEvent(new Event('change', { bubbles: true }));
-  });
+  await replayTime.focus();
+  await page.keyboard.press('End');
   await expect.poll(() => canvas.evaluate((element) => element.dataset.scoreFrameIndex)).toBe('2');
   await expect
     .poll(() => canvas.evaluate((element) => element.dataset.weatherCondition))
