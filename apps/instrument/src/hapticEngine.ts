@@ -30,7 +30,7 @@ export class BrowserVibrationHapticAdapter implements HapticOutputAdapter {
       return this.stop();
     }
 
-    return vibrate.call(this.browserNavigator, pattern.pattern) ? 'active' : 'rejected';
+    return vibrate(pattern.pattern) ? 'active' : 'rejected';
   }
 
   stop(): HapticPlaybackState {
@@ -40,6 +40,6 @@ export class BrowserVibrationHapticAdapter implements HapticOutputAdapter {
       return 'unsupported';
     }
 
-    return vibrate.call(this.browserNavigator, 0) ? 'idle' : 'rejected';
+    return vibrate(0) ? 'idle' : 'rejected';
   }
 }
