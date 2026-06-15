@@ -65,13 +65,17 @@ The project should be built as a high-quality creative system, not an MVP. Deter
 4. CI baseline established and merged: `JTW-14`.
 5. PR review fallback policy documented: `JTW-20`.
 6. Stale pre-setup Cursor PRs closed and documented: `JTW-21`.
+7. Core stream, score, and replay contracts implemented: `JTW-15`.
+8. Visual rendering path and browser instrument shell implemented: `JTW-16`.
+9. First fixture-first weather adapter and deterministic weather score implemented: `JTW-17`.
+10. Coverage thresholds and refactor review cadence implemented: `JTW-18`.
 
 ## Current Sequence
 
-1. Monitor `JTW-15`, which is the active coding-heavy issue delegated to Cursor.
-2. Do not release another coding-heavy Cursor issue until `JTW-15` opens a fresh PR/branch, lands, or is confirmed stalled.
-3. Review the `JTW-15` PR when it appears, wait for automatic Codex review unless a documented exception applies, and merge only after checks and actionable feedback are handled.
-4. After `JTW-15` lands, update docs and release `JTW-16` for the visual rendering decision and app shell.
-5. Keep `JTW-19` with Jonny for the weather provider and credential decision; fixture-first weather work can be planned before live credentials, but live provider integration should not proceed without that decision.
+1. Monitor `JTW-33`, the active coding-heavy issue delegated to Cursor for connecting `weatherScoreV1` to the Three.js visual instrument scene.
+2. Do not release another coding-heavy Cursor issue until `JTW-33` lands, is explicitly paused, or is confirmed blocked.
+3. Review the `JTW-33` PR when it appears, wait for automatic Codex review unless a documented exception applies, and merge only after checks and actionable feedback are handled.
+4. After `JTW-33` lands, update durable docs and release the next ready issue from the gap-driven backlog.
+5. Current backlog order is `JTW-34` deterministic replay controls, `JTW-35` first Web Audio output layer, and `JTW-36` haptic output abstraction.
 6. Continue creating Linear issues for new problems, follow-on implementation work, refactor reviews, and human decisions as they arise.
-7. If the explicit backlog runs out, evaluate the built app against the product vision and create new scoped Linear issues for the next concrete gaps rather than pausing the project.
+7. If the explicit backlog runs out again, evaluate the built app against the product vision and create new scoped Linear issues for the next concrete gaps rather than pausing the project.
