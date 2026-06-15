@@ -89,7 +89,10 @@ describe('instrument replay archive', () => {
     });
     const capturedSession = [0, 1].reduce(
       (currentSession, position) =>
-        appendCapturedReplayFrame(currentSession, captureInputForReplayFrame(sourceArchive, position)),
+        appendCapturedReplayFrame(
+          currentSession,
+          captureInputForReplayFrame(sourceArchive, position),
+        ),
       session,
     );
     const snapshot = buildReplaySnapshot(capturedSession, {

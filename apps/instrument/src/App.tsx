@@ -1547,7 +1547,8 @@ function sourceDefinitionForArchive(archive: ReplayArchive) {
   const archiveSourceKinds = new Set(replayArchiveSourceKinds(archive));
 
   return instrumentSourceDefinitions.find(
-    (definition) => archiveSourceKinds.has(definition.kind) && sourceSupportsMode(definition.id, 'replay'),
+    (definition) =>
+      archiveSourceKinds.has(definition.kind) && sourceSupportsMode(definition.id, 'replay'),
   );
 }
 
