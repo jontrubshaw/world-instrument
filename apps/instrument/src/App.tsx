@@ -4,10 +4,7 @@ import { InstrumentAudioEngine } from './audioEngine.ts';
 import { serializeAudioParametersForDom } from './audioParameters.ts';
 import { InstrumentStage } from './components/InstrumentStage.tsx';
 import { BrowserVibrationHapticEngine, type HapticPlaybackState } from './hapticEngine.ts';
-import {
-  serializeHapticPatternForDom,
-  type InstrumentHapticPattern,
-} from './hapticParameters.ts';
+import { serializeHapticPatternForDom, type InstrumentHapticPattern } from './hapticParameters.ts';
 import {
   REPLAY_PLAYBACK_INTERVAL_MS,
   evaluateReplayFrame,
