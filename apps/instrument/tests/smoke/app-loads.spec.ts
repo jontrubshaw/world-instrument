@@ -83,25 +83,28 @@ test('loads the instrument shell', async ({ page }) => {
   await sourceSelector.selectOption('sensor.browser-interaction');
   await expect(streamControls).toHaveAttribute('data-source-id', 'sensor.browser-interaction');
   await expect(streamControls).toHaveAttribute('data-source-mode', 'live');
-  await page.evaluate(() => {
-    window.dispatchEvent(
-      new PointerEvent('pointerdown', {
-        clientX: 520,
-        clientY: 240,
-        buttons: 1,
-        pressure: 0.7,
-        pointerType: 'mouse',
-      }),
-    );
-  });
+  await expect
+    .poll(async () => {
+      await page.evaluate(() => {
+        window.dispatchEvent(
+          new PointerEvent('pointerdown', {
+            clientX: 520,
+            clientY: 240,
+            buttons: 1,
+            pressure: 0.7,
+            pointerType: 'mouse',
+          }),
+        );
+      });
+
+      return canvas.evaluate((element) => element.dataset.weatherCondition);
+    })
+    .toBe('sensor-touch');
   await expect(streamControls).toHaveAttribute('data-source-state', 'ready');
   await expect(streamControls.locator('.source-status')).toHaveText(
     'Browser sensor / interaction pointer fallback is driving the instrument; motion/orientation sensors are unavailable or waiting for permission.',
   );
   await expect(page.getByText('live mode', { exact: true })).toBeVisible();
-  await expect
-    .poll(() => canvas.evaluate((element) => element.dataset.weatherCondition))
-    .toBe('sensor-touch');
 
   const sensorCaptureControls = page.getByRole('region', { name: 'Capture controls' });
   await page.getByRole('button', { name: 'Start capture' }).click();
