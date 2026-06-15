@@ -80,15 +80,74 @@ test('loads the instrument shell', async ({ page }) => {
     .poll(() => canvas.evaluate((element) => element.dataset.weatherCondition))
     .toBe('overcast');
 
-  await sourceSelector.selectOption('sensor.mock-local-device');
-  await expect(streamControls).toHaveAttribute('data-source-id', 'sensor.mock-local-device');
-  await expect(streamControls).toHaveAttribute('data-source-mode', 'fixture');
-  await expect(streamControls).toHaveAttribute('data-source-state', 'unavailable');
-  await expect(page.getByRole('button', { name: 'Live', exact: true })).toBeDisabled();
+  await sourceSelector.selectOption('sensor.browser-interaction');
+  await expect(streamControls).toHaveAttribute('data-source-id', 'sensor.browser-interaction');
+  await expect(streamControls).toHaveAttribute('data-source-mode', 'live');
+  await expect(streamControls).toHaveAttribute('data-source-state', 'ready');
   await expect(streamControls.locator('.source-status')).toHaveText(
-    'Mock local sensor fixture is available, but no compatible score is registered yet; replay remains available. Showing deterministic replay fallback.',
+    'Browser sensor / interaction is waiting for local interaction; move the pointer to drive the instrument.',
   );
-  await expect(page.getByText('replay fallback', { exact: true })).toBeVisible();
+  await expect(page.getByText('live mode', { exact: true })).toBeVisible();
+  await page.evaluate(() => {
+    window.dispatchEvent(
+      new PointerEvent('pointerdown', {
+        clientX: 520,
+        clientY: 240,
+        buttons: 1,
+        pressure: 0.7,
+        pointerType: 'mouse',
+      }),
+    );
+  });
+  await expect(streamControls.locator('.source-status')).toHaveText(
+    'Browser sensor / interaction pointer fallback is driving the instrument; motion/orientation sensors are unavailable or waiting for permission.',
+  );
+  await expect
+    .poll(() => canvas.evaluate((element) => element.dataset.weatherCondition))
+    .toBe('sensor-touch');
+
+  const sensorCaptureControls = page.getByRole('region', { name: 'Capture controls' });
+  await page.getByRole('button', { name: 'Start capture' }).click();
+  await expect(sensorCaptureControls).toHaveAttribute('data-capture-state', 'recording');
+  await expect(sensorCaptureControls).toHaveAttribute('data-capture-frame-count', '1');
+  await page.getByRole('button', { name: 'Stop capture' }).click();
+  const sensorDownloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Export replay JSON' }).click();
+  const sensorDownload = await sensorDownloadPromise;
+  const sensorDownloadPath = await sensorDownload.path();
+
+  expect(sensorDownload.suggestedFilename()).toMatch(
+    /^world-instrument-captured-live-sensor-.*\.replay\.json$/,
+  );
+  expect(JSON.parse(await readFile(sensorDownloadPath, 'utf8'))).toMatchObject({
+    schemaVersion: 'replay-snapshot.v1',
+    frames: [
+      {
+        seed: 'world-instrument-live-browser-sensor-v1',
+        streams: [
+          {
+            source: {
+              kind: 'sensor',
+            },
+            metadata: {
+              provider: 'browser-sensor',
+              mode: 'live',
+            },
+          },
+        ],
+      },
+    ],
+    metadata: {
+      capture: {
+        sourceMode: 'live',
+      },
+      sources: [
+        {
+          kind: 'sensor',
+        },
+      ],
+    },
+  });
 
   await sourceSelector.selectOption('weather.open-meteo');
   await page.getByRole('button', { name: 'Live', exact: true }).click();
@@ -98,7 +157,7 @@ test('loads the instrument shell', async ({ page }) => {
 
   const captureControls = page.getByRole('region', { name: 'Capture controls' });
   await expect(captureControls).toBeVisible();
-  await expect(captureControls).toHaveAttribute('data-capture-state', 'idle');
+  await expect(captureControls).toHaveAttribute('data-capture-state', 'ready');
   await page.getByRole('button', { name: 'Start capture' }).click();
   await expect(captureControls).toHaveAttribute('data-capture-state', 'recording');
   await expect(captureControls).toHaveAttribute('data-capture-frame-count', '1');

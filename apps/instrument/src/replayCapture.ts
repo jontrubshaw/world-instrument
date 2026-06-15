@@ -253,7 +253,7 @@ function buildSnapshotMetadata(
     title: session.title,
     description:
       options.description ??
-      'Captured World Instrument weather session with normalized stream state and score output.',
+      'Captured World Instrument session with normalized stream state and score output.',
     capture: {
       sessionId: session.sessionId,
       status: session.status,
@@ -279,7 +279,7 @@ function frameMetadata(frame: CapturedReplayFrame): JsonObject {
     capturedAt: frame.capturedAt,
     seed: frame.seed,
     sourceMode: frame.sourceMode,
-    sourceLabel: frame.sourceLabel ?? 'Weather stream',
+    sourceLabel: frame.sourceLabel ?? 'Captured stream',
     statusLabel: frame.statusLabel ?? 'Captured frame',
     inputHash: traceValue(frame.output, 'inputHash') ?? '',
     condition: traceValue(frame.output, 'condition') ?? '',

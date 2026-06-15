@@ -8,8 +8,18 @@ import {
   type SetStateAction,
 } from 'react';
 
+import { BROWSER_SENSOR_STREAM_SOURCE_ID } from '@world-instrument/adapters';
+
 import { InstrumentAudioEngine } from './audioEngine.ts';
 import { serializeAudioParametersForDom } from './audioParameters.ts';
+import {
+  BROWSER_SENSOR_POINTER_REFRESH_MS,
+  createInitialBrowserSensorRuntimeState,
+  requestBrowserSensorPermission,
+  updateBrowserSensorMotion,
+  updateBrowserSensorOrientation,
+  updateBrowserSensorPointer,
+} from './browserSensor.ts';
 import { InstrumentStage } from './components/InstrumentStage.tsx';
 import { BrowserVibrationHapticEngine, type HapticPlaybackState } from './hapticEngine.ts';
 import { serializeHapticPatternForDom, type InstrumentHapticPattern } from './hapticParameters.ts';
@@ -81,6 +91,9 @@ export function App() {
   const [framePosition, setFramePosition] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [sourceRefreshToken, setSourceRefreshToken] = useState(0);
+  const [browserSensorState, setBrowserSensorState] = useState(
+    createInitialBrowserSensorRuntimeState,
+  );
   const [sourceState, setSourceState] = useState<SourceUiState>({
     sourceId: DEFAULT_INSTRUMENT_SOURCE_ID,
     sourceName: sourceDefinition(DEFAULT_INSTRUMENT_SOURCE_ID).displayName,
@@ -99,6 +112,8 @@ export function App() {
   const hapticActivationPatternKeyRef = useRef<string | undefined>(undefined);
   const sourceSequenceRef = useRef<number | undefined>(undefined);
   const captureLastFrameKeyRef = useRef<string | undefined>(undefined);
+  const browserSensorRefreshRef = useRef<number | undefined>(undefined);
+  const browserSensorSnapshotRef = useRef(browserSensorState.snapshot);
   const selectedSource = sourceDefinition(selectedSourceId);
   const sourceReplayArchives = useMemo(
     () => archives.filter((archive) => archiveMatchesSource(archive, selectedSource.kind)),
@@ -212,6 +227,9 @@ export function App() {
     void readSourceFrame({
       sourceId: selectedSourceId,
       sourceMode: instrumentMode,
+      ...(selectedSourceId === BROWSER_SENSOR_STREAM_SOURCE_ID
+        ? { browserSensorSnapshot: browserSensorSnapshotRef.current }
+        : {}),
       signal: abortController.signal,
       ...(sourceSequenceRef.current === undefined
         ? {}
@@ -271,6 +289,10 @@ export function App() {
   }, [instrumentMode, selectedSourceId, sourceRefreshToken]);
 
   useEffect(() => {
+    browserSensorSnapshotRef.current = browserSensorState.snapshot;
+  }, [browserSensorState.snapshot]);
+
+  useEffect(() => {
     if (instrumentMode !== 'live') {
       return;
     }
@@ -289,6 +311,69 @@ export function App() {
       window.clearInterval(intervalId);
     };
   }, [instrumentMode, selectedSource.displayName, selectedSourceId]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    let lastRefreshAt = 0;
+
+    const refreshSensorSource = () => {
+      const now = window.performance.now();
+
+      if (now - lastRefreshAt < BROWSER_SENSOR_POINTER_REFRESH_MS) {
+        return;
+      }
+
+      lastRefreshAt = now;
+
+      if (
+        selectedSourceId !== BROWSER_SENSOR_STREAM_SOURCE_ID ||
+        instrumentMode !== 'live' ||
+        browserSensorRefreshRef.current !== undefined
+      ) {
+        return;
+      }
+
+      browserSensorRefreshRef.current = window.requestAnimationFrame(() => {
+        browserSensorRefreshRef.current = undefined;
+        setSourceRefreshToken((currentToken) => currentToken + 1);
+      });
+    };
+
+    const handlePointer = (event: PointerEvent) => {
+      setBrowserSensorState((currentState) => updateBrowserSensorPointer(currentState, event));
+      refreshSensorSource();
+    };
+    const handleMotion = (event: DeviceMotionEvent) => {
+      setBrowserSensorState((currentState) => updateBrowserSensorMotion(currentState, event));
+      refreshSensorSource();
+    };
+    const handleOrientation = (event: DeviceOrientationEvent) => {
+      setBrowserSensorState((currentState) => updateBrowserSensorOrientation(currentState, event));
+      refreshSensorSource();
+    };
+
+    window.addEventListener('pointermove', handlePointer, { passive: true });
+    window.addEventListener('pointerdown', handlePointer, { passive: true });
+    window.addEventListener('pointerup', handlePointer, { passive: true });
+    window.addEventListener('devicemotion', handleMotion);
+    window.addEventListener('deviceorientation', handleOrientation);
+
+    return () => {
+      window.removeEventListener('pointermove', handlePointer);
+      window.removeEventListener('pointerdown', handlePointer);
+      window.removeEventListener('pointerup', handlePointer);
+      window.removeEventListener('devicemotion', handleMotion);
+      window.removeEventListener('deviceorientation', handleOrientation);
+
+      if (browserSensorRefreshRef.current !== undefined) {
+        window.cancelAnimationFrame(browserSensorRefreshRef.current);
+        browserSensorRefreshRef.current = undefined;
+      }
+    };
+  }, [instrumentMode, selectedSourceId]);
 
   useEffect(() => {
     audioEngineRef.current?.applyParameters(viewState.audioParameters);
@@ -424,6 +509,11 @@ export function App() {
     setIsPlaying(true);
   };
 
+  const enableBrowserSensors = async () => {
+    setBrowserSensorState(await requestBrowserSensorPermission(browserSensorState));
+    setSourceRefreshToken((currentToken) => currentToken + 1);
+  };
+
   const restartReplay = () => {
     setFramePosition(0);
     setIsPlaying(false);
@@ -548,6 +638,10 @@ export function App() {
         ? 'ready'
         : 'unavailable'
       : sourceState.status;
+  const canRequestBrowserSensorPermission =
+    selectedSourceId === BROWSER_SENSOR_STREAM_SOURCE_ID &&
+    instrumentMode === 'live' &&
+    browserSensorState.permissionRequestAvailable;
 
   return (
     <main className="instrument-shell" aria-labelledby="instrument-title">
@@ -644,6 +738,17 @@ export function App() {
                     ? `Refreshing ${instrumentMode}`
                     : `Refresh ${instrumentMode}`}
                 </button>
+                {canRequestBrowserSensorPermission ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void enableBrowserSensors();
+                    }}
+                    disabled={browserSensorState.permissionState === 'granted'}
+                  >
+                    Enable device sensors
+                  </button>
+                ) : null}
               </div>
             </>
           ) : (

@@ -7,7 +7,13 @@ import {
   parseReplaySnapshot,
   type ReplaySnapshot,
 } from '@world-instrument/core';
-import { normalizeWeatherPayload, type RecordedWeatherPayload } from '@world-instrument/adapters';
+import {
+  createDeterministicBrowserSensorSnapshot,
+  normalizeBrowserSensorPayload,
+  normalizeWeatherPayload,
+  type RecordedBrowserSensorPayload,
+  type RecordedWeatherPayload,
+} from '@world-instrument/adapters';
 
 import {
   WEATHER_SCORE_V1_ID,
@@ -72,6 +78,60 @@ describe('weather score v1', () => {
     expect(first).toEqual(second);
   });
 
+  it('maps browser sensor streams into the shared deterministic output parameters', () => {
+    const stream = normalizeBrowserSensorPayload(sensorFixture, { sequence: 2 });
+    const input = {
+      schemaVersion: SCORE_INPUT_SCHEMA_VERSION,
+      score: weatherScoreV1.metadata,
+      frame: {
+        frameIndex: 2,
+        elapsedMs: 240,
+        renderedAt: '2026-06-15T12:00:00.240Z',
+      },
+      streams: [stream],
+      seed: 'world-instrument-test-sensor-v1',
+    };
+
+    const first = weatherScoreV1.evaluate(input);
+    const second = weatherScoreV1.evaluate(input);
+
+    expect(first).toEqual(second);
+    expect(first).toMatchObject({
+      scoreId: 'weather-score',
+      scoreVersion: '1.0.0',
+      frameIndex: 2,
+      generatedAt: '2026-06-15T12:00:00.240Z',
+      metadata: {
+        streamStatus: 'ok',
+        streamId: 'sensor:studio-browser',
+        condition: 'sensor-touch',
+        inputKind: 'sensor',
+      },
+      audio: {
+        enabled: true,
+      },
+      haptic: {
+        enabled: false,
+      },
+    });
+    expect(first.visual.parameters.map((parameter) => parameter.key)).toEqual([
+      'warmth',
+      'humidity',
+      'wind',
+      'precipitation',
+      'pressure',
+      'cloudCover',
+      'motion',
+      'diffusion',
+      'tension',
+      'brightness',
+    ]);
+    expect(first.trace?.find((entry) => entry.key === 'condition')).toEqual({
+      key: 'condition',
+      value: 'sensor-touch',
+    });
+  });
+
   it('keeps the adapter fixture aligned with the replay stream fixture', async () => {
     const weatherFixture = await loadWeatherFixture();
     const snapshot = await loadReplaySnapshot();
@@ -108,3 +168,7 @@ async function loadWeatherFixture(): Promise<RecordedWeatherPayload> {
 
   return JSON.parse(contents) as RecordedWeatherPayload;
 }
+
+const sensorFixture: RecordedBrowserSensorPayload = createDeterministicBrowserSensorSnapshot({
+  observedAt: '2026-06-15T12:00:00.000Z',
+});

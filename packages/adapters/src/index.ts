@@ -17,6 +17,26 @@ export {
   type WeatherLocation,
 } from './weather.ts';
 export {
+  BROWSER_SENSOR_ADAPTER_ID,
+  BROWSER_SENSOR_ADAPTER_VERSION,
+  BrowserSensorAdapter,
+  createDeterministicBrowserSensorSnapshot,
+  normalizeBrowserSensorPayload,
+  type BrowserSensorAdapterConfig,
+  type BrowserSensorCapabilities,
+  type BrowserSensorCapabilityState,
+  type BrowserSensorDevice,
+  type BrowserSensorFixtureAdapterConfig,
+  type BrowserSensorLiveAdapterConfig,
+  type BrowserSensorMotionPayload,
+  type BrowserSensorOrientationPayload,
+  type BrowserSensorPermissionState,
+  type BrowserSensorPointerPayload,
+  type CreateDeterministicBrowserSensorSnapshotOptions,
+  type NormalizeBrowserSensorOptions,
+  type RecordedBrowserSensorPayload,
+} from './browser-sensor.ts';
+export {
   MOCK_SENSOR_ADAPTER_ID,
   MOCK_SENSOR_ADAPTER_VERSION,
   MockSensorAdapter,
@@ -29,10 +49,10 @@ export {
   type RecordedMockSensorPayload,
 } from './mock-sensor.ts';
 export {
-  MOCK_SENSOR_STREAM_SOURCE_ID,
+  BROWSER_SENSOR_STREAM_SOURCE_ID,
   WEATHER_STREAM_SOURCE_ID,
+  browserSensorStreamSourceDefinition,
   createRegisteredStreamAdapter,
-  mockSensorStreamSourceDefinition,
   streamSourceRegistry,
   weatherStreamSourceDefinition,
   type RegisteredStreamAdapter,

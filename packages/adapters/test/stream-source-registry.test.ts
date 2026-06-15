@@ -8,41 +8,43 @@ import {
 } from '@world-instrument/core';
 
 import {
-  MOCK_SENSOR_ADAPTER_ID,
-  MOCK_SENSOR_STREAM_SOURCE_ID,
-  MockSensorAdapter,
+  BROWSER_SENSOR_ADAPTER_ID,
+  BROWSER_SENSOR_STREAM_SOURCE_ID,
+  BrowserSensorAdapter,
   WEATHER_ADAPTER_ID,
   WEATHER_STREAM_SOURCE_ID,
   WeatherAdapter,
+  browserSensorStreamSourceDefinition,
   createRegisteredStreamAdapter,
-  mockSensorStreamSourceDefinition,
-  normalizeMockSensorPayload,
+  createDeterministicBrowserSensorSnapshot,
+  normalizeBrowserSensorPayload,
   streamSourceRegistry,
   weatherStreamSourceDefinition,
-  type RecordedMockSensorPayload,
+  type RecordedBrowserSensorPayload,
 } from '../src/index.ts';
 
 describe('stream source registry', () => {
   it('catalogs weather and non-weather source capabilities', () => {
     expect(streamSourceRegistry.list().map((definition) => definition.id)).toEqual([
       WEATHER_STREAM_SOURCE_ID,
-      MOCK_SENSOR_STREAM_SOURCE_ID,
+      BROWSER_SENSOR_STREAM_SOURCE_ID,
     ]);
     expect(streamSourceRegistry.require(WEATHER_STREAM_SOURCE_ID)).toBe(
       weatherStreamSourceDefinition,
     );
-    expect(streamSourceRegistry.require(MOCK_SENSOR_STREAM_SOURCE_ID)).toBe(
-      mockSensorStreamSourceDefinition,
+    expect(streamSourceRegistry.require(BROWSER_SENSOR_STREAM_SOURCE_ID)).toBe(
+      browserSensorStreamSourceDefinition,
     );
 
     expect(streamSourceRegistry.supports(WEATHER_STREAM_SOURCE_ID, 'fixture')).toBe(true);
     expect(streamSourceRegistry.supports(WEATHER_STREAM_SOURCE_ID, 'live')).toBe(true);
     expect(streamSourceRegistry.supports(WEATHER_STREAM_SOURCE_ID, 'replay')).toBe(true);
-    expect(streamSourceRegistry.supports(MOCK_SENSOR_STREAM_SOURCE_ID, 'fixture')).toBe(true);
-    expect(streamSourceRegistry.supports(MOCK_SENSOR_STREAM_SOURCE_ID, 'live')).toBe(false);
-    expect(streamSourceRegistry.supports(MOCK_SENSOR_STREAM_SOURCE_ID, 'replay')).toBe(true);
+    expect(streamSourceRegistry.supports(BROWSER_SENSOR_STREAM_SOURCE_ID, 'fixture')).toBe(true);
+    expect(streamSourceRegistry.supports(BROWSER_SENSOR_STREAM_SOURCE_ID, 'live')).toBe(true);
+    expect(streamSourceRegistry.supports(BROWSER_SENSOR_STREAM_SOURCE_ID, 'replay')).toBe(true);
     expect(streamSourceRegistry.listByMode('live').map((definition) => definition.id)).toEqual([
       WEATHER_STREAM_SOURCE_ID,
+      BROWSER_SENSOR_STREAM_SOURCE_ID,
     ]);
   });
 
@@ -72,16 +74,28 @@ describe('stream source registry', () => {
       'isRaining',
       'windVector',
     ]);
-    expect(mockSensorStreamSourceDefinition).toMatchObject({
+    expect(browserSensorStreamSourceDefinition).toMatchObject({
       adapter: {
-        id: MOCK_SENSOR_ADAPTER_ID,
+        id: BROWSER_SENSOR_ADAPTER_ID,
       },
       mapping: {
         streamKind: 'sensor',
         streamIdPrefix: 'sensor',
       },
-      scoreCompatibility: [],
+      defaultScoreId: 'weather-score',
     });
+    expect(browserSensorStreamSourceDefinition.mapping.samples.map((sample) => sample.key)).toEqual(
+      [
+        'pointerPosition',
+        'pointerVelocity',
+        'pointerPressure',
+        'interactionActive',
+        'acceleration',
+        'rotationRate',
+        'orientation',
+        'motionIntensity',
+      ],
+    );
   });
 
   it('checks source compatibility against score metadata', () => {
@@ -92,7 +106,7 @@ describe('stream source registry', () => {
       streamSourceRegistry
         .compatibleSourcesForScore(weatherScoreMetadata)
         .map((source) => source.id),
-    ).toEqual([WEATHER_STREAM_SOURCE_ID]);
+    ).toEqual([WEATHER_STREAM_SOURCE_ID, BROWSER_SENSOR_STREAM_SOURCE_ID]);
     expect(
       streamSourceRegistry.compatibleScoresForSource(WEATHER_STREAM_SOURCE_ID, [
         weatherScoreMetadata,
@@ -100,10 +114,10 @@ describe('stream source registry', () => {
       ]),
     ).toEqual([weatherScoreMetadata]);
     expect(
-      streamSourceRegistry.compatibleScoresForSource(MOCK_SENSOR_STREAM_SOURCE_ID, [
+      streamSourceRegistry.compatibleScoresForSource(BROWSER_SENSOR_STREAM_SOURCE_ID, [
         weatherScoreMetadata,
       ]),
-    ).toEqual([]);
+    ).toEqual([weatherScoreMetadata]);
   });
 
   it('creates registered adapters from source definitions', () => {
@@ -123,13 +137,13 @@ describe('stream source registry', () => {
         },
       },
     });
-    const sensorAdapter = createRegisteredStreamAdapter(MOCK_SENSOR_STREAM_SOURCE_ID, {
+    const sensorAdapter = createRegisteredStreamAdapter(BROWSER_SENSOR_STREAM_SOURCE_ID, {
       mode: 'fixture',
       fixture: sensorFixture,
     });
 
     expect(weatherAdapter).toBeInstanceOf(WeatherAdapter);
-    expect(sensorAdapter).toBeInstanceOf(MockSensorAdapter);
+    expect(sensorAdapter).toBeInstanceOf(BrowserSensorAdapter);
     expect(() =>
       createRegisteredStreamAdapter('news.mock', {
         mode: 'fixture',
@@ -138,8 +152,8 @@ describe('stream source registry', () => {
     ).toThrow("Stream source 'news.mock' is not registered with an adapter factory.");
   });
 
-  it('normalizes fixture-only sensor payloads through the shared stream state contract', async () => {
-    const adapter = new MockSensorAdapter({
+  it('normalizes browser sensor payloads through the shared stream state contract', async () => {
+    const adapter = new BrowserSensorAdapter({
       mode: 'fixture',
       fixture: sensorFixture,
       sequence: 3,
@@ -150,36 +164,67 @@ describe('stream source registry', () => {
     expect(result.raw).toBe(sensorFixture);
     expect(result.state).toMatchObject({
       schemaVersion: STREAM_STATE_SCHEMA_VERSION,
-      streamId: 'sensor:studio-controller',
+      streamId: 'sensor:studio-browser',
       source: {
-        id: `${MOCK_SENSOR_ADAPTER_ID}:studio-controller`,
+        id: `${BROWSER_SENSOR_ADAPTER_ID}:studio-browser`,
         kind: 'sensor',
-        label: 'Studio Controller sensor',
+        label: 'Studio browser sensor',
       },
       status: 'ok',
       observedAt: '2026-06-15T12:00:00.000Z',
       receivedAt: '2026-06-15T12:00:01.000Z',
       sequence: 3,
       metadata: {
-        provider: 'mock-sensor',
+        provider: 'browser-sensor',
         mode: 'fixture',
         device: {
-          id: 'studio-controller',
+          id: 'studio-browser',
         },
+        activeInputs: ['pointer', 'deviceMotion', 'deviceOrientation'],
       },
+    });
+    expect(result.state.samples.find((sample) => sample.key === 'pointerPosition')).toMatchObject({
+      kind: 'vector',
+      values: [0.5, 0.78],
+      axes: ['x', 'y'],
     });
     expect(result.state.samples.find((sample) => sample.key === 'acceleration')).toMatchObject({
       kind: 'vector',
-      values: [0.1, -0.2, 0.3],
       axes: ['x', 'y', 'z'],
     });
-    expect(result.state.samples.find((sample) => sample.key === 'contact')).toMatchObject({
-      kind: 'boolean',
-      value: true,
-    });
-    expect(normalizeMockSensorPayload(sensorFixture, { sequence: 4 })).toMatchObject({
-      streamId: 'sensor:studio-controller',
+    expect(result.state.samples.find((sample) => sample.key === 'interactionActive')).toMatchObject(
+      {
+        kind: 'boolean',
+        value: false,
+      },
+    );
+    expect(normalizeBrowserSensorPayload(sensorFixture, { sequence: 4 })).toMatchObject({
+      streamId: 'sensor:studio-browser',
       sequence: 4,
+    });
+  });
+
+  it('marks pointer-only browser sensor frames as degraded fallback input', async () => {
+    const state = normalizeBrowserSensorPayload({
+      ...sensorFixture,
+      motion: undefined,
+      orientation: undefined,
+      capabilities: {
+        pointer: 'available',
+        deviceMotion: 'permission-required',
+        deviceOrientation: 'unavailable',
+        permission: 'not-requested',
+        fallback: 'pointer',
+      },
+    });
+
+    expect(state.status).toBe('degraded');
+    expect(state.metadata).toMatchObject({
+      capabilities: {
+        deviceMotion: 'permission-required',
+        fallback: 'pointer',
+      },
+      activeInputs: ['pointer'],
     });
   });
 });
@@ -198,18 +243,7 @@ const incompatibleScoreMetadata: ScoreVersionMetadata = {
   scoreId: 'sensor-score',
 };
 
-const sensorFixture: RecordedMockSensorPayload = {
-  provider: 'mock-sensor',
+const sensorFixture: RecordedBrowserSensorPayload = createDeterministicBrowserSensorSnapshot({
   observedAt: '2026-06-15T12:00:00.000Z',
   receivedAt: '2026-06-15T12:00:01.000Z',
-  device: {
-    id: 'studio-controller',
-    label: 'Studio Controller',
-  },
-  reading: {
-    acceleration: [0.1, -0.2, 0.3],
-    orientation: [12.1254, 0, 181.9876],
-    contact: true,
-    batteryPercent: 87.45,
-  },
-};
+});
