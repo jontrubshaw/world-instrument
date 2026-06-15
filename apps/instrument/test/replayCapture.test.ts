@@ -1,4 +1,9 @@
 import { parseReplaySnapshot, type JsonObject } from '@world-instrument/core';
+import {
+  createDeterministicBrowserSensorSnapshot,
+  normalizeBrowserSensorPayload,
+} from '@world-instrument/adapters';
+import { browserSensorScoreV1 } from '@world-instrument/scores';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -122,6 +127,84 @@ describe('instrument replay capture', () => {
         (output) => output.trace?.find((entry) => entry.key === 'inputHash')?.value,
       ),
     ).toEqual(['8f5c7a72', '6c2d4560', '6247890f']);
+  });
+
+  it('exports browser sensor captures with browser sensor score provenance', () => {
+    const stream = normalizeBrowserSensorPayload(
+      createDeterministicBrowserSensorSnapshot({
+        observedAt: '2026-06-15T12:00:00.000Z',
+      }),
+    );
+    const output = browserSensorScoreV1.evaluate({
+      schemaVersion: 'score-input.v1',
+      score: browserSensorScoreV1.metadata,
+      frame: {
+        frameIndex: 0,
+        elapsedMs: 0,
+        renderedAt: '2026-06-15T12:00:00.000Z',
+      },
+      streams: [stream],
+      seed: 'browser-sensor-score-v1:fixture:0',
+    });
+    const session = appendCapturedReplayFrame(
+      createReplayCaptureSession({
+        sessionId: 'captured-fixture-sensor-2026-06-15T12-00-00Z',
+        title: 'Captured browser sensor session',
+        startedAt: '2026-06-15T12:00:00.000Z',
+      }),
+      {
+        sourceMode: 'fixture',
+        frameIndex: 0,
+        capturedAt: '2026-06-15T12:00:00.000Z',
+        streams: [stream],
+        seed: 'browser-sensor-score-v1:fixture:0',
+        output,
+        visualSignature: output.trace?.[0]?.value ?? 'missing',
+        audioSignature: output.trace?.[0]?.value ?? 'missing',
+        hapticSignature: output.trace?.[0]?.value ?? 'missing',
+        provenance: {
+          scoreId: output.scoreId,
+          scoreVersion: output.scoreVersion,
+          scoreIdentity: `${output.scoreId} ${output.scoreVersion}`,
+        },
+      },
+    );
+    const snapshot = buildReplaySnapshot(session, {
+      createdAt: '2026-06-15T12:00:10.000Z',
+    });
+    const parsed = parseReplaySnapshot(JSON.parse(serializeReplaySnapshot(snapshot)));
+
+    expect(parsed).toMatchObject({
+      score: {
+        scoreId: 'browser-sensor-score',
+        scoreVersion: '1.0.0',
+      },
+      frames: [
+        {
+          output: {
+            scoreId: 'browser-sensor-score',
+            scoreVersion: '1.0.0',
+          },
+        },
+      ],
+      metadata: {
+        score: {
+          scoreId: 'browser-sensor-score',
+          scoreVersion: '1.0.0',
+          displayName: 'Browser Sensor Score v1',
+        },
+      },
+    });
+    expect(metadataFrames(parsed.metadata)[0]).toMatchObject({
+      score: {
+        scoreId: 'browser-sensor-score',
+        scoreVersion: '1.0.0',
+      },
+      provenance: {
+        scoreId: 'browser-sensor-score',
+        scoreVersion: '1.0.0',
+      },
+    });
   });
 
   it('builds a captureable replay frame from the currently rendered archive view', () => {

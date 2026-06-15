@@ -24,6 +24,8 @@ export const BROWSER_SENSOR_STREAM_SOURCE_ID = BROWSER_SENSOR_ADAPTER_ID;
 
 const WEATHER_SCORE_ID = 'weather-score';
 const WEATHER_SCORE_VERSION = '1.0.0';
+const BROWSER_SENSOR_SCORE_ID = 'browser-sensor-score';
+const BROWSER_SENSOR_SCORE_VERSION = '1.0.0';
 
 export const weatherStreamSourceDefinition = {
   schemaVersion: STREAM_SOURCE_REGISTRY_SCHEMA_VERSION,
@@ -254,14 +256,14 @@ export const browserSensorStreamSourceDefinition = {
   },
   scoreCompatibility: [
     {
-      scoreId: WEATHER_SCORE_ID,
-      scoreVersion: WEATHER_SCORE_VERSION,
+      scoreId: BROWSER_SENSOR_SCORE_ID,
+      scoreVersion: BROWSER_SENSOR_SCORE_VERSION,
       supportedStreamSchemas: [STREAM_STATE_SCHEMA_VERSION],
       description:
-        'Weather Score v1 also maps browser sensor stream samples into the shared abstract instrument parameters.',
+        'Browser Sensor Score v1 consumes pointer, motion, orientation, pressure, and interaction samples.',
     },
   ],
-  defaultScoreId: WEATHER_SCORE_ID,
+  defaultScoreId: BROWSER_SENSOR_SCORE_ID,
   fixtures: [
     {
       id: 'browser-sensor-pointer-motion-v1',

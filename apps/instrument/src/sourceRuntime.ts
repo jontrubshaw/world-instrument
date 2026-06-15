@@ -15,7 +15,6 @@ import {
   type StreamSourceDefinition,
   type StreamSourceMode,
 } from '@world-instrument/core';
-import { weatherScoreV1 } from '@world-instrument/scores';
 
 import {
   DEFAULT_LIVE_WEATHER_LOCATION,
@@ -24,7 +23,9 @@ import {
   readLiveWeatherFrame,
 } from './liveWeather.ts';
 import {
-  evaluateWeatherInstrumentFrame,
+  evaluateInstrumentFrame,
+  instrumentScoreMetadata,
+  scoreMetadataForId,
   type WeatherInstrumentState,
 } from './weatherInstrument.ts';
 
@@ -82,9 +83,7 @@ export function sourceSupportsMode(sourceId: string, mode: StreamSourceMode): bo
 }
 
 export function sourceHasCompatibleScore(sourceId: string): boolean {
-  return streamSourceRegistry
-    .compatibleSourcesForScore(weatherScoreV1.metadata)
-    .some((definition) => definition.id === sourceId);
+  return streamSourceRegistry.compatibleScoresForSource(sourceId, instrumentScoreMetadata).length > 0;
 }
 
 export function selectableModeForSource(
@@ -202,7 +201,12 @@ async function readFixtureSourceFrame(
         ? {}
         : { afterSequence: options.previousSequence }),
     });
-    const frame = evaluateSourceWeatherFrame(result.state, 'fixture', FIXTURE_WEATHER_SEED);
+    const frame = evaluateSourceWeatherFrame(
+      definition,
+      result.state,
+      'fixture',
+      FIXTURE_WEATHER_SEED,
+    );
 
     return {
       sourceId: definition.id,
@@ -255,7 +259,7 @@ async function readBrowserSensorSourceFrame(
   const result = await adapter.read({
     ...(options.previousSequence === undefined ? {} : { afterSequence: options.previousSequence }),
   });
-  const frame = evaluateSourceWeatherFrame(result.state, sourceMode, seed);
+  const frame = evaluateSourceWeatherFrame(definition, result.state, sourceMode, seed);
   const status = result.state.status === 'stale' ? 'stale' : 'ready';
 
   return {
@@ -271,16 +275,20 @@ async function readBrowserSensorSourceFrame(
 }
 
 function evaluateSourceWeatherFrame(
+  definition: StreamSourceDefinition,
   streamState: NormalizedStreamState,
   sourceMode: Exclude<StreamSourceMode, 'replay'>,
   seed: string,
 ): SourceInstrumentFrameState {
-  const instrumentFrame = evaluateWeatherInstrumentFrame({
+  const scoreId = definition.defaultScoreId;
+  const score = scoreId === undefined ? undefined : scoreMetadataForId(scoreId);
+  const instrumentFrame = evaluateInstrumentFrame({
     frameIndex: streamState.sequence,
     elapsedMs: 0,
     capturedAt: streamState.observedAt,
     streams: [streamState],
     seed,
+    ...(score === undefined ? {} : { scoreId: score.scoreId, scoreVersion: score.scoreVersion }),
     sourceLabel: streamState.source.label ?? streamState.source.id,
   });
 

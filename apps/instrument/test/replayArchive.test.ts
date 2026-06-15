@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  createDeterministicBrowserSensorSnapshot,
+  normalizeBrowserSensorPayload,
+} from '@world-instrument/adapters';
+import { browserSensorScoreV1 } from '@world-instrument/scores';
+
+import {
   createReplayScoreSequence,
   evaluateReplayFrame,
   loadReplayArchives,
@@ -51,6 +57,28 @@ describe('instrument replay archive', () => {
     ]);
   });
 
+  it('routes browser sensor replay archives through the browser sensor score path', () => {
+    const archive = browserSensorArchive();
+    const sequence = createReplayScoreSequence(archive);
+
+    expect(sequence).toHaveLength(1);
+    expect(sequence[0]).toEqual(archive.snapshot.frames[0]?.output);
+    expect(evaluateReplayFrame(archive, 0)).toMatchObject({
+      archiveId: 'browser-sensor-test-archive',
+      sourceLabel: 'Studio browser sensor',
+      visualParameters: {
+        scoreId: 'browser-sensor-score',
+        condition: 'sensor-touch',
+      },
+      audioParameters: {
+        scoreId: 'browser-sensor-score',
+      },
+      hapticPattern: {
+        scoreId: 'browser-sensor-score',
+      },
+    });
+  });
+
   it('restarts the archive into the same deterministic score sequence', () => {
     const archive = firstReplayArchive();
     const firstRun = createReplayScoreSequence(archive).map(scoreSignature);
@@ -86,4 +114,44 @@ function scoreSignature(output: {
   readonly trace?: readonly { readonly key: string; readonly value: string }[];
 }) {
   return output.trace?.find((entry) => entry.key === 'inputHash')?.value;
+}
+
+function browserSensorArchive(): ReplayArchive {
+  const stream = normalizeBrowserSensorPayload(
+    createDeterministicBrowserSensorSnapshot({
+      observedAt: '2026-06-15T12:00:00.000Z',
+    }),
+  );
+  const output = browserSensorScoreV1.evaluate({
+    schemaVersion: 'score-input.v1',
+    score: browserSensorScoreV1.metadata,
+    frame: {
+      frameIndex: 0,
+      elapsedMs: 0,
+      renderedAt: '2026-06-15T12:00:00.000Z',
+    },
+    streams: [stream],
+    seed: 'browser-sensor-score-v1:fixture:0',
+  });
+
+  return {
+    id: 'browser-sensor-test-archive',
+    label: 'Browser sensor test archive',
+    snapshot: {
+      schemaVersion: 'replay-snapshot.v1',
+      snapshotId: 'browser-sensor-test-archive',
+      createdAt: '2026-06-15T12:00:05.000Z',
+      score: browserSensorScoreV1.metadata,
+      frames: [
+        {
+          frameIndex: 0,
+          elapsedMs: 0,
+          capturedAt: '2026-06-15T12:00:00.000Z',
+          streams: [stream],
+          output,
+          seed: 'browser-sensor-score-v1:fixture:0',
+        },
+      ],
+    },
+  };
 }

@@ -82,7 +82,7 @@ describe('stream source registry', () => {
         streamKind: 'sensor',
         streamIdPrefix: 'sensor',
       },
-      defaultScoreId: 'weather-score',
+      defaultScoreId: 'browser-sensor-score',
     });
     expect(browserSensorStreamSourceDefinition.mapping.samples.map((sample) => sample.key)).toEqual(
       [
@@ -106,7 +106,7 @@ describe('stream source registry', () => {
       streamSourceRegistry
         .compatibleSourcesForScore(weatherScoreMetadata)
         .map((source) => source.id),
-    ).toEqual([WEATHER_STREAM_SOURCE_ID, BROWSER_SENSOR_STREAM_SOURCE_ID]);
+    ).toEqual([WEATHER_STREAM_SOURCE_ID]);
     expect(
       streamSourceRegistry.compatibleScoresForSource(WEATHER_STREAM_SOURCE_ID, [
         weatherScoreMetadata,
@@ -116,8 +116,9 @@ describe('stream source registry', () => {
     expect(
       streamSourceRegistry.compatibleScoresForSource(BROWSER_SENSOR_STREAM_SOURCE_ID, [
         weatherScoreMetadata,
+        browserSensorScoreMetadata,
       ]),
-    ).toEqual([weatherScoreMetadata]);
+    ).toEqual([browserSensorScoreMetadata]);
   });
 
   it('creates registered adapters from source definitions', () => {
@@ -340,7 +341,13 @@ const weatherScoreMetadata: ScoreVersionMetadata = {
 
 const incompatibleScoreMetadata: ScoreVersionMetadata = {
   ...weatherScoreMetadata,
-  scoreId: 'sensor-score',
+  scoreId: 'news-score',
+};
+
+const browserSensorScoreMetadata: ScoreVersionMetadata = {
+  ...weatherScoreMetadata,
+  scoreId: 'browser-sensor-score',
+  displayName: 'Browser Sensor Score v1',
 };
 
 const sensorFixture: RecordedBrowserSensorPayload = createDeterministicBrowserSensorSnapshot({

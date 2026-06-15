@@ -33,10 +33,11 @@ To add a source:
 
 ### Registered Sources
 
-| Source id                  | Kind      | Modes                       | Default score   |
-| -------------------------- | --------- | --------------------------- | --------------- |
-| `weather.open-meteo`       | `weather` | `fixture`, `live`, `replay` | `weather-score` |
-| `sensor.mock-local-device` | `sensor`  | `fixture`, `replay`         | none yet        |
+| Source id                    | Kind      | Modes                       | Default score           |
+| ---------------------------- | --------- | --------------------------- | ----------------------- |
+| `weather.open-meteo`         | `weather` | `fixture`, `live`, `replay` | `weather-score`         |
+| `sensor.browser-interaction` | `sensor`  | `fixture`, `live`, `replay` | `browser-sensor-score`  |
+| `sensor.mock-local-device`   | `sensor`  | `fixture`, `replay`         | none yet                |
 
 ## Weather Adapter v1
 
@@ -49,6 +50,14 @@ Weather maps to `source.kind = "weather"` and `streamId` values prefixed with `w
 normalized samples include `temperature`, `relativeHumidity`, `windSpeed`, `condition`, `isRaining`,
 and `windVector`, plus optional supporting weather measurements. `weather-score` v1 declares
 compatibility with this mapping through `stream-state.v1`.
+
+## Browser Sensor / Interaction Source
+
+`BrowserSensorAdapter` normalizes local pointer interaction plus optional DeviceMotion and
+DeviceOrientation readings. It maps to `source.kind = "sensor"` and `streamId` values prefixed with
+`sensor:`. Its samples include `pointerPosition`, `pointerVelocity`, `pointerPressure`,
+`interactionActive`, `acceleration`, `rotationRate`, `orientation`, and `motionIntensity`.
+`browser-sensor-score` v1 declares compatibility with this mapping through `stream-state.v1`.
 
 ## Mock Sensor Fixture Source
 

@@ -9,10 +9,9 @@ import {
   type StreamSourceMode,
   stableStringify,
 } from '@world-instrument/core';
-import { weatherScoreV1 } from '@world-instrument/scores';
 
 import type { ReplayArchive, ReplayInstrumentFrameState } from './replayArchive.ts';
-import { evaluateWeatherInstrumentFrame } from './weatherInstrument.ts';
+import { evaluateInstrumentFrame, scoreMetadataForOutput } from './weatherInstrument.ts';
 
 export type ReplayCaptureSourceMode = StreamSourceMode;
 
@@ -137,12 +136,14 @@ export function prepareFrameForCaptureClock(
   }
 
   const elapsedMs = elapsedFromSessionStart(session.startedAt, capturedAt);
-  const rescoredFrame = evaluateWeatherInstrumentFrame({
+  const rescoredFrame = evaluateInstrumentFrame({
     frameIndex: frame.frameIndex,
     elapsedMs,
     capturedAt,
     streams: frame.streams,
     seed: frame.seed,
+    scoreId: frame.output.scoreId,
+    scoreVersion: frame.output.scoreVersion,
     ...(frame.sourceLabel === undefined ? {} : { sourceLabel: frame.sourceLabel }),
     ...(frame.statusLabel === undefined ? {} : { statusLabel: frame.statusLabel }),
   });
@@ -188,11 +189,12 @@ export function buildReplaySnapshot(
   options: BuildReplaySnapshotOptions,
 ): ReplaySnapshot {
   const frames = session.frames.map(toReplayFrame);
+  const score = scoreMetadataForCapturedSession(session);
   const snapshot = {
     schemaVersion: REPLAY_SNAPSHOT_SCHEMA_VERSION,
     snapshotId: session.sessionId,
     createdAt: options.createdAt,
-    score: weatherScoreV1.metadata,
+    score,
     frames,
     metadata: buildSnapshotMetadata(session, options),
   } satisfies ReplaySnapshot;
@@ -263,6 +265,8 @@ function buildSnapshotMetadata(
   session: ReplayCaptureSession,
   options: BuildReplaySnapshotOptions,
 ): JsonObject {
+  const score = scoreMetadataForCapturedSession(session);
+
   return {
     fixture: false,
     mode: 'captured',
@@ -279,9 +283,9 @@ function buildSnapshotMetadata(
       sourceMode: sourceModeSummary(session.frames),
     },
     score: {
-      scoreId: weatherScoreV1.metadata.scoreId,
-      scoreVersion: weatherScoreV1.metadata.scoreVersion,
-      displayName: weatherScoreV1.metadata.displayName,
+      scoreId: score.scoreId,
+      scoreVersion: score.scoreVersion,
+      displayName: score.displayName,
     },
     sources: sourceMetadata(session.frames),
     frames: session.frames.map(frameMetadata),
@@ -294,6 +298,10 @@ function frameMetadata(frame: CapturedReplayFrame): JsonObject {
     elapsedMs: frame.elapsedMs,
     capturedAt: frame.capturedAt,
     seed: frame.seed,
+    score: {
+      scoreId: frame.output.scoreId,
+      scoreVersion: frame.output.scoreVersion,
+    },
     sourceMode: frame.sourceMode,
     sourceLabel: frame.sourceLabel ?? 'Captured stream',
     statusLabel: frame.statusLabel ?? 'Captured frame',
@@ -315,6 +323,16 @@ function frameMetadata(frame: CapturedReplayFrame): JsonObject {
       sequence: stream.sequence,
     })),
   };
+}
+
+function scoreMetadataForCapturedSession(session: ReplayCaptureSession) {
+  const firstOutput = session.frames[0]?.output;
+
+  if (firstOutput === undefined) {
+    throw new Error('Cannot build replay snapshot without at least one captured score output.');
+  }
+
+  return scoreMetadataForOutput(firstOutput);
 }
 
 function sourceMetadata(frames: readonly CapturedReplayFrame[]): readonly JsonObject[] {

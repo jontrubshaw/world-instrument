@@ -813,6 +813,7 @@ export function App() {
           data-provenance-mode={provenanceState.displayMode}
           data-provenance-status={provenanceState.status}
           data-provenance-source-id={provenanceState.sourceId}
+          data-provenance-score-id={provenanceState.scoreId}
           data-provenance-frame-age-ms={
             provenanceState.frameAgeMs === undefined
               ? 'unknown'
@@ -841,7 +842,9 @@ export function App() {
           <div className="capability-strip" aria-label="Source capabilities">
             <span>{sourceCapabilitySummary(selectedSource)}</span>
             <span>
-              {sourceHasCompatibleScore(selectedSourceId) ? 'shared score' : 'score pending'}
+              {sourceHasCompatibleScore(selectedSourceId)
+                ? `${selectedSource.defaultScoreId ?? 'registered'} score`
+                : 'score pending'}
             </span>
           </div>
 
@@ -884,6 +887,7 @@ export function App() {
             data-provenance-mode={provenanceState.displayMode}
             data-provenance-status={provenanceState.status}
             data-provenance-source-id={provenanceState.sourceId}
+            data-provenance-score-id={provenanceState.scoreId}
           >
             <p className="provenance-summary" role="status" aria-live="polite">
               {provenanceState.summary}
@@ -904,6 +908,10 @@ export function App() {
               <div>
                 <dt>Source</dt>
                 <dd>{provenanceState.sourceIdentity}</dd>
+              </div>
+              <div>
+                <dt>Score</dt>
+                <dd>{provenanceState.scoreIdentity}</dd>
               </div>
             </dl>
           </section>
@@ -1129,6 +1137,8 @@ interface ProvenanceViewState {
   readonly status: string;
   readonly sourceId: string;
   readonly sourceIdentity: string;
+  readonly scoreId: string;
+  readonly scoreIdentity: string;
   readonly streamStatus: string;
   readonly frameAgeLabel: string;
   readonly frameAgeMs?: number;
@@ -1153,6 +1163,9 @@ function buildProvenanceViewState(options: {
   const stream = replayDriven
     ? options.activeReplayFrame?.streams[0]
     : options.sourceState.streamState;
+  const output = replayDriven
+    ? options.replayViewState.output
+    : (options.sourceState.frame?.output ?? options.replayViewState.output);
   const observedAt =
     stream?.observedAt ??
     (options.instrumentMode === 'replay' ? options.activeReplayFrame?.capturedAt : undefined) ??
@@ -1180,6 +1193,7 @@ function buildProvenanceViewState(options: {
     archiveLabel: options.activeArchive?.label,
     displayMode,
     frameAgeLabel: frameAge.label,
+    scoreIdentity: scoreIdentity(output.scoreId, output.scoreVersion),
     sourceIdentity,
     sourceName: options.selectedSourceName,
     status,
@@ -1193,6 +1207,9 @@ function buildProvenanceViewState(options: {
     sourceName: options.selectedSourceName,
     sourceIdentity,
     sourceId,
+    scoreId: output.scoreId,
+    scoreVersion: output.scoreVersion,
+    scoreIdentity: scoreIdentity(output.scoreId, output.scoreVersion),
     ...(stream === undefined
       ? {}
       : {
@@ -1229,6 +1246,8 @@ function buildProvenanceViewState(options: {
     status,
     sourceId,
     sourceIdentity,
+    scoreId: output.scoreId,
+    scoreIdentity: scoreIdentity(output.scoreId, output.scoreVersion),
     streamStatus,
     frameAgeLabel: frameAge.label,
     ...(frameAge.ms === undefined ? {} : { frameAgeMs: frameAge.ms }),
@@ -1244,27 +1263,32 @@ function provenanceSummaryText(options: {
   readonly archiveLabel: string | undefined;
   readonly displayMode: ProvenanceDisplayMode;
   readonly frameAgeLabel: string;
+  readonly scoreIdentity: string;
   readonly sourceIdentity: string;
   readonly sourceName: string;
   readonly status: string;
 }): string {
   if (options.displayMode === 'replay-fallback') {
-    return `Replay fallback is driving output from ${options.archiveLabel ?? options.sourceIdentity}; ${options.sourceName} is ${provenanceStatusLabel(
+    return `Replay fallback is driving output from ${options.archiveLabel ?? options.sourceIdentity} via ${options.scoreIdentity}; ${options.sourceName} is ${provenanceStatusLabel(
       options.status,
     ).toLowerCase()}. Frame ${options.frameAgeLabel}.`;
   }
 
   if (options.displayMode === 'replay') {
-    return `Replay archive is driving output from ${options.sourceIdentity}. Frame ${options.frameAgeLabel}.`;
+    return `Replay archive is driving output from ${options.sourceIdentity} via ${options.scoreIdentity}. Frame ${options.frameAgeLabel}.`;
   }
 
   if (options.status === 'loading') {
     return `${provenanceModeLabel(options.displayMode)} ${options.sourceName} is loading the latest normalized frame.`;
   }
 
-  return `${provenanceModeLabel(options.displayMode)} output from ${options.sourceIdentity}; ${provenanceStatusLabel(
+  return `${provenanceModeLabel(options.displayMode)} output from ${options.sourceIdentity} via ${options.scoreIdentity}; ${provenanceStatusLabel(
     options.status,
   ).toLowerCase()}. Frame ${options.frameAgeLabel}.`;
+}
+
+function scoreIdentity(scoreId: string, scoreVersion: string): string {
+  return `${scoreId} ${scoreVersion}`;
 }
 
 function provenanceModeLabel(mode: ProvenanceDisplayMode): string {

@@ -2,9 +2,15 @@ import {
   SCORE_INPUT_SCHEMA_VERSION,
   parseReplaySnapshot,
   type NormalizedStreamState,
+  type Score,
   type ScoreOutput,
+  type ScoreVersionMetadata,
 } from '@world-instrument/core';
-import { weatherScoreV1 } from '@world-instrument/scores';
+import {
+  WEATHER_SCORE_V1_ID,
+  browserSensorScoreV1,
+  weatherScoreV1,
+} from '@world-instrument/scores';
 
 import type { InstrumentAudioParameters } from './audioParameters.ts';
 import { mapScoreOutputToAudioParameters } from './audioParameters.ts';
@@ -31,9 +37,19 @@ export interface WeatherInstrumentFrameInput {
   readonly capturedAt: string;
   readonly streams: readonly NormalizedStreamState[];
   readonly seed: string;
+  readonly scoreId?: string;
+  readonly scoreVersion?: string;
   readonly sourceLabel?: string;
   readonly statusLabel?: string;
 }
+
+export type InstrumentFrameInput = WeatherInstrumentFrameInput;
+
+export const instrumentScores = [
+  weatherScoreV1,
+  browserSensorScoreV1,
+] as const satisfies readonly Score[];
+export const instrumentScoreMetadata = instrumentScores.map((score) => score.metadata);
 
 export function loadFixtureWeatherInstrumentState(): Promise<WeatherInstrumentState> {
   const snapshot = parseReplaySnapshot(recordedWeatherReplay);
@@ -58,7 +74,11 @@ export function loadFixtureWeatherInstrumentState(): Promise<WeatherInstrumentSt
 export function evaluateWeatherInstrumentFrame(
   input: WeatherInstrumentFrameInput,
 ): WeatherInstrumentState {
-  const output = evaluateWeatherScore(input);
+  return evaluateInstrumentFrame(input);
+}
+
+export function evaluateInstrumentFrame(input: InstrumentFrameInput): WeatherInstrumentState {
+  const output = evaluateInstrumentScore(input);
 
   return {
     frameIndex: input.frameIndex,
@@ -74,9 +94,18 @@ export function evaluateWeatherInstrumentFrame(
 }
 
 export function evaluateWeatherScore(input: WeatherInstrumentFrameInput): ScoreOutput {
-  return weatherScoreV1.evaluate({
+  return evaluateInstrumentScore({
+    ...input,
+    scoreId: input.scoreId ?? WEATHER_SCORE_V1_ID,
+  });
+}
+
+export function evaluateInstrumentScore(input: InstrumentFrameInput): ScoreOutput {
+  const score = scoreForInstrumentInput(input);
+
+  return score.evaluate({
     schemaVersion: SCORE_INPUT_SCHEMA_VERSION,
-    score: weatherScoreV1.metadata,
+    score: score.metadata,
     frame: {
       frameIndex: input.frameIndex,
       elapsedMs: input.elapsedMs,
@@ -87,8 +116,58 @@ export function evaluateWeatherScore(input: WeatherInstrumentFrameInput): ScoreO
   });
 }
 
+export function scoreMetadataForId(
+  scoreId: string,
+  scoreVersion?: string,
+): ScoreVersionMetadata | undefined {
+  return scoreForId(scoreId, scoreVersion)?.metadata;
+}
+
+export function scoreMetadataForOutput(output: ScoreOutput): ScoreVersionMetadata {
+  return (
+    scoreMetadataForId(output.scoreId, output.scoreVersion) ?? {
+      schemaVersion: 'score-version.v1',
+      scoreId: output.scoreId,
+      scoreVersion: output.scoreVersion,
+      displayName: `${output.scoreId} ${output.scoreVersion}`,
+      deterministic: true,
+      supportedStreamSchemas: ['stream-state.v1'],
+    }
+  );
+}
+
+function scoreForInstrumentInput(input: InstrumentFrameInput): Score {
+  if (input.scoreId !== undefined) {
+    const score = scoreForId(input.scoreId, input.scoreVersion);
+
+    if (score !== undefined) {
+      return score;
+    }
+
+    throw new Error(`Score '${input.scoreId}' is not registered with the instrument runtime.`);
+  }
+
+  if (
+    input.streams.some(
+      (stream) => stream.source.kind === 'sensor' || stream.streamId.startsWith('sensor:'),
+    )
+  ) {
+    return browserSensorScoreV1;
+  }
+
+  return weatherScoreV1;
+}
+
+function scoreForId(scoreId: string, scoreVersion?: string): Score | undefined {
+  return instrumentScores.find(
+    (score) =>
+      score.metadata.scoreId === scoreId &&
+      (scoreVersion === undefined || score.metadata.scoreVersion === scoreVersion),
+  );
+}
+
 function sourceLabel(streams: readonly NormalizedStreamState[]): string {
   const stream = streams[0];
 
-  return stream?.source.label ?? stream?.source.id ?? 'Weather stream';
+  return stream?.source.label ?? stream?.source.id ?? 'Instrument stream';
 }

@@ -92,11 +92,11 @@ describe('instrument source runtime', () => {
         seed: FIXTURE_BROWSER_SENSOR_SEED,
         sourceLabel: 'Studio browser sensor',
         visualParameters: {
-          scoreId: 'weather-score',
+          scoreId: 'browser-sensor-score',
           condition: 'sensor-touch',
         },
         audioParameters: {
-          scoreId: 'weather-score',
+          scoreId: 'browser-sensor-score',
           enabled: true,
         },
       },
@@ -157,6 +157,7 @@ describe('instrument source runtime', () => {
       frame: {
         streamStatus: 'degraded',
         visualParameters: {
+          scoreId: 'browser-sensor-score',
           condition: 'sensor-touch',
         },
       },
@@ -194,6 +195,7 @@ describe('instrument source runtime', () => {
       frame: {
         streamStatus: 'stale',
         visualParameters: {
+          scoreId: 'browser-sensor-score',
           condition: 'sensor-stale',
         },
       },
