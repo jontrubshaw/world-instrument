@@ -11,6 +11,7 @@ import {
   BROWSER_SENSOR_ADAPTER_ID,
   BROWSER_SENSOR_STREAM_SOURCE_ID,
   BrowserSensorAdapter,
+  MockSensorAdapter,
   WEATHER_ADAPTER_ID,
   WEATHER_STREAM_SOURCE_ID,
   WeatherAdapter,
@@ -18,9 +19,11 @@ import {
   createBrowserSensorFixturePayload,
   createRegisteredStreamAdapter,
   normalizeBrowserSensorPayload,
+  normalizeMockSensorPayload,
   streamSourceRegistry,
   weatherStreamSourceDefinition,
   type RecordedBrowserSensorPayload,
+  type RecordedMockSensorPayload,
 } from '../src/index.ts';
 
 describe('stream source registry', () => {
@@ -203,6 +206,39 @@ describe('stream source registry', () => {
       sequence: 4,
     });
   });
+
+  it('keeps the legacy mock sensor fixture helper deterministic', async () => {
+    const adapter = new MockSensorAdapter({
+      mode: 'fixture',
+      fixture: legacyMockSensorFixture,
+      sequence: 7,
+    });
+
+    const result = await adapter.read();
+
+    expect(result.state).toMatchObject({
+      schemaVersion: STREAM_STATE_SCHEMA_VERSION,
+      streamId: 'sensor:studio-controller',
+      source: {
+        kind: 'sensor',
+        label: 'Studio Controller sensor',
+      },
+      status: 'ok',
+      sequence: 7,
+      metadata: {
+        provider: 'mock-sensor',
+        mode: 'fixture',
+      },
+    });
+    expect(result.state.samples.find((sample) => sample.key === 'acceleration')).toMatchObject({
+      kind: 'vector',
+      values: [0.1, -0.2, 0.3],
+    });
+    expect(normalizeMockSensorPayload(legacyMockSensorFixture, { sequence: 8 })).toMatchObject({
+      sequence: 8,
+      streamId: 'sensor:studio-controller',
+    });
+  });
 });
 
 const weatherScoreMetadata: ScoreVersionMetadata = {
@@ -227,3 +263,19 @@ const sensorScoreMetadata: ScoreVersionMetadata = {
 };
 
 const sensorFixture: RecordedBrowserSensorPayload = createBrowserSensorFixturePayload();
+
+const legacyMockSensorFixture: RecordedMockSensorPayload = {
+  provider: 'mock-sensor',
+  observedAt: '2026-06-15T12:00:00.000Z',
+  receivedAt: '2026-06-15T12:00:01.000Z',
+  device: {
+    id: 'studio-controller',
+    label: 'Studio Controller',
+  },
+  reading: {
+    acceleration: [0.1, -0.2, 0.3],
+    orientation: [12.1254, 0, 181.9876],
+    contact: true,
+    batteryPercent: 87.45,
+  },
+};
