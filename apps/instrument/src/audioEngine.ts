@@ -121,9 +121,11 @@ class BrowserInstrumentAudioEngine implements InstrumentAudioEngine {
 }
 
 function createBrowserAudioContext(): AudioContext | undefined {
-  const AudioContextConstructor =
-    window.AudioContext ??
-    (window as Window & { readonly webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  const audioWindow = window as unknown as {
+    readonly AudioContext?: typeof AudioContext;
+    readonly webkitAudioContext?: typeof AudioContext;
+  };
+  const AudioContextConstructor = audioWindow.AudioContext ?? audioWindow.webkitAudioContext;
 
   return AudioContextConstructor === undefined ? undefined : new AudioContextConstructor();
 }

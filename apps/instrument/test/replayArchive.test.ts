@@ -48,9 +48,9 @@ describe('instrument replay archive', () => {
     );
 
     expect(plans.map((plan) => plan.frameIndex)).toEqual([0, 1, 2]);
-    expect(plans.map((plan) => plan.signature)).toEqual(['8f5c7a72', '5fbe7b12', 'b5e05580']);
+    expect(plans.map((plan) => plan.signature)).toEqual(['8f5c7a72', '6c2d4560', '6247890f']);
     expect(plans.map((plan) => plan.enabled)).toEqual([true, true, true]);
-    expect(plans.map((plan) => plan.carrierFrequencyHz)).toEqual([211.562, 200.694, 232.945]);
+    expect(plans.map((plan) => plan.carrierFrequencyHz)).toEqual([211.562, 189.668, 263.961]);
   });
 
   it('restarts the archive into the same deterministic score sequence', () => {

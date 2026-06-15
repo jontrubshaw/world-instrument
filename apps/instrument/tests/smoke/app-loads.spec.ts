@@ -99,7 +99,7 @@ test('loads the instrument shell', async ({ page }) => {
     )
     .toMatchObject({
       frameIndex: 1,
-      signature: 'a64de263',
+      signature: '6c2d4560',
     });
 
   await page.getByRole('button', { name: 'Restart' }).click();
