@@ -12,11 +12,11 @@ export interface HapticOutputAdapter {
   stop(): HapticPlaybackState;
 }
 
-type BrowserNavigatorWithVibration = Navigator & {
+type BrowserNavigatorWithVibration = Omit<Navigator, 'vibrate'> & {
   vibrate?: (pattern: VibratePattern) => boolean;
 };
 
-type BrowserWindowWithVibration = Window & {
+type BrowserWindowWithVibration = Omit<Window, 'navigator'> & {
   readonly navigator: BrowserNavigatorWithVibration;
 };
 
