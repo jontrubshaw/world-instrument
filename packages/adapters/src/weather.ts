@@ -89,6 +89,7 @@ export interface WeatherLiveAdapterConfig {
   readonly location: WeatherLocation;
   readonly apiKey?: string;
   readonly credentialEnvName?: string;
+  readonly requiresCredential?: boolean;
   readonly fetchWeather?: WeatherFetch;
   readonly receivedAt?: string;
   readonly sequence?: number;
@@ -167,7 +168,7 @@ export class WeatherAdapter implements StreamAdapter<WeatherAdapterRaw, WeatherA
     const credentialEnvName = config.credentialEnvName ?? WEATHER_CREDENTIAL_ENV;
     const apiKey = config.apiKey ?? readCredentialFromEnv(credentialEnvName);
 
-    if (apiKey === undefined || apiKey.length === 0) {
+    if (config.requiresCredential === true && (apiKey === undefined || apiKey.length === 0)) {
       return createFailureResult(config, {
         code: 'missing-credentials',
         message: `Weather live mode requires apiKey or ${credentialEnvName}.`,
@@ -543,14 +544,21 @@ function parseOpenMeteoObservedAt(value: unknown): string | undefined {
   return Number.isNaN(parsed.valueOf()) ? undefined : parsed.toISOString();
 }
 
-function buildLiveUrl(endpointUrl: string, location: WeatherLocation, apiKey: string): string {
+function buildLiveUrl(
+  endpointUrl: string,
+  location: WeatherLocation,
+  apiKey: string | undefined,
+): string {
   const url = new URL(endpointUrl);
   url.searchParams.set('latitude', String(location.latitude));
   url.searchParams.set('longitude', String(location.longitude));
   url.searchParams.set('current', OPEN_METEO_CURRENT_FIELDS.join(','));
   url.searchParams.set('timezone', 'GMT');
   url.searchParams.set('wind_speed_unit', 'ms');
-  url.searchParams.set('apikey', apiKey);
+
+  if (apiKey !== undefined && apiKey.length > 0) {
+    url.searchParams.set('apikey', apiKey);
+  }
 
   return url.toString();
 }

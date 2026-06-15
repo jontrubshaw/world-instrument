@@ -6,6 +6,12 @@ import { InstrumentStage } from './components/InstrumentStage.tsx';
 import { BrowserVibrationHapticEngine, type HapticPlaybackState } from './hapticEngine.ts';
 import { serializeHapticPatternForDom, type InstrumentHapticPattern } from './hapticParameters.ts';
 import {
+  LIVE_WEATHER_REFRESH_INTERVAL_MS,
+  readLiveWeatherFrame,
+  type LiveWeatherInstrumentFrameState,
+  type LiveWeatherReadStatus,
+} from './liveWeather.ts';
+import {
   REPLAY_PLAYBACK_INTERVAL_MS,
   evaluateReplayFrame,
   loadReplayArchives,
@@ -21,11 +27,27 @@ type AudioControlState =
 
 type HapticControlState = 'checking' | 'unsupported' | 'disabled' | 'enabled' | 'blocked';
 
+type InstrumentMode = 'live' | 'replay';
+
+type LiveWeatherUiStatus = LiveWeatherReadStatus | 'idle' | 'loading';
+
+interface LiveWeatherUiState {
+  readonly status: LiveWeatherUiStatus;
+  readonly message: string;
+  readonly frame?: LiveWeatherInstrumentFrameState;
+}
+
 export function App() {
   const [archives] = useState(() => loadReplayArchives());
+  const [instrumentMode, setInstrumentMode] = useState<InstrumentMode>('live');
   const [archiveId, setArchiveId] = useState(archives[0]?.id ?? '');
   const [framePosition, setFramePosition] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [liveRefreshToken, setLiveRefreshToken] = useState(0);
+  const [liveWeatherState, setLiveWeatherState] = useState<LiveWeatherUiState>({
+    status: 'idle',
+    message: 'Live weather is ready to load.',
+  });
   const [audioControlState, setAudioControlState] = useState<AudioControlState>('stopped');
   const [isAudioMuted, setIsAudioMuted] = useState(false);
   const [hapticControlState, setHapticControlState] = useState(initialHapticControlState);
@@ -33,16 +55,22 @@ export function App() {
   const audioEngineRef = useRef<InstrumentAudioEngine | undefined>(undefined);
   const hapticEngineRef = useRef<BrowserVibrationHapticEngine | undefined>(undefined);
   const hapticActivationPatternKeyRef = useRef<string | undefined>(undefined);
+  const liveSequenceRef = useRef<number | undefined>(undefined);
   const activeArchive = archives.find((archive) => archive.id === archiveId) ?? archives[0];
 
-  const viewState = useMemo(() => {
+  const replayViewState = useMemo(() => {
     if (activeArchive === undefined) {
       throw new Error('Expected at least one replay archive.');
     }
 
     return evaluateReplayFrame(activeArchive, framePosition);
   }, [activeArchive, framePosition]);
-  const lastFramePosition = viewState.frameCount - 1;
+  const viewState =
+    instrumentMode === 'live' && liveWeatherState.frame !== undefined
+      ? liveWeatherState.frame
+      : replayViewState;
+  const liveFallbackActive = instrumentMode === 'live' && liveWeatherState.frame === undefined;
+  const lastFramePosition = replayViewState.frameCount - 1;
   const stageGlowStyle = {
     '--stage-glow-color': viewState.visualParameters.accentColor,
     '--stage-glow-opacity': String(viewState.visualParameters.glowOpacity),
@@ -61,7 +89,7 @@ export function App() {
   );
 
   useEffect(() => {
-    if (!isPlaying) {
+    if (!isPlaying || instrumentMode !== 'replay') {
       return;
     }
 
@@ -80,7 +108,78 @@ export function App() {
     return () => {
       window.clearInterval(intervalId);
     };
-  }, [isPlaying, lastFramePosition]);
+  }, [instrumentMode, isPlaying, lastFramePosition]);
+
+  useEffect(() => {
+    if (instrumentMode !== 'live') {
+      return;
+    }
+
+    const abortController = new AbortController();
+    let isCurrentRequest = true;
+
+    setLiveWeatherState((currentState) => ({
+      ...currentState,
+      status: 'loading',
+      message:
+        currentState.frame === undefined
+          ? 'Loading current weather...'
+          : 'Refreshing current weather...',
+    }));
+
+    void readLiveWeatherFrame({
+      previousSequence: liveSequenceRef.current,
+      signal: abortController.signal,
+    })
+      .then((nextState) => {
+        if (!isCurrentRequest) {
+          return;
+        }
+
+        if (nextState.frame !== undefined) {
+          liveSequenceRef.current = nextState.frame.streamSequence;
+        }
+
+        setLiveWeatherState((currentState) => ({
+          status: nextState.status,
+          message: nextState.message,
+          frame: nextState.frame ?? currentState.frame,
+        }));
+      })
+      .catch((error: unknown) => {
+        if (!isCurrentRequest || abortController.signal.aborted) {
+          return;
+        }
+
+        setLiveWeatherState((currentState) => ({
+          ...currentState,
+          status: 'error',
+          message:
+            error instanceof Error
+              ? `Live weather adapter error: ${error.message}`
+              : 'Live weather adapter error; replay remains available.',
+        }));
+      });
+
+    return () => {
+      isCurrentRequest = false;
+      abortController.abort();
+    };
+  }, [instrumentMode, liveRefreshToken]);
+
+  useEffect(() => {
+    if (instrumentMode !== 'live') {
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      setLiveRefreshToken((currentToken) => currentToken + 1);
+    }, LIVE_WEATHER_REFRESH_INTERVAL_MS);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [instrumentMode]);
 
   useEffect(() => {
     audioEngineRef.current?.applyParameters(viewState.audioParameters);
@@ -115,10 +214,25 @@ export function App() {
     };
   }, []);
 
+  const selectInstrumentMode = (nextMode: InstrumentMode) => {
+    setInstrumentMode(nextMode);
+
+    if (nextMode === 'live') {
+      setIsPlaying(false);
+    }
+  };
+
   const selectArchive = (nextArchiveId: string) => {
     setArchiveId(nextArchiveId);
     setFramePosition(0);
     setIsPlaying(false);
+    setInstrumentMode('replay');
+  };
+
+  const refreshLiveWeather = () => {
+    setInstrumentMode('live');
+    setIsPlaying(false);
+    setLiveRefreshToken((currentToken) => currentToken + 1);
   };
 
   const togglePlayback = () => {
@@ -211,71 +325,120 @@ export function App() {
         <p className="eyebrow">World Instrument / weather score</p>
         <h1 id="instrument-title">A weather score tuned into light.</h1>
         <p className="lead">
-          A recorded stream is replayed through the first deterministic weather score, pressing
-          palette, pulse, motion, and atmosphere directly into the visual instrument.
+          Current and recorded weather streams pass through the same deterministic score, pressing
+          palette, pulse, motion, sound, and haptics into the instrument.
         </p>
-        <section className="replay-controls" aria-label="Replay controls">
-          <label className="archive-picker">
-            <span>Archive</span>
-            <select
-              value={archiveId}
-              onChange={(event) => {
-                selectArchive(event.target.value);
+        <section
+          className="stream-controls"
+          aria-label="Stream controls"
+          data-instrument-mode={instrumentMode}
+          data-live-state={liveWeatherState.status}
+        >
+          <div className="mode-switch" role="group" aria-label="Input mode">
+            <button
+              type="button"
+              onClick={() => {
+                selectInstrumentMode('live');
               }}
+              aria-pressed={instrumentMode === 'live'}
             >
-              {archives.map((archive) => (
-                <option value={archive.id} key={archive.id}>
-                  {archive.label}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <div className="transport-controls">
-            <button type="button" onClick={togglePlayback} aria-pressed={isPlaying}>
-              {isPlaying ? 'Pause' : 'Play'}
-            </button>
-            <button type="button" onClick={restartReplay}>
-              Restart
+              Live weather
             </button>
             <button
               type="button"
               onClick={() => {
-                stepReplay(-1);
+                selectInstrumentMode('replay');
               }}
-              disabled={framePosition === 0}
-              aria-label="Step backward"
+              aria-pressed={instrumentMode === 'replay'}
             >
-              Prev
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                stepReplay(1);
-              }}
-              disabled={framePosition === lastFramePosition}
-              aria-label="Step forward"
-            >
-              Next
+              Replay archive
             </button>
           </div>
 
-          <label className="time-scrubber">
-            <span>Replay time</span>
-            <input
-              type="range"
-              min="0"
-              max={lastFramePosition}
-              step="1"
-              value={framePosition}
-              onChange={(event) => {
-                scrubReplay(Number(event.target.value));
-              }}
-            />
-            <output aria-live="polite">
-              {formatElapsed(viewState.elapsedMs)} / {formatElapsed(viewState.durationMs)}
-            </output>
-          </label>
+          <p className="live-status" role="status" aria-live="polite">
+            {liveWeatherStatusText(liveWeatherState, liveFallbackActive)}
+          </p>
+
+          <div className="transport-controls">
+            <button
+              type="button"
+              onClick={refreshLiveWeather}
+              disabled={liveWeatherState.status === 'loading'}
+            >
+              {liveWeatherState.status === 'loading' ? 'Refreshing live' : 'Refresh live'}
+            </button>
+          </div>
+
+          <section className="replay-controls" aria-label="Replay controls">
+            <label className="archive-picker">
+              <span>Archive</span>
+              <select
+                value={archiveId}
+                onChange={(event) => {
+                  selectArchive(event.target.value);
+                }}
+              >
+                {archives.map((archive) => (
+                  <option value={archive.id} key={archive.id}>
+                    {archive.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <div className="transport-controls">
+              <button
+                type="button"
+                onClick={togglePlayback}
+                aria-pressed={isPlaying}
+                disabled={instrumentMode !== 'replay'}
+              >
+                {isPlaying ? 'Pause' : 'Play'}
+              </button>
+              <button type="button" onClick={restartReplay} disabled={instrumentMode !== 'replay'}>
+                Restart
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  stepReplay(-1);
+                }}
+                disabled={instrumentMode !== 'replay' || framePosition === 0}
+                aria-label="Step backward"
+              >
+                Prev
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  stepReplay(1);
+                }}
+                disabled={instrumentMode !== 'replay' || framePosition === lastFramePosition}
+                aria-label="Step forward"
+              >
+                Next
+              </button>
+            </div>
+
+            <label className="time-scrubber">
+              <span>Replay time</span>
+              <input
+                type="range"
+                min="0"
+                max={lastFramePosition}
+                step="1"
+                value={framePosition}
+                disabled={instrumentMode !== 'replay'}
+                onChange={(event) => {
+                  scrubReplay(Number(event.target.value));
+                }}
+              />
+              <output aria-live="polite">
+                {formatElapsed(replayViewState.elapsedMs)} /{' '}
+                {formatElapsed(replayViewState.durationMs)}
+              </output>
+            </label>
+          </section>
 
           <section
             className="audio-controls"
@@ -327,6 +490,9 @@ export function App() {
           </section>
         </section>
         <div className="signal-strip" aria-label="Score-driven output lanes">
+          <span>
+            {instrumentMode === 'live' && !liveFallbackActive ? 'live mode' : 'replay mode'}
+          </span>
           <span>{viewState.sourceLabel}</span>
           <span>{viewState.statusLabel}</span>
           <span>visual signature {viewState.visualParameters.signature}</span>
@@ -348,6 +514,20 @@ function formatElapsed(elapsedMs: number): string {
 
 function formatHertz(value: number): string {
   return `${value.toFixed(1)} Hz`;
+}
+
+function liveWeatherStatusText(state: LiveWeatherUiState, liveFallbackActive: boolean): string {
+  const fallbackSuffix = liveFallbackActive ? ' Showing replay fallback.' : '';
+
+  if (state.status === 'idle') {
+    return 'Live weather has not loaded yet.';
+  }
+
+  if (state.status === 'loading') {
+    return state.message;
+  }
+
+  return `${state.message}${fallbackSuffix}`;
 }
 
 function audioStatusText(state: AudioControlState, isMuted: boolean): string {

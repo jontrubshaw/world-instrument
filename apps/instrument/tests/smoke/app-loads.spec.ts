@@ -1,6 +1,28 @@
 import { expect, test } from '@playwright/test';
 
 test('loads the instrument shell', async ({ page }) => {
+  await page.route('https://api.open-meteo.com/v1/forecast**', async (route) => {
+    await route.fulfill({
+      json: {
+        latitude: 51.5,
+        longitude: -0.12,
+        timezone: 'GMT',
+        current: {
+          time: '2026-06-14T21:00',
+          temperature_2m: 18.4,
+          apparent_temperature: 17.9,
+          relative_humidity_2m: 72,
+          precipitation: 0.1,
+          rain: 0,
+          weather_code: 3,
+          cloud_cover: 86,
+          surface_pressure: 1012.4,
+          wind_speed_10m: 6.8,
+          wind_direction_10m: 248,
+        },
+      },
+    });
+  });
   await page.addInitScript(() => {
     const vibrationLog: VibratePattern[] = [];
 
@@ -29,10 +51,22 @@ test('loads the instrument shell', async ({ page }) => {
   await expect(canvas).toBeVisible();
   await expect.poll(() => canvas.evaluate((element) => element.clientWidth > 0)).toBe(true);
   await expect.poll(() => canvas.evaluate((element) => element.clientHeight > 0)).toBe(true);
+
+  const streamControls = page.getByRole('region', { name: 'Stream controls' });
+  await expect(streamControls).toBeVisible();
+  await expect(streamControls).toHaveAttribute('data-instrument-mode', 'live');
+  await expect(streamControls).toHaveAttribute('data-live-state', 'ready');
+  await expect(page.getByRole('status')).toHaveText('Live weather is driving the instrument.');
   await expect
     .poll(() => canvas.evaluate((element) => element.dataset.scoreId))
     .toBe('weather-score');
   await expect.poll(() => canvas.evaluate((element) => element.dataset.scoreFrameIndex)).toBe('0');
+  await expect
+    .poll(() => canvas.evaluate((element) => element.dataset.weatherCondition))
+    .toBe('overcast');
+
+  await page.getByRole('button', { name: 'Replay archive' }).click();
+  await expect(streamControls).toHaveAttribute('data-instrument-mode', 'replay');
   await expect
     .poll(() => canvas.evaluate((element) => element.dataset.scoreSignature))
     .toBe('8f5c7a72');

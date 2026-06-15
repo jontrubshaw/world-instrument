@@ -1,22 +1,16 @@
 import {
-  SCORE_INPUT_SCHEMA_VERSION,
   parseReplaySnapshot,
   type ReplayFrame,
   type ReplaySnapshot,
   type ScoreOutput,
 } from '@world-instrument/core';
-import { weatherScoreV1 } from '@world-instrument/scores';
 
-import {
-  mapScoreOutputToAudioParameters,
-  type InstrumentAudioParameters,
-} from './audioParameters.ts';
-import { mapScoreOutputToHapticPattern, type InstrumentHapticPattern } from './hapticParameters.ts';
 import recordedWeatherReplay from './replayArchives/weather-london.v1.replay.json';
 import {
-  mapScoreOutputToVisualParameters,
-  type InstrumentVisualParameters,
-} from './visualParameters.ts';
+  evaluateWeatherInstrumentFrame,
+  evaluateWeatherScore,
+  type WeatherInstrumentState,
+} from './weatherInstrument.ts';
 
 export const REPLAY_PLAYBACK_INTERVAL_MS = 1800;
 
@@ -26,19 +20,12 @@ export interface ReplayArchive {
   readonly snapshot: ReplaySnapshot;
 }
 
-export interface ReplayInstrumentFrameState {
+export interface ReplayInstrumentFrameState extends WeatherInstrumentState {
   readonly archiveId: string;
   readonly archiveLabel: string;
   readonly framePosition: number;
   readonly frameCount: number;
-  readonly elapsedMs: number;
   readonly durationMs: number;
-  readonly sourceLabel: string;
-  readonly statusLabel: string;
-  readonly output: ScoreOutput;
-  readonly visualParameters: InstrumentVisualParameters;
-  readonly audioParameters: InstrumentAudioParameters;
-  readonly hapticPattern: InstrumentHapticPattern;
 }
 
 export function loadReplayArchives(): readonly ReplayArchive[] {
@@ -59,28 +46,27 @@ export function evaluateReplayFrame(
 ): ReplayInstrumentFrameState {
   const framePosition = clampFramePosition(archive.snapshot, requestedPosition);
   const frame = frameAt(archive.snapshot, framePosition);
-  const output = evaluateWeatherScore(frame);
-  const visualParameters = mapScoreOutputToVisualParameters(output);
-  const audioParameters = mapScoreOutputToAudioParameters(output);
-  const hapticPattern = mapScoreOutputToHapticPattern(output);
   const frameCount = archive.snapshot.frames.length;
   const durationMs = archive.snapshot.frames.at(-1)?.elapsedMs ?? frame.elapsedMs;
+  const instrumentFrame = evaluateWeatherInstrumentFrame({
+    frameIndex: frame.frameIndex,
+    elapsedMs: frame.elapsedMs,
+    capturedAt: frame.capturedAt,
+    streams: frame.streams,
+    seed: frame.seed,
+    sourceLabel: sourceLabel(frame),
+  });
 
   return {
+    ...instrumentFrame,
     archiveId: archive.id,
     archiveLabel: archive.label,
     framePosition,
     frameCount,
-    elapsedMs: frame.elapsedMs,
     durationMs,
-    sourceLabel: sourceLabel(frame),
-    statusLabel: `${visualParameters.condition} archive frame ${String(framePosition + 1)}/${String(
-      frameCount,
-    )}`,
-    output,
-    visualParameters,
-    audioParameters,
-    hapticPattern,
+    statusLabel: `${instrumentFrame.visualParameters.condition} archive frame ${String(
+      framePosition + 1,
+    )}/${String(frameCount)}`,
   };
 }
 
@@ -94,20 +80,6 @@ export function clampFramePosition(snapshot: ReplaySnapshot, requestedPosition: 
   }
 
   return Math.min(Math.max(Math.round(requestedPosition), 0), snapshot.frames.length - 1);
-}
-
-function evaluateWeatherScore(frame: ReplayFrame): ScoreOutput {
-  return weatherScoreV1.evaluate({
-    schemaVersion: SCORE_INPUT_SCHEMA_VERSION,
-    score: weatherScoreV1.metadata,
-    frame: {
-      frameIndex: frame.frameIndex,
-      elapsedMs: frame.elapsedMs,
-      renderedAt: frame.capturedAt,
-    },
-    streams: frame.streams,
-    seed: frame.seed,
-  });
 }
 
 function frameAt(snapshot: ReplaySnapshot, position: number): ReplayFrame {
