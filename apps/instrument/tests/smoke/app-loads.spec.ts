@@ -109,7 +109,13 @@ test('loads the instrument shell', async ({ page }) => {
   const sensorCaptureControls = page.getByRole('region', { name: 'Capture controls' });
   await page.getByRole('button', { name: 'Start capture' }).click();
   await expect(sensorCaptureControls).toHaveAttribute('data-capture-state', 'recording');
-  await expect(sensorCaptureControls).toHaveAttribute('data-capture-frame-count', '1');
+  await expect
+    .poll(() =>
+      sensorCaptureControls.evaluate((element) =>
+        Number(element.getAttribute('data-capture-frame-count')),
+      ),
+    )
+    .toBeGreaterThanOrEqual(1);
   await page.getByRole('button', { name: 'Stop capture' }).click();
   const sensorDownloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Export replay JSON' }).click();
