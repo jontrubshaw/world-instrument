@@ -85,7 +85,7 @@ test('loads the instrument shell', async ({ page }) => {
   await expect(streamControls).toHaveAttribute('data-source-mode', 'live');
   await expect(streamControls).toHaveAttribute('data-source-state', 'ready');
   await expect(streamControls.locator('.source-status')).toHaveText(
-    'Browser sensor / interaction is waiting for local interaction; move the pointer to drive the instrument.',
+    'Browser sensor / interaction pointer fallback is driving the instrument; motion/orientation sensors are unavailable or waiting for permission.',
   );
   await expect(page.getByText('live mode', { exact: true })).toBeVisible();
   await page.evaluate(() => {
