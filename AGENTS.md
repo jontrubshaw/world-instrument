@@ -161,6 +161,7 @@ There is no longer a global pause on Cursor setup. Pick the next issue deliberat
 - PR #40 (`JTW-42 add replay capture export`) merged on 2026-06-15 after CI passed and the documented latest-head Codex review fallback window elapsed with all known replay timing, live stream/frame pairing, output consistency, and fallback capture feedback addressed. `JTW-42` was marked Done.
 - JTW-43 was released to Cursor on 2026-06-15 after PR #40 merged. Scope was the stream-source registry/extensibility boundary: source metadata, capabilities, fixture/live/replay support, score compatibility, normalized-stream mapping documentation, tests for registry behavior, and minimal non-weather fixture proof only if useful.
 - PR #42 (`JTW-43 define stream source registry`) merged on 2026-06-15 after CI passed, the branch was clean, and the documented latest-head Codex review fallback window elapsed with no review appearing. `JTW-43` was marked Done.
+- JTW-44 setup branch `cursor/playwright-chromium-setup-6dfd` verified on 2026-06-15 in Cursor Cloud: `bash .cursor/install.sh` selected Node `v24.16.0` / npm `11.13.0`, ran `npm install`, and installed Playwright Chromium; `node --version`, `npm run check`, `npm run build`, and `npm run test:smoke` passed. Build still reports the expected large initial bundle warning from the Three.js app shell.
 
 ## Cursor Cloud specific instructions
 
