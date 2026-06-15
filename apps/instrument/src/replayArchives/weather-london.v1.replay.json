@@ -252,7 +252,7 @@
               "label": "Weather condition",
               "observedAt": "2026-06-14T21:15:00.000Z",
               "quality": "estimated",
-              "value": "partly-cloudy",
+              "value": "clear",
               "confidence": 0.86
             },
             {
@@ -278,8 +278,8 @@
           "metadata": {
             "provider": "open-meteo",
             "mode": "archive",
-            "condition": "partly-cloudy",
-            "weatherCode": 2,
+            "condition": "clear",
+            "weatherCode": 0,
             "location": {
               "id": "london-uk",
               "label": "London, UK",

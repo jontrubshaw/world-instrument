@@ -51,7 +51,7 @@ test('loads the instrument shell', async ({ page }) => {
   await expect.poll(() => canvas.evaluate((element) => element.dataset.scoreFrameIndex)).toBe('1');
   await expect
     .poll(() => canvas.evaluate((element) => element.dataset.weatherCondition))
-    .toBe('partly-cloudy');
+    .toBe('clear');
 
   await page.getByRole('button', { name: 'Restart' }).click();
   await expect.poll(() => canvas.evaluate((element) => element.dataset.scoreFrameIndex)).toBe('0');

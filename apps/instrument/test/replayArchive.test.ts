@@ -36,7 +36,7 @@ describe('instrument replay archive', () => {
     expect(sequence.map((output) => output.frameIndex)).toEqual([0, 1, 2]);
     expect(sequence.map((output) => output.metadata?.condition)).toEqual([
       'overcast',
-      'partly-cloudy',
+      'clear',
       'rain',
     ]);
   });
