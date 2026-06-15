@@ -210,6 +210,52 @@ describe('instrument replay capture', () => {
     expect(firstStream?.observedAt).toBe('2026-06-14T20:00:00.000Z');
   });
 
+  it('uses capture-clock elapsed times for fixture frames with older observations', () => {
+    const session = createReplayCaptureSession({
+      sessionId: 'captured-fixture-clock-regression',
+      title: 'Captured fixture clock regression',
+      startedAt: '2026-06-14T21:05:00.000Z',
+    });
+    const replayInput = captureInputForReplayFrame(firstReplayArchive(), 0);
+    const preparedFrame = prepareFrameForCaptureClock(
+      session,
+      {
+        ...replayInput,
+        sourceMode: 'fixture',
+        capturedAt: '2026-06-14T20:00:00.000Z',
+        streams: replayInput.streams.map((stream) => ({
+          ...stream,
+          observedAt: '2026-06-14T20:00:00.000Z',
+        })),
+      },
+      '2026-06-14T21:05:30.000Z',
+    );
+    const capturedSession = appendCapturedReplayFrame(session, preparedFrame);
+    const snapshot = buildReplaySnapshot(capturedSession, {
+      createdAt: '2026-06-14T21:06:00.000Z',
+    });
+
+    expect(preparedFrame).toMatchObject({
+      sourceMode: 'fixture',
+      capturedAt: '2026-06-14T21:05:30.000Z',
+      elapsedMs: 30000,
+    });
+    expect(preparedFrame.output.generatedAt).toBe('2026-06-14T21:05:30.000Z');
+    expect(capturedSession.frames[0]?.elapsedMs).toBe(30000);
+    expect(parseReplaySnapshot(snapshot).frames[0]).toMatchObject({
+      capturedAt: '2026-06-14T21:05:30.000Z',
+      elapsedMs: 30000,
+      output: {
+        generatedAt: '2026-06-14T21:05:30.000Z',
+      },
+    });
+    expect(metadataFrames(snapshot.metadata)[0]).toMatchObject({
+      sourceMode: 'fixture',
+      capturedAt: '2026-06-14T21:05:30.000Z',
+      elapsedMs: 30000,
+    });
+  });
+
   it('rescores live frames after applying the capture clock', () => {
     const session = createReplayCaptureSession({
       sessionId: 'captured-live-rescore-regression',

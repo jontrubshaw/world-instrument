@@ -105,7 +105,7 @@ export function prepareFrameForCaptureClock(
   frame: ReplayCaptureFrameInput,
   capturedAt: string,
 ): ReplayCaptureFrameInput {
-  if (frame.sourceMode !== 'live') {
+  if (frame.sourceMode === 'replay') {
     return frame;
   }
 
