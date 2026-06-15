@@ -5,6 +5,7 @@ import {
   isBrowserSensorStateAtLeastAsFresh,
   requestBrowserSensorPermission,
   updateBrowserSensorMotion,
+  updateBrowserSensorOrientation,
   updateBrowserSensorPointer,
 } from '../src/browserSensor.ts';
 
@@ -131,6 +132,46 @@ describe('browser sensor runtime', () => {
     expect(stalePointerState.snapshot.capabilities.fallback).toBe('pointer');
   });
 
+  it('keeps pointer fallback for device events without measured axes', () => {
+    Object.defineProperty(globalThis, 'window', {
+      configurable: true,
+      value: {
+        innerHeight: 500,
+        innerWidth: 1_000,
+        DeviceMotionEvent: function DeviceMotionEvent() {},
+        DeviceOrientationEvent: function DeviceOrientationEvent() {},
+        PointerEvent: function PointerEvent() {},
+      },
+    });
+    const initialState = createInitialBrowserSensorRuntimeState(
+      new Date('2026-06-15T12:00:00.000Z'),
+    );
+    const emptyMotionState = updateBrowserSensorMotion(
+      initialState,
+      createEmptyDeviceMotionEvent(),
+      new Date('2026-06-15T12:00:01.000Z'),
+    );
+    const emptyOrientationState = updateBrowserSensorOrientation(
+      emptyMotionState,
+      createEmptyDeviceOrientationEvent(),
+      new Date('2026-06-15T12:00:02.000Z'),
+    );
+    const pointerState = updateBrowserSensorPointer(
+      emptyOrientationState,
+      createPointerEvent({ buttons: 0, pointerType: 'mouse' }),
+      new Date('2026-06-15T12:00:03.000Z'),
+    );
+
+    expect(emptyMotionState.snapshot.motion).toEqual({ intervalMs: 16.7 });
+    expect(emptyMotionState.snapshot.capabilities.fallback).toBe('pointer');
+    expect(emptyOrientationState.snapshot.orientation).toEqual({ absolute: true });
+    expect(emptyOrientationState.snapshot.capabilities.fallback).toBe('pointer');
+    expect(pointerState.snapshot.motion?.acceleration).toBeUndefined();
+    expect(pointerState.snapshot.motion?.rotationRate).toBeUndefined();
+    expect(pointerState.snapshot.orientation?.angles).toBeUndefined();
+    expect(pointerState.snapshot.capabilities.fallback).toBe('pointer');
+  });
+
   it('rejects committed sensor state that is older than the ref snapshot', () => {
     Object.defineProperty(globalThis, 'window', {
       configurable: true,
@@ -236,6 +277,31 @@ function createDeviceMotionEvent(options: {
     },
     interval: 16.7,
   } as DeviceMotionEvent;
+}
+
+function createEmptyDeviceMotionEvent(): DeviceMotionEvent {
+  return {
+    acceleration: {
+      x: null,
+      y: null,
+      z: null,
+    },
+    rotationRate: {
+      alpha: null,
+      beta: null,
+      gamma: null,
+    },
+    interval: 16.7,
+  } as DeviceMotionEvent;
+}
+
+function createEmptyDeviceOrientationEvent(): DeviceOrientationEvent {
+  return {
+    absolute: true,
+    alpha: null,
+    beta: null,
+    gamma: null,
+  } as DeviceOrientationEvent;
 }
 
 function deferred<T>(): {

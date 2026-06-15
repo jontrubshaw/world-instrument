@@ -325,17 +325,14 @@ function permissionedCapabilities(
   current: BrowserSensorCapabilities,
   updates: Partial<Pick<BrowserSensorCapabilities, 'deviceMotion' | 'deviceOrientation'>>,
 ): BrowserSensorCapabilities {
+  const hasMeasuredUpdate =
+    updates.deviceMotion === 'available' || updates.deviceOrientation === 'available';
+
   return {
     ...current,
     ...updates,
     permission: 'granted',
-    fallback:
-      updates.deviceMotion === 'available' ||
-      updates.deviceOrientation === 'available' ||
-      current.deviceMotion === 'available' ||
-      current.deviceOrientation === 'available'
-        ? 'none'
-        : current.fallback,
+    fallback: hasMeasuredUpdate ? 'none' : current.fallback,
   };
 }
 
@@ -415,11 +412,18 @@ function hasMotionPayload(motion: BrowserSensorMotionPayload): boolean {
   return motion.acceleration !== undefined || motion.rotationRate !== undefined;
 }
 
+function hasOrientationPayload(orientation: BrowserSensorOrientationPayload): boolean {
+  return orientation.angles !== undefined;
+}
+
 function hasDeviceInput(input: {
   readonly motion?: BrowserSensorMotionPayload;
   readonly orientation?: BrowserSensorOrientationPayload;
 }): boolean {
-  return input.motion !== undefined || input.orientation !== undefined;
+  return (
+    (input.motion !== undefined && hasMotionPayload(input.motion)) ||
+    (input.orientation !== undefined && hasOrientationPayload(input.orientation))
+  );
 }
 
 function retainFreshBrowserSensorInputs(
