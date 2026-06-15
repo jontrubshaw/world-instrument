@@ -60,11 +60,12 @@ test('loads the instrument shell', async ({ page }) => {
   await expect(streamControls).toHaveAttribute('data-live-state', 'ready');
   await expect(streamControls).toHaveAttribute('data-source-id', 'weather.open-meteo');
   await expect(streamControls).toHaveAttribute('data-source-state', 'ready');
-  await expect(page.getByLabel('Source')).toHaveValue('weather.open-meteo');
+  const sourceSelector = streamControls.locator('.source-picker select');
+  await expect(sourceSelector).toHaveValue('weather.open-meteo');
   await expect(streamControls.locator('.live-status')).toHaveText(
     'Live weather is driving the instrument.',
   );
-  await page.getByRole('button', { name: 'Live' }).click();
+  await page.getByRole('button', { name: 'Live', exact: true }).click();
   await page.waitForTimeout(50);
   await expect(streamControls).toHaveAttribute('data-instrument-mode', 'live');
   await expect(streamControls).toHaveAttribute('data-live-state', 'ready');
@@ -79,18 +80,18 @@ test('loads the instrument shell', async ({ page }) => {
     .poll(() => canvas.evaluate((element) => element.dataset.weatherCondition))
     .toBe('overcast');
 
-  await page.getByLabel('Source').selectOption('sensor.mock-local-device');
+  await sourceSelector.selectOption('sensor.mock-local-device');
   await expect(streamControls).toHaveAttribute('data-source-id', 'sensor.mock-local-device');
   await expect(streamControls).toHaveAttribute('data-source-mode', 'fixture');
   await expect(streamControls).toHaveAttribute('data-source-state', 'unavailable');
-  await expect(page.getByRole('button', { name: 'Live' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Live', exact: true })).toBeDisabled();
   await expect(streamControls.locator('.source-status')).toHaveText(
     'Mock local sensor fixture is available, but no compatible score is registered yet; replay remains available. Showing deterministic replay fallback.',
   );
-  await expect(page.getByText('replay fallback')).toBeVisible();
+  await expect(page.getByText('replay fallback', { exact: true })).toBeVisible();
 
-  await page.getByLabel('Source').selectOption('weather.open-meteo');
-  await page.getByRole('button', { name: 'Live' }).click();
+  await sourceSelector.selectOption('weather.open-meteo');
+  await page.getByRole('button', { name: 'Live', exact: true }).click();
   await expect(streamControls).toHaveAttribute('data-source-id', 'weather.open-meteo');
   await expect(streamControls).toHaveAttribute('data-source-mode', 'live');
   await expect(streamControls).toHaveAttribute('data-source-state', 'ready');
@@ -130,7 +131,7 @@ test('loads the instrument shell', async ({ page }) => {
     },
   });
 
-  await page.getByRole('button', { name: 'Replay archive' }).click();
+  await page.getByRole('button', { name: 'Replay', exact: true }).click();
   await expect(streamControls).toHaveAttribute('data-instrument-mode', 'replay');
   await expect
     .poll(() => canvas.evaluate((element) => element.dataset.scoreSignature))

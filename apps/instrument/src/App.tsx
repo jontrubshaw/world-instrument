@@ -44,6 +44,7 @@ import {
   sourceDefinition,
   sourceHasCompatibleScore,
   sourceSupportsMode,
+  type SourceInstrumentFrameState,
   type SourceReadState,
 } from './sourceRuntime.ts';
 
@@ -66,9 +67,9 @@ type SourceUiState =
       readonly sourceMode: Exclude<InstrumentMode, 'replay'>;
       readonly status: 'loading';
       readonly message: string;
-      readonly seed?: undefined;
-      readonly frame?: undefined;
-      readonly streamState?: undefined;
+      readonly seed?: string;
+      readonly frame?: SourceInstrumentFrameState;
+      readonly streamState?: SourceReadState['streamState'];
     };
 
 export function App() {
@@ -202,23 +203,6 @@ export function App() {
   }, [instrumentMode, isPlaying, lastFramePosition]);
 
   useEffect(() => {
-    const nextArchive = sourceReplayArchives[0];
-
-    if (nextArchive === undefined) {
-      setFramePosition(0);
-      setIsPlaying(false);
-
-      return;
-    }
-
-    if (!sourceReplayArchives.some((archive) => archive.id === archiveId)) {
-      setArchiveId(nextArchive.id);
-      setFramePosition(0);
-      setIsPlaying(false);
-    }
-  }, [archiveId, sourceReplayArchives]);
-
-  useEffect(() => {
     if (instrumentMode === 'replay') {
       return;
     }
@@ -250,14 +234,35 @@ export function App() {
           return;
         }
 
-        setSourceState((currentState) => ({
-          ...currentState,
-          status: 'error',
-          message:
+        setSourceState((currentState) => {
+          const message =
             error instanceof Error
               ? `Source adapter error: ${error.message}`
-              : 'Source adapter error; replay remains available.',
-        }));
+              : 'Source adapter error; replay remains available.';
+
+          if (currentState.frame !== undefined) {
+            return {
+              sourceId: currentState.sourceId,
+              sourceName: currentState.sourceName,
+              sourceMode: currentState.sourceMode,
+              status: 'error',
+              message,
+              seed: currentState.frame.seed,
+              frame: currentState.frame,
+              ...(currentState.streamState === undefined
+                ? {}
+                : { streamState: currentState.streamState }),
+            };
+          }
+
+          return {
+            sourceId: currentState.sourceId,
+            sourceName: currentState.sourceName,
+            sourceMode: currentState.sourceMode,
+            status: 'error',
+            message,
+          };
+        });
       });
 
     return () => {
@@ -353,12 +358,19 @@ export function App() {
 
     const nextSource = sourceDefinition(nextSourceId);
     const nextMode = selectableModeForSource(nextSourceId, instrumentMode);
+    const nextReplayArchive = archives.find((archive) =>
+      archiveMatchesSource(archive, nextSource.kind),
+    );
 
     sourceSequenceRef.current = undefined;
     setSelectedSourceId(nextSourceId);
     setInstrumentMode(nextMode);
     setFramePosition(0);
     setIsPlaying(false);
+
+    if (nextReplayArchive !== undefined) {
+      setArchiveId(nextReplayArchive.id);
+    }
 
     if (nextMode !== 'replay') {
       markSourceLoading(setSourceState, nextSourceId, nextSource.displayName, nextMode);
@@ -903,7 +915,7 @@ function markSourceLoading(
       ...(canPreserveFrame
         ? {
             frame: currentState.frame,
-            seed: currentState.seed,
+            seed: currentState.frame.seed,
             ...(currentState.streamState === undefined
               ? {}
               : { streamState: currentState.streamState }),
@@ -929,7 +941,7 @@ function mergeSourceUiState(
     return {
       ...nextState,
       frame: currentState.frame,
-      seed: currentState.seed,
+      seed: currentState.frame.seed,
       ...(currentState.streamState === undefined ? {} : { streamState: currentState.streamState }),
     };
   }

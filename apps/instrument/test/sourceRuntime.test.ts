@@ -86,13 +86,13 @@ describe('instrument source runtime', () => {
           kind: 'sensor',
           label: 'Studio Controller sensor',
         },
-        samples: expect.arrayContaining([
-          expect.objectContaining({
-            key: 'acceleration',
-            kind: 'vector',
-          }),
-        ]),
       },
+    });
+    expect(
+      frame.streamState?.samples.find((sample) => sample.key === 'acceleration'),
+    ).toMatchObject({
+      key: 'acceleration',
+      kind: 'vector',
     });
     expect(frame.frame).toBeUndefined();
   });
