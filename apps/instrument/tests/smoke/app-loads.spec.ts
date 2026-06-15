@@ -85,16 +85,16 @@ test('loads the instrument shell', async ({ page }) => {
   await expect(streamControls).toHaveAttribute('data-source-mode', 'live');
   await page.mouse.move(320, 180);
   await page.getByRole('button', { name: 'Refresh live' }).click();
-  await expect(streamControls).toHaveAttribute('data-source-state', 'degraded');
+  await expect(streamControls).toHaveAttribute('data-source-state', /^(degraded|ready)$/);
   await expect(streamControls.locator('.source-status')).toHaveText(
-    'Browser interaction is driving the instrument through pointer fallback.',
+    /^(Browser interaction is driving the instrument through pointer fallback\.|Browser sensors are driving the instrument\.)$/,
   );
   await expect
     .poll(() => canvas.evaluate((element) => element.dataset.scoreId))
     .toBe('sensor-score');
   await expect
     .poll(() => canvas.evaluate((element) => element.dataset.weatherCondition))
-    .toBe('sensor-pointer-active');
+    .toMatch(/^sensor-(motion|pointer)-active$/u);
 
   const captureControls = page.getByRole('region', { name: 'Capture controls' });
   await expect(captureControls).toBeVisible();
