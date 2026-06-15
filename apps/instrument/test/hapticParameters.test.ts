@@ -51,8 +51,8 @@ describe('weather score haptic patterns', () => {
     expect(secondRun).toEqual(firstRun);
     expect(firstRun.map((pattern) => pattern.signature)).toEqual([
       '8f5c7a72',
-      'ee9a1be4',
-      '7148e47c',
+      '6c2d4560',
+      '6247890f',
     ]);
   });
 

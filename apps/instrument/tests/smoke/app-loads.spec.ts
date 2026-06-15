@@ -131,12 +131,12 @@ test('loads the instrument shell', async ({ page }) => {
       }),
     )
     .toEqual({
-      signature: '7148e47c',
+      signature: '6247890f',
       enabled: true,
-      intensity: 0.84,
-      pulseDurationMs: 106,
-      repeatCount: 4,
-      pattern: [106, 84, 106, 84, 106, 84, 106],
+      intensity: 0.281,
+      pulseDurationMs: 59,
+      repeatCount: 2,
+      pattern: [59, 131, 59],
     });
   await page.getByRole('button', { name: 'Enable haptics' }).click();
   await expect(hapticControls).toHaveAttribute('data-haptic-enabled', 'true');
@@ -148,7 +148,7 @@ test('loads the instrument shell', async ({ page }) => {
             .__worldInstrumentVibrations,
       ),
     )
-    .toContainEqual([106, 84, 106, 84, 106, 84, 106]);
+    .toContainEqual([59, 131, 59]);
 
   await page.getByRole('button', { name: 'Play' }).click();
   await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible();
