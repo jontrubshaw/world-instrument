@@ -8,12 +8,12 @@ export interface HapticOutputAdapter {
   stop(): HapticPlaybackState;
 }
 
-type NavigatorWithVibration = Navigator & {
-  vibrate?: (pattern: VibratePattern) => boolean;
-};
+interface BrowserVibrationNavigator {
+  readonly vibrate?: Navigator['vibrate'];
+}
 
 export class BrowserVibrationHapticAdapter implements HapticOutputAdapter {
-  constructor(private readonly browserNavigator: NavigatorWithVibration = navigator) {}
+  constructor(private readonly browserNavigator: BrowserVibrationNavigator = navigator) {}
 
   get isSupported(): boolean {
     return typeof this.browserNavigator.vibrate === 'function';

@@ -38,22 +38,22 @@ describe('BrowserVibrationHapticAdapter', () => {
   });
 });
 
-interface FakeVibrationNavigator extends Navigator {
-  readonly calls: VibratePattern[];
-  vibrate(pattern: VibratePattern): boolean;
+interface FakeVibrationNavigator {
+  readonly calls: Array<VibratePattern | Iterable<number>>;
+  vibrate(pattern: VibratePattern | Iterable<number>): boolean;
 }
 
 function createFakeNavigator(accepted = true): FakeVibrationNavigator {
-  const calls: VibratePattern[] = [];
+  const calls: Array<VibratePattern | Iterable<number>> = [];
 
   return {
     calls,
-    vibrate(pattern: VibratePattern) {
+    vibrate(pattern: VibratePattern | Iterable<number>) {
       calls.push(pattern);
 
       return accepted;
     },
-  } as FakeVibrationNavigator;
+  };
 }
 
 function testPattern(): InstrumentHapticPattern {
