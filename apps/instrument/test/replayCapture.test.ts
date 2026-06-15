@@ -198,9 +198,7 @@ describe('instrument replay capture', () => {
     } satisfies ReplayCaptureFrameInput;
 
     expect(replayCaptureFrameKey(agedLiveInput)).toBe(replayCaptureFrameKey(readyLiveInput));
-    expect(replayCaptureFrameKey(offlineLiveInput)).not.toBe(
-      replayCaptureFrameKey(readyLiveInput),
-    );
+    expect(replayCaptureFrameKey(offlineLiveInput)).not.toBe(replayCaptureFrameKey(readyLiveInput));
   });
 
   it('derives capture session metadata from replay fallback frames', () => {
