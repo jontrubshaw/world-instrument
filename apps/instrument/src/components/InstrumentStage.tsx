@@ -92,10 +92,10 @@ export function InstrumentStage({ visualParameters }: InstrumentStageProps) {
 
     const startTime = window.performance.now();
     let animationFrameId = 0;
-    let appliedSignature = '';
+    let appliedParametersKey = '';
 
     const applyVisualParameters = (parameters: InstrumentVisualParameters) => {
-      appliedSignature = parameters.signature;
+      appliedParametersKey = visualParametersKey(parameters);
 
       renderer.setClearColor(new THREE.Color(parameters.backgroundColor), 1);
       renderer.domElement.dataset.scoreId = parameters.scoreId;
@@ -130,7 +130,7 @@ export function InstrumentStage({ visualParameters }: InstrumentStageProps) {
       const elapsed = (window.performance.now() - startTime) / 1000;
       const pulse = Math.sin(elapsed * parameters.pulseRate) * parameters.pulseAmplitude;
 
-      if (appliedSignature !== parameters.signature) {
+      if (appliedParametersKey !== visualParametersKey(parameters)) {
         applyVisualParameters(parameters);
       }
 
@@ -166,4 +166,14 @@ export function InstrumentStage({ visualParameters }: InstrumentStageProps) {
   }, []);
 
   return <div ref={mountRef} className="instrument-stage" />;
+}
+
+function visualParametersKey(parameters: InstrumentVisualParameters): string {
+  return [
+    parameters.scoreId,
+    parameters.scoreVersion,
+    String(parameters.frameIndex),
+    parameters.generatedAt,
+    parameters.signature,
+  ].join(':');
 }
