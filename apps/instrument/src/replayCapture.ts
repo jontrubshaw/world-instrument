@@ -91,6 +91,22 @@ export function appendCapturedReplayFrame(
   };
 }
 
+export function prepareFrameForCaptureClock(
+  session: ReplayCaptureSession,
+  frame: ReplayCaptureFrameInput,
+  capturedAt: string,
+): ReplayCaptureFrameInput {
+  if (frame.sourceMode !== 'live') {
+    return frame;
+  }
+
+  return {
+    ...frame,
+    capturedAt,
+    elapsedMs: elapsedFromSessionStart(session.startedAt, capturedAt),
+  };
+}
+
 export function buildReplaySnapshot(
   session: ReplayCaptureSession,
   options: BuildReplaySnapshotOptions,

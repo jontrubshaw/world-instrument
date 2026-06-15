@@ -25,6 +25,7 @@ import {
   createReplayCaptureSession,
   createReplayCaptureSessionId,
   createReplayDownloadFilename,
+  prepareFrameForCaptureClock,
   replayCaptureFrameKey,
   serializeReplaySnapshot,
   stopReplayCaptureSession,
@@ -254,11 +255,19 @@ export function App() {
     }
 
     captureLastFrameKeyRef.current = frameKey;
-    setCaptureSession((currentSession) =>
-      currentSession?.status === 'recording'
-        ? appendCapturedReplayFrame(currentSession, currentCaptureFrame)
-        : currentSession,
-    );
+    setCaptureSession((currentSession) => {
+      if (currentSession?.status !== 'recording') {
+        return currentSession;
+      }
+
+      const capturedFrame = prepareFrameForCaptureClock(
+        currentSession,
+        currentCaptureFrame,
+        new Date().toISOString(),
+      );
+
+      return appendCapturedReplayFrame(currentSession, capturedFrame);
+    });
   }, [captureSession?.status, currentCaptureFrame]);
 
   useEffect(() => {

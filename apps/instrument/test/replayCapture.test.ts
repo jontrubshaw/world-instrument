@@ -7,6 +7,7 @@ import {
   createReplayCaptureSession,
   createReplayCaptureSessionId,
   createReplayDownloadFilename,
+  prepareFrameForCaptureClock,
   serializeReplaySnapshot,
   type ReplayCaptureFrameInput,
 } from '../src/replayCapture.ts';
@@ -138,6 +139,39 @@ describe('instrument replay capture', () => {
     expect(createReplayDownloadFilename(snapshot)).toBe(
       'world-instrument-captured-live-weather-2026-06-14T21-05-00Z.replay.json',
     );
+  });
+
+  it('uses capture-clock elapsed time for live frames with older observations', () => {
+    const session = createReplayCaptureSession({
+      sessionId: 'captured-live-clock-regression',
+      title: 'Captured live clock regression',
+      startedAt: '2026-06-14T21:05:00.000Z',
+    });
+    const replayInput = captureInputForReplayFrame(firstReplayArchive(), 0);
+    const liveInput = {
+      ...replayInput,
+      sourceMode: 'live' as const,
+      capturedAt: '2026-06-14T20:00:00.000Z',
+      streams: replayInput.streams.map((stream) => ({
+        ...stream,
+        observedAt: '2026-06-14T20:00:00.000Z',
+      })),
+    };
+    const clockedInput = prepareFrameForCaptureClock(
+      session,
+      liveInput,
+      '2026-06-14T21:05:12.000Z',
+    );
+    const capturedSession = appendCapturedReplayFrame(session, clockedInput);
+    const frame = capturedSession.frames[0];
+    const firstStream = frame?.streams[0];
+
+    expect(frame).toMatchObject({
+      sourceMode: 'live',
+      capturedAt: '2026-06-14T21:05:12.000Z',
+      elapsedMs: 12000,
+    });
+    expect(firstStream?.observedAt).toBe('2026-06-14T20:00:00.000Z');
   });
 });
 
