@@ -1,4 +1,12 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type Dispatch,
+  type SetStateAction,
+} from 'react';
 
 import { InstrumentAudioEngine } from './audioEngine.ts';
 import { serializeAudioParametersForDom } from './audioParameters.ts';
@@ -45,8 +53,8 @@ export function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [liveRefreshToken, setLiveRefreshToken] = useState(0);
   const [liveWeatherState, setLiveWeatherState] = useState<LiveWeatherUiState>({
-    status: 'idle',
-    message: 'Live weather is ready to load.',
+    status: 'loading',
+    message: 'Loading current weather...',
   });
   const [audioControlState, setAudioControlState] = useState<AudioControlState>('stopped');
   const [isAudioMuted, setIsAudioMuted] = useState(false);
@@ -118,15 +126,6 @@ export function App() {
     const abortController = new AbortController();
     let isCurrentRequest = true;
 
-    setLiveWeatherState((currentState) => ({
-      ...currentState,
-      status: 'loading',
-      message:
-        currentState.frame === undefined
-          ? 'Loading current weather...'
-          : 'Refreshing current weather...',
-    }));
-
     void readLiveWeatherFrame({
       signal: abortController.signal,
       ...(liveSequenceRef.current === undefined
@@ -179,6 +178,7 @@ export function App() {
     }
 
     const intervalId = window.setInterval(() => {
+      markLiveWeatherLoading(setLiveWeatherState);
       setLiveRefreshToken((currentToken) => currentToken + 1);
     }, LIVE_WEATHER_REFRESH_INTERVAL_MS);
 
@@ -225,6 +225,7 @@ export function App() {
 
     if (nextMode === 'live') {
       setIsPlaying(false);
+      markLiveWeatherLoading(setLiveWeatherState);
     }
   };
 
@@ -238,6 +239,7 @@ export function App() {
   const refreshLiveWeather = () => {
     setInstrumentMode('live');
     setIsPlaying(false);
+    markLiveWeatherLoading(setLiveWeatherState);
     setLiveRefreshToken((currentToken) => currentToken + 1);
   };
 
@@ -534,6 +536,19 @@ function liveWeatherStatusText(state: LiveWeatherUiState, liveFallbackActive: bo
   }
 
   return `${state.message}${fallbackSuffix}`;
+}
+
+function markLiveWeatherLoading(
+  setLiveWeatherState: Dispatch<SetStateAction<LiveWeatherUiState>>,
+): void {
+  setLiveWeatherState((currentState) => ({
+    ...currentState,
+    status: 'loading',
+    message:
+      currentState.frame === undefined
+        ? 'Loading current weather...'
+        : 'Refreshing current weather...',
+  }));
 }
 
 function audioStatusText(state: AudioControlState, isMuted: boolean): string {
