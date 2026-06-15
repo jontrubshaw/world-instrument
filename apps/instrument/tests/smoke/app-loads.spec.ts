@@ -15,6 +15,7 @@ test('loads the instrument shell', async ({ page }) => {
   await expect
     .poll(() => canvas.evaluate((element) => element.dataset.scoreId))
     .toBe('weather-score');
+  await expect.poll(() => canvas.evaluate((element) => element.dataset.scoreFrameIndex)).toBe('0');
   await expect
     .poll(() => canvas.evaluate((element) => element.dataset.scoreSignature))
     .toBe('8f5c7a72');
@@ -41,4 +42,33 @@ test('loads the instrument shell', async ({ page }) => {
       wireOpacity: 0.372,
       glowOpacity: 0.24,
     });
+
+  await expect(page.getByRole('region', { name: 'Replay controls' })).toBeVisible();
+  await expect(page.getByLabel('Archive')).toHaveValue('weather-london-archive');
+  await expect(page.getByLabel('Replay time')).toHaveValue('0');
+
+  await page.getByRole('button', { name: 'Step forward' }).click();
+  await expect.poll(() => canvas.evaluate((element) => element.dataset.scoreFrameIndex)).toBe('1');
+  await expect
+    .poll(() => canvas.evaluate((element) => element.dataset.weatherCondition))
+    .toBe('clear');
+
+  await page.getByRole('button', { name: 'Restart' }).click();
+  await expect.poll(() => canvas.evaluate((element) => element.dataset.scoreFrameIndex)).toBe('0');
+  await expect
+    .poll(() => canvas.evaluate((element) => element.dataset.scoreSignature))
+    .toBe('8f5c7a72');
+
+  const replayTime = page.getByLabel('Replay time');
+  await replayTime.focus();
+  await page.keyboard.press('End');
+  await expect.poll(() => canvas.evaluate((element) => element.dataset.scoreFrameIndex)).toBe('2');
+  await expect
+    .poll(() => canvas.evaluate((element) => element.dataset.weatherCondition))
+    .toBe('rain');
+
+  await page.getByRole('button', { name: 'Play' }).click();
+  await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible();
+  await expect.poll(() => canvas.evaluate((element) => element.dataset.scoreFrameIndex)).toBe('0');
+  await page.getByRole('button', { name: 'Pause' }).click();
 });

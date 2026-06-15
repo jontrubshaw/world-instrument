@@ -100,6 +100,8 @@ export function InstrumentStage({ visualParameters }: InstrumentStageProps) {
       renderer.setClearColor(new THREE.Color(parameters.backgroundColor), 1);
       renderer.domElement.dataset.scoreId = parameters.scoreId;
       renderer.domElement.dataset.scoreVersion = parameters.scoreVersion;
+      renderer.domElement.dataset.scoreFrameIndex = String(parameters.frameIndex);
+      renderer.domElement.dataset.scoreGeneratedAt = parameters.generatedAt;
       renderer.domElement.dataset.scoreSignature = parameters.signature;
       renderer.domElement.dataset.weatherCondition = parameters.condition;
       renderer.domElement.dataset.visualParameters = serializeVisualParametersForCanvas(parameters);

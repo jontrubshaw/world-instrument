@@ -142,6 +142,82 @@ h1 {
   line-height: 1.62;
 }
 
+.replay-controls {
+  display: grid;
+  gap: 0.8rem;
+  max-width: 34rem;
+  padding: 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 1.2rem;
+  background: rgba(255, 255, 255, 0.055);
+  box-shadow: inset 0 0 2rem rgba(110, 231, 249, 0.035);
+}
+
+.archive-picker,
+.time-scrubber {
+  display: grid;
+  gap: 0.42rem;
+  color: rgba(248, 251, 255, 0.64);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.archive-picker select {
+  width: 100%;
+  min-height: 2.45rem;
+  color: #f8fbff;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  background: rgba(5, 7, 22, 0.82);
+  padding: 0 0.9rem;
+}
+
+.transport-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.transport-controls button {
+  min-height: 2.35rem;
+  padding: 0 0.9rem;
+  color: #f8fbff;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  background: rgba(110, 231, 249, 0.12);
+  cursor: pointer;
+}
+
+.transport-controls button:disabled {
+  color: rgba(248, 251, 255, 0.34);
+  background: rgba(255, 255, 255, 0.045);
+  cursor: not-allowed;
+}
+
+.transport-controls button:focus-visible,
+.archive-picker select:focus-visible,
+.time-scrubber input:focus-visible {
+  outline: 2px solid #8eeaff;
+  outline-offset: 3px;
+}
+
+.time-scrubber input {
+  width: 100%;
+  accent-color: #8eeaff;
+}
+
+.time-scrubber output {
+  color: rgba(248, 251, 255, 0.82);
+  letter-spacing: 0.12em;
+}
+
 .signal-strip {
   display: flex;
   flex-wrap: wrap;
