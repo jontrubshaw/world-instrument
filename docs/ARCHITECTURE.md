@@ -30,6 +30,20 @@ World Instrument is organized as a deterministic translation pipeline.
 - `packages/adapters`: Stream-specific adapters and normalization.
 - `packages/scores`: Versioned score implementations.
 
+## Stream Source Registry
+
+New realtime inputs enter through a stream source registry before they receive bespoke runtime UI.
+Core defines `StreamSourceDefinition` and compatibility helpers; adapters publish concrete registry
+entries and adapter factories. A registry entry documents:
+
+- source and adapter identity;
+- whether the source supports fixture, live, and/or replay modes;
+- normalized `stream-state` schema, source kind, stream id prefix, sample keys, and metadata keys;
+- compatible deterministic score ids and stream schemas.
+
+Weather is the first live-capable source. A fixture-only mock sensor source proves the same boundary
+for non-weather inputs without adding a production sensor integration or score yet.
+
 ## Output Modalities
 
 - Visual: WebGL-first browser rendering.
