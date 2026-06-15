@@ -5,7 +5,7 @@ import type { InstrumentHapticPattern } from '../src/hapticParameters.ts';
 
 describe('BrowserVibrationHapticAdapter', () => {
   it('fails quietly when browser vibration is unsupported', () => {
-    const adapter = new BrowserVibrationHapticAdapter({} as Navigator);
+    const adapter = new BrowserVibrationHapticAdapter({});
 
     expect(adapter.isSupported).toBe(false);
     expect(adapter.applyPattern(testPattern())).toBe('unsupported');
