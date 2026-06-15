@@ -17,6 +17,7 @@ import {
 export const WEATHER_ADAPTER_ID = 'weather.open-meteo';
 export const WEATHER_ADAPTER_VERSION = '1.0.0';
 export const WEATHER_CREDENTIAL_ENV = 'WORLD_INSTRUMENT_WEATHER_API_KEY';
+export const OPEN_METEO_FORECAST_ENDPOINT = 'https://api.open-meteo.com/v1/forecast';
 
 const OPEN_METEO_CURRENT_FIELDS = [
   'temperature_2m',
@@ -166,15 +167,6 @@ export class WeatherAdapter implements StreamAdapter<WeatherAdapterRaw, WeatherA
     const receivedAt = config.receivedAt ?? new Date().toISOString();
     const credentialEnvName = config.credentialEnvName ?? WEATHER_CREDENTIAL_ENV;
     const apiKey = config.apiKey ?? readCredentialFromEnv(credentialEnvName);
-
-    if (apiKey === undefined || apiKey.length === 0) {
-      return createFailureResult(config, {
-        code: 'missing-credentials',
-        message: `Weather live mode requires apiKey or ${credentialEnvName}.`,
-        receivedAt,
-        sequence,
-      });
-    }
 
     const fetchWeather = config.fetchWeather ?? createGlobalWeatherFetch();
 
@@ -543,14 +535,21 @@ function parseOpenMeteoObservedAt(value: unknown): string | undefined {
   return Number.isNaN(parsed.valueOf()) ? undefined : parsed.toISOString();
 }
 
-function buildLiveUrl(endpointUrl: string, location: WeatherLocation, apiKey: string): string {
+function buildLiveUrl(
+  endpointUrl: string,
+  location: WeatherLocation,
+  apiKey: string | undefined,
+): string {
   const url = new URL(endpointUrl);
   url.searchParams.set('latitude', String(location.latitude));
   url.searchParams.set('longitude', String(location.longitude));
   url.searchParams.set('current', OPEN_METEO_CURRENT_FIELDS.join(','));
   url.searchParams.set('timezone', 'GMT');
   url.searchParams.set('wind_speed_unit', 'ms');
-  url.searchParams.set('apikey', apiKey);
+
+  if (apiKey !== undefined && apiKey.length > 0) {
+    url.searchParams.set('apikey', apiKey);
+  }
 
   return url.toString();
 }

@@ -1,22 +1,15 @@
 import {
-  SCORE_INPUT_SCHEMA_VERSION,
   parseReplaySnapshot,
   type ReplayFrame,
   type ReplaySnapshot,
   type ScoreOutput,
 } from '@world-instrument/core';
-import { weatherScoreV1 } from '@world-instrument/scores';
 
-import {
-  mapScoreOutputToAudioParameters,
-  type InstrumentAudioParameters,
-} from './audioParameters.ts';
-import { mapScoreOutputToHapticPattern, type InstrumentHapticPattern } from './hapticParameters.ts';
+import type { InstrumentAudioParameters } from './audioParameters.ts';
+import type { InstrumentHapticPattern } from './hapticParameters.ts';
 import recordedWeatherReplay from './replayArchives/weather-london.v1.replay.json';
-import {
-  mapScoreOutputToVisualParameters,
-  type InstrumentVisualParameters,
-} from './visualParameters.ts';
+import type { InstrumentVisualParameters } from './visualParameters.ts';
+import { evaluateWeatherInstrumentPipeline, evaluateWeatherScore } from './weatherPipeline.ts';
 
 export const REPLAY_PLAYBACK_INTERVAL_MS = 1800;
 
@@ -59,10 +52,13 @@ export function evaluateReplayFrame(
 ): ReplayInstrumentFrameState {
   const framePosition = clampFramePosition(archive.snapshot, requestedPosition);
   const frame = frameAt(archive.snapshot, framePosition);
-  const output = evaluateWeatherScore(frame);
-  const visualParameters = mapScoreOutputToVisualParameters(output);
-  const audioParameters = mapScoreOutputToAudioParameters(output);
-  const hapticPattern = mapScoreOutputToHapticPattern(output);
+  const pipeline = evaluateWeatherInstrumentPipeline({
+    frameIndex: frame.frameIndex,
+    elapsedMs: frame.elapsedMs,
+    renderedAt: frame.capturedAt,
+    streams: frame.streams,
+    seed: frame.seed,
+  });
   const frameCount = archive.snapshot.frames.length;
   const durationMs = archive.snapshot.frames.at(-1)?.elapsedMs ?? frame.elapsedMs;
 
@@ -73,19 +69,19 @@ export function evaluateReplayFrame(
     frameCount,
     elapsedMs: frame.elapsedMs,
     durationMs,
-    sourceLabel: sourceLabel(frame),
-    statusLabel: `${visualParameters.condition} archive frame ${String(framePosition + 1)}/${String(
-      frameCount,
-    )}`,
-    output,
-    visualParameters,
-    audioParameters,
-    hapticPattern,
+    sourceLabel: pipeline.sourceLabel,
+    statusLabel: `${pipeline.visualParameters.condition} archive frame ${String(
+      framePosition + 1,
+    )}/${String(frameCount)}`,
+    output: pipeline.output,
+    visualParameters: pipeline.visualParameters,
+    audioParameters: pipeline.audioParameters,
+    hapticPattern: pipeline.hapticPattern,
   };
 }
 
 export function createReplayScoreSequence(archive: ReplayArchive): readonly ScoreOutput[] {
-  return archive.snapshot.frames.map(evaluateWeatherScore);
+  return archive.snapshot.frames.map(evaluateReplayWeatherScore);
 }
 
 export function clampFramePosition(snapshot: ReplaySnapshot, requestedPosition: number): number {
@@ -96,15 +92,11 @@ export function clampFramePosition(snapshot: ReplaySnapshot, requestedPosition: 
   return Math.min(Math.max(Math.round(requestedPosition), 0), snapshot.frames.length - 1);
 }
 
-function evaluateWeatherScore(frame: ReplayFrame): ScoreOutput {
-  return weatherScoreV1.evaluate({
-    schemaVersion: SCORE_INPUT_SCHEMA_VERSION,
-    score: weatherScoreV1.metadata,
-    frame: {
-      frameIndex: frame.frameIndex,
-      elapsedMs: frame.elapsedMs,
-      renderedAt: frame.capturedAt,
-    },
+function evaluateReplayWeatherScore(frame: ReplayFrame): ScoreOutput {
+  return evaluateWeatherScore({
+    frameIndex: frame.frameIndex,
+    elapsedMs: frame.elapsedMs,
+    renderedAt: frame.capturedAt,
     streams: frame.streams,
     seed: frame.seed,
   });
@@ -118,12 +110,6 @@ function frameAt(snapshot: ReplaySnapshot, position: number): ReplayFrame {
   }
 
   return frame;
-}
-
-function sourceLabel(frame: ReplayFrame): string {
-  const stream = frame.streams[0];
-
-  return stream?.source.label ?? stream?.source.id ?? 'Recorded stream';
 }
 
 function metadataString(value: unknown, fallback: string): string {

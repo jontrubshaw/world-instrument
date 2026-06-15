@@ -1,6 +1,8 @@
 import { expect, test } from '@playwright/test';
 
 test('loads the instrument shell', async ({ page }) => {
+  let liveRequestUrl: string | undefined;
+
   await page.addInitScript(() => {
     const vibrationLog: VibratePattern[] = [];
 
@@ -15,6 +17,29 @@ test('loads the instrument shell', async ({ page }) => {
 
         return true;
       },
+    });
+  });
+  await page.route('https://api.open-meteo.com/v1/forecast**', async (route) => {
+    liveRequestUrl = route.request().url();
+
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        timezone: 'GMT',
+        current: {
+          time: '2099-01-01T00:00',
+          temperature_2m: 20.2,
+          apparent_temperature: 19.8,
+          relative_humidity_2m: 54,
+          precipitation: 0,
+          rain: 0,
+          weather_code: 0,
+          cloud_cover: 12,
+          surface_pressure: 1018.6,
+          wind_speed_10m: 4.4,
+          wind_direction_10m: 215,
+        },
+      }),
     });
   });
 
@@ -159,4 +184,26 @@ test('loads the instrument shell', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible();
   await expect.poll(() => canvas.evaluate((element) => element.dataset.scoreFrameIndex)).toBe('0');
   await page.getByRole('button', { name: 'Pause' }).click();
+
+  const inputModeControls = page.getByRole('region', { name: 'Input mode controls' });
+  const liveControls = page.getByRole('region', { name: 'Live weather controls' });
+  await expect(inputModeControls).toHaveAttribute('data-input-mode', 'replay');
+  await expect(liveControls).toHaveAttribute('data-live-status', 'idle');
+
+  await page.getByRole('button', { name: 'Live weather' }).click();
+  await expect(liveControls).toHaveAttribute('data-live-status', 'ready');
+  await expect(inputModeControls).toHaveAttribute('data-input-mode', 'live');
+  await expect.poll(() => liveRequestUrl).not.toBeUndefined();
+  expect(new URL(liveRequestUrl ?? '').searchParams.get('apikey')).toBeNull();
+  await expect
+    .poll(() => canvas.evaluate((element) => element.dataset.weatherCondition))
+    .toBe('clear');
+  await expect.poll(() => canvas.evaluate((element) => element.dataset.scoreFrameIndex)).toBe('0');
+  await expect(liveControls.getByText(/Live weather current/u)).toBeVisible();
+
+  await page.getByRole('button', { name: 'Replay archive' }).click();
+  await expect(inputModeControls).toHaveAttribute('data-input-mode', 'replay');
+  await expect
+    .poll(() => canvas.evaluate((element) => element.dataset.weatherCondition))
+    .toBe('overcast');
 });

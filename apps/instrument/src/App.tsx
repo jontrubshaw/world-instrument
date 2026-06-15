@@ -6,9 +6,14 @@ import { InstrumentStage } from './components/InstrumentStage.tsx';
 import { BrowserVibrationHapticEngine, type HapticPlaybackState } from './hapticEngine.ts';
 import { serializeHapticPatternForDom, type InstrumentHapticPattern } from './hapticParameters.ts';
 import {
+  readLiveWeatherInstrumentFrame,
+  type LiveWeatherInstrumentFrameState,
+} from './liveWeather.ts';
+import {
   REPLAY_PLAYBACK_INTERVAL_MS,
   evaluateReplayFrame,
   loadReplayArchives,
+  type ReplayInstrumentFrameState,
 } from './replayArchive.ts';
 
 type AudioControlState =
@@ -20,12 +25,25 @@ type AudioControlState =
   | 'error';
 
 type HapticControlState = 'checking' | 'unsupported' | 'disabled' | 'enabled' | 'blocked';
+type InputMode = 'live' | 'replay';
+type LiveWeatherControlStatus = 'idle' | 'loading' | 'ready' | 'stale' | 'offline' | 'error';
+
+interface LiveWeatherControlState {
+  readonly status: LiveWeatherControlStatus;
+  readonly frame?: LiveWeatherInstrumentFrameState;
+  readonly errorMessage?: string;
+  readonly sequence?: number;
+}
+
+type InstrumentViewState = LiveWeatherInstrumentFrameState | ReplayInstrumentFrameState;
 
 export function App() {
   const [archives] = useState(() => loadReplayArchives());
   const [archiveId, setArchiveId] = useState(archives[0]?.id ?? '');
   const [framePosition, setFramePosition] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [inputMode, setInputMode] = useState<InputMode>('replay');
+  const [liveWeather, setLiveWeather] = useState<LiveWeatherControlState>({ status: 'idle' });
   const [audioControlState, setAudioControlState] = useState<AudioControlState>('stopped');
   const [isAudioMuted, setIsAudioMuted] = useState(false);
   const [hapticControlState, setHapticControlState] = useState(initialHapticControlState);
@@ -35,14 +53,16 @@ export function App() {
   const hapticActivationPatternKeyRef = useRef<string | undefined>(undefined);
   const activeArchive = archives.find((archive) => archive.id === archiveId) ?? archives[0];
 
-  const viewState = useMemo(() => {
+  const replayViewState = useMemo(() => {
     if (activeArchive === undefined) {
       throw new Error('Expected at least one replay archive.');
     }
 
     return evaluateReplayFrame(activeArchive, framePosition);
   }, [activeArchive, framePosition]);
-  const lastFramePosition = viewState.frameCount - 1;
+  const viewState: InstrumentViewState =
+    inputMode === 'live' && liveWeather.frame !== undefined ? liveWeather.frame : replayViewState;
+  const lastFramePosition = replayViewState.frameCount - 1;
   const stageGlowStyle = {
     '--stage-glow-color': viewState.visualParameters.accentColor,
     '--stage-glow-opacity': String(viewState.visualParameters.glowOpacity),
@@ -59,9 +79,10 @@ export function App() {
     hapticsEnabled,
     viewState.hapticPattern.enabled,
   );
+  const liveWeatherStatusLabel = liveWeatherStatusText(liveWeather);
 
   useEffect(() => {
-    if (!isPlaying) {
+    if (!isPlaying || inputMode !== 'replay') {
       return;
     }
 
@@ -80,7 +101,7 @@ export function App() {
     return () => {
       window.clearInterval(intervalId);
     };
-  }, [isPlaying, lastFramePosition]);
+  }, [inputMode, isPlaying, lastFramePosition]);
 
   useEffect(() => {
     audioEngineRef.current?.applyParameters(viewState.audioParameters);
@@ -116,12 +137,75 @@ export function App() {
   }, []);
 
   const selectArchive = (nextArchiveId: string) => {
+    setInputMode('replay');
     setArchiveId(nextArchiveId);
     setFramePosition(0);
     setIsPlaying(false);
   };
 
+  const selectReplayMode = () => {
+    setInputMode('replay');
+    setIsPlaying(false);
+  };
+
+  const refreshLiveWeather = async () => {
+    setInputMode('live');
+    setIsPlaying(false);
+
+    if (browserIsOffline()) {
+      setLiveWeather((current) => ({
+        ...current,
+        status: 'offline',
+        errorMessage: 'Browser reports that the network is offline. Replay remains available.',
+      }));
+
+      return;
+    }
+
+    const afterSequence = liveWeather.sequence;
+    setLiveWeather((current) => ({
+      status: 'loading',
+      ...(current.frame === undefined ? {} : { frame: current.frame }),
+      ...(current.sequence === undefined ? {} : { sequence: current.sequence }),
+    }));
+
+    try {
+      const result = await readLiveWeatherInstrumentFrame(
+        afterSequence === undefined ? {} : { afterSequence },
+      );
+
+      setLiveWeather((current) => {
+        const nextFrame = result.frame ?? current.frame;
+
+        return {
+          status: result.status,
+          ...(nextFrame === undefined ? {} : { frame: nextFrame }),
+          ...(result.errorMessage === undefined ? {} : { errorMessage: result.errorMessage }),
+          sequence: result.state.sequence,
+        };
+      });
+    } catch (error) {
+      setLiveWeather((current) => ({
+        ...current,
+        status: 'error',
+        errorMessage:
+          error instanceof Error ? error.message : 'Live weather request failed unexpectedly.',
+      }));
+    }
+  };
+
+  const selectLiveMode = () => {
+    setInputMode('live');
+    setIsPlaying(false);
+
+    if (liveWeather.frame === undefined) {
+      void refreshLiveWeather();
+    }
+  };
+
   const togglePlayback = () => {
+    setInputMode('replay');
+
     if (isPlaying) {
       setIsPlaying(false);
       return;
@@ -135,11 +219,13 @@ export function App() {
   };
 
   const restartReplay = () => {
+    setInputMode('replay');
     setFramePosition(0);
     setIsPlaying(false);
   };
 
   const stepReplay = (direction: -1 | 1) => {
+    setInputMode('replay');
     setIsPlaying(false);
     setFramePosition((currentPosition) =>
       Math.min(Math.max(currentPosition + direction, 0), lastFramePosition),
@@ -147,6 +233,7 @@ export function App() {
   };
 
   const scrubReplay = (nextPosition: number) => {
+    setInputMode('replay');
     setIsPlaying(false);
     setFramePosition(nextPosition);
   };
@@ -211,9 +298,41 @@ export function App() {
         <p className="eyebrow">World Instrument / weather score</p>
         <h1 id="instrument-title">A weather score tuned into light.</h1>
         <p className="lead">
-          A recorded stream is replayed through the first deterministic weather score, pressing
-          palette, pulse, motion, and atmosphere directly into the visual instrument.
+          Live and recorded weather streams pass through the same deterministic score, pressing
+          palette, pulse, motion, atmosphere, sound, and haptics into the instrument.
         </p>
+        <section
+          className="mode-controls"
+          aria-label="Input mode controls"
+          data-input-mode={inputMode}
+        >
+          <button type="button" onClick={selectLiveMode} aria-pressed={inputMode === 'live'}>
+            Live weather
+          </button>
+          <button type="button" onClick={selectReplayMode} aria-pressed={inputMode === 'replay'}>
+            Replay archive
+          </button>
+        </section>
+
+        <section
+          className="live-weather-controls"
+          aria-label="Live weather controls"
+          data-live-status={liveWeather.status}
+          data-live-signature={liveWeather.frame?.visualParameters.signature ?? ''}
+        >
+          <div className="transport-controls">
+            <button
+              type="button"
+              onClick={() => {
+                void refreshLiveWeather();
+              }}
+              disabled={liveWeather.status === 'loading'}
+            >
+              {liveWeather.status === 'loading' ? 'Loading live weather' : 'Refresh live weather'}
+            </button>
+          </div>
+          <p aria-live="polite">{liveWeatherStatusLabel}</p>
+        </section>
         <section className="replay-controls" aria-label="Replay controls">
           <label className="archive-picker">
             <span>Archive</span>
@@ -327,6 +446,7 @@ export function App() {
           </section>
         </section>
         <div className="signal-strip" aria-label="Score-driven output lanes">
+          <span>{inputMode === 'live' ? 'live mode' : 'replay mode'}</span>
           <span>{viewState.sourceLabel}</span>
           <span>{viewState.statusLabel}</span>
           <span>visual signature {viewState.visualParameters.signature}</span>
@@ -348,6 +468,50 @@ function formatElapsed(elapsedMs: number): string {
 
 function formatHertz(value: number): string {
   return `${value.toFixed(1)} Hz`;
+}
+
+function browserIsOffline(): boolean {
+  return typeof navigator !== 'undefined' && navigator.onLine === false;
+}
+
+function liveWeatherStatusText(state: LiveWeatherControlState): string {
+  if (state.status === 'idle') {
+    return 'Live weather is ready to load from Open-Meteo without credentials.';
+  }
+
+  if (state.status === 'loading') {
+    return 'Loading current weather from Open-Meteo...';
+  }
+
+  if (state.status === 'offline') {
+    return state.errorMessage ?? 'Browser is offline. Replay remains available.';
+  }
+
+  if (state.status === 'error') {
+    return `Live adapter error: ${state.errorMessage ?? 'weather request failed'}. Replay remains available.`;
+  }
+
+  const observedAt = state.frame?.observedAt;
+  const timestamp = observedAt === undefined ? 'unknown time' : formatLiveTimestamp(observedAt);
+
+  return state.status === 'stale'
+    ? `Live weather is stale from ${timestamp}; replay remains available for comparison.`
+    : `Live weather current from ${timestamp}.`;
+}
+
+function formatLiveTimestamp(value: string): string {
+  const parsed = new Date(value);
+
+  if (Number.isNaN(parsed.valueOf())) {
+    return value;
+  }
+
+  return parsed.toLocaleString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 }
 
 function audioStatusText(state: AudioControlState, isMuted: boolean): string {

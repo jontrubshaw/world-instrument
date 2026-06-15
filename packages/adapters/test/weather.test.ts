@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { STREAM_STATE_SCHEMA_VERSION } from '@world-instrument/core';
 
 import {
+  OPEN_METEO_FORECAST_ENDPOINT,
   WEATHER_ADAPTER_ID,
   WeatherAdapter,
   normalizeWeatherPayload,
@@ -99,12 +100,11 @@ describe('weather adapter', () => {
     }
   });
 
-  it('maps Open-Meteo live responses into normalized weather state', async () => {
+  it('maps Open-Meteo live responses into normalized weather state without credentials', async () => {
     let requestedUrl: string | undefined;
     const adapter = new WeatherAdapter({
       mode: 'live',
-      endpointUrl: 'https://api.open-meteo.com/v1/forecast',
-      apiKey: 'test-api-key',
+      endpointUrl: OPEN_METEO_FORECAST_ENDPOINT,
       receivedAt: '2026-06-14T21:05:00.000Z',
       location: {
         id: 'london-uk',
@@ -147,7 +147,7 @@ describe('weather adapter', () => {
     const url = new URL(requestedUrl ?? '');
     expect(url.searchParams.get('latitude')).toBe('51.5072');
     expect(url.searchParams.get('longitude')).toBe('-0.1276');
-    expect(url.searchParams.get('apikey')).toBe('test-api-key');
+    expect(url.searchParams.get('apikey')).toBeNull();
     expect(url.searchParams.get('timezone')).toBe('GMT');
     expect(url.searchParams.get('wind_speed_unit')).toBe('ms');
     expect(url.searchParams.get('current')).toBe(
@@ -210,63 +210,45 @@ describe('weather adapter', () => {
       value: 18.4,
       quality: 'measured',
     });
+  });
+
+  it('sanitizes optional Open-Meteo API keys from live raw and normalized state', async () => {
+    const adapter = new WeatherAdapter({
+      mode: 'live',
+      endpointUrl: OPEN_METEO_FORECAST_ENDPOINT,
+      apiKey: 'test-api-key',
+      receivedAt: '2026-06-14T21:05:00.000Z',
+      location: {
+        id: 'london-uk',
+        label: 'London, UK',
+        latitude: 51.5072,
+        longitude: -0.1276,
+      },
+      fetchWeather: () =>
+        Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () =>
+            Promise.resolve({
+              timezone: 'GMT',
+              current: {
+                time: '2026-06-14T21:00',
+                temperature_2m: 18.4,
+              },
+            }),
+        }),
+    });
+
+    const result = await adapter.read();
+
     expect(JSON.stringify(result.raw)).not.toContain('test-api-key');
     expect(JSON.stringify(result.state)).not.toContain('test-api-key');
+    expect(result.state.source.uri).not.toContain('apikey=');
   });
 
-  it('returns a clear error stream state when live credentials are missing', async () => {
-    const envName = 'WORLD_INSTRUMENT_TEST_WEATHER_API_KEY';
-    const previousValue = process.env.WORLD_INSTRUMENT_TEST_WEATHER_API_KEY;
-    delete process.env.WORLD_INSTRUMENT_TEST_WEATHER_API_KEY;
-
-    try {
-      const adapter = new WeatherAdapter({
-        mode: 'live',
-        endpointUrl: 'https://weather.example.test/current',
-        credentialEnvName: envName,
-        receivedAt: '2026-06-14T21:05:00.000Z',
-        location: {
-          id: 'london-uk',
-          label: 'London, UK',
-          latitude: 51.5072,
-          longitude: -0.1276,
-        },
-      });
-
-      const result = await adapter.read({ afterSequence: 41 });
-
-      expect(result.raw).toMatchObject({
-        ok: false,
-        error: {
-          code: 'missing-credentials',
-          message: `Weather live mode requires apiKey or ${envName}.`,
-        },
-      });
-      expect(result.state).toMatchObject({
-        status: 'error',
-        streamId: 'weather:london-uk',
-        sequence: 42,
-        metadata: {
-          provider: 'live',
-          mode: 'live',
-          error: {
-            code: 'missing-credentials',
-          },
-        },
-      });
-      expect(result.state.samples.every((sample) => sample.quality === 'missing')).toBe(true);
-    } finally {
-      if (previousValue === undefined) {
-        delete process.env.WORLD_INSTRUMENT_TEST_WEATHER_API_KEY;
-      } else {
-        process.env.WORLD_INSTRUMENT_TEST_WEATHER_API_KEY = previousValue;
-      }
-    }
-  });
-
-  it('returns missing credentials instead of crashing when process is unavailable', async () => {
-    const originalProcess = globalThis.process;
-    vi.stubGlobal('process', undefined);
+  it('returns a clear error stream state when live fetch is unavailable', async () => {
+    const originalFetch = globalThis.fetch;
+    vi.stubGlobal('fetch', undefined);
 
     try {
       const adapter = new WeatherAdapter({
@@ -286,13 +268,14 @@ describe('weather adapter', () => {
       expect(result.raw).toMatchObject({
         ok: false,
         error: {
-          code: 'missing-credentials',
-          message: 'Weather live mode requires apiKey or WORLD_INSTRUMENT_WEATHER_API_KEY.',
+          code: 'missing-fetch',
+          message: 'Weather live mode requires a fetch implementation.',
         },
       });
       expect(result.state.status).toBe('error');
+      expect(result.state.samples.every((sample) => sample.quality === 'missing')).toBe(true);
     } finally {
-      vi.stubGlobal('process', originalProcess);
+      vi.stubGlobal('fetch', originalFetch);
     }
   });
 });

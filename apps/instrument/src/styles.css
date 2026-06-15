@@ -142,6 +142,8 @@ h1 {
   line-height: 1.62;
 }
 
+.mode-controls,
+.live-weather-controls,
 .replay-controls {
   display: grid;
   gap: 0.8rem;
@@ -155,6 +157,7 @@ h1 {
 
 .archive-picker,
 .time-scrubber,
+.live-weather-controls,
 .audio-controls,
 .haptic-controls {
   display: grid;
@@ -174,6 +177,42 @@ h1 {
   border-radius: 999px;
   background: rgba(5, 7, 22, 0.82);
   padding: 0 0.9rem;
+}
+
+.mode-controls {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.mode-controls button {
+  min-height: 2.55rem;
+  color: rgba(248, 251, 255, 0.72);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.055);
+  cursor: pointer;
+}
+
+.mode-controls button[aria-pressed='true'] {
+  color: #03101a;
+  border-color: rgba(142, 234, 255, 0.8);
+  background: linear-gradient(135deg, #8eeaff, #d8b4fe);
+  box-shadow: 0 0 1.4rem rgba(142, 234, 255, 0.2);
+}
+
+.live-weather-controls[data-live-status='error'],
+.live-weather-controls[data-live-status='offline'] {
+  border-color: rgba(248, 113, 113, 0.36);
+  background: rgba(127, 29, 29, 0.18);
+}
+
+.live-weather-controls[data-live-status='stale'] {
+  border-color: rgba(251, 191, 36, 0.34);
+  background: rgba(120, 53, 15, 0.16);
 }
 
 .transport-controls {
@@ -204,6 +243,7 @@ h1 {
 }
 
 .transport-controls button:focus-visible,
+.mode-controls button:focus-visible,
 .archive-picker select:focus-visible,
 .time-scrubber input:focus-visible {
   outline: 2px solid #8eeaff;
@@ -221,12 +261,14 @@ h1 {
 }
 
 .audio-controls,
+.live-weather-controls,
 .haptic-controls {
   gap: 0.55rem;
   padding-top: 0.2rem;
 }
 
 .audio-controls p,
+.live-weather-controls p,
 .haptic-controls p {
   margin: 0;
   color: rgba(248, 251, 255, 0.74);
