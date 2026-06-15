@@ -35,7 +35,7 @@ export interface ReplayInstrumentFrameState {
 }
 
 export function loadReplayArchives(): readonly ReplayArchive[] {
-  const snapshot = parseReplaySnapshot(recordedWeatherReplay as unknown);
+  const snapshot = parseReplaySnapshot(recordedWeatherReplay);
 
   return [
     {

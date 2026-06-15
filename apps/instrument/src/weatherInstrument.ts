@@ -6,12 +6,12 @@ export interface WeatherInstrumentState {
   readonly sourceLabel: string;
 }
 
-export async function loadFixtureWeatherInstrumentState(): Promise<WeatherInstrumentState> {
+export function loadFixtureWeatherInstrumentState(): Promise<WeatherInstrumentState> {
   const archive = loadReplayArchives()[0];
 
   if (archive === undefined) {
     throw new Error('Expected at least one recorded weather replay archive.');
   }
 
-  return evaluateReplayFrame(archive, 0);
+  return Promise.resolve(evaluateReplayFrame(archive, 0));
 }

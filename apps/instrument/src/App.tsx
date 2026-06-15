@@ -102,7 +102,12 @@ export function App() {
         <section className="replay-controls" aria-label="Replay controls">
           <label className="archive-picker">
             <span>Archive</span>
-            <select value={archiveId} onChange={(event) => selectArchive(event.target.value)}>
+            <select
+              value={archiveId}
+              onChange={(event) => {
+                selectArchive(event.target.value);
+              }}
+            >
               {archives.map((archive) => (
                 <option value={archive.id} key={archive.id}>
                   {archive.label}
@@ -120,7 +125,9 @@ export function App() {
             </button>
             <button
               type="button"
-              onClick={() => stepReplay(-1)}
+              onClick={() => {
+                stepReplay(-1);
+              }}
               disabled={framePosition === 0}
               aria-label="Step backward"
             >
@@ -128,7 +135,9 @@ export function App() {
             </button>
             <button
               type="button"
-              onClick={() => stepReplay(1)}
+              onClick={() => {
+                stepReplay(1);
+              }}
               disabled={framePosition === lastFramePosition}
               aria-label="Step forward"
             >
@@ -144,7 +153,9 @@ export function App() {
               max={lastFramePosition}
               step="1"
               value={framePosition}
-              onChange={(event) => scrubReplay(Number(event.target.value))}
+              onChange={(event) => {
+                scrubReplay(Number(event.target.value));
+              }}
             />
             <output aria-live="polite">
               {formatElapsed(viewState.elapsedMs)} / {formatElapsed(viewState.durationMs)}
