@@ -8,7 +8,7 @@ This file is the durable project handoff. Keep it current whenever project conve
 - Linear project: https://linear.app/jtworks/project/world-instrument-1472eb8e5477
 - Linear team: Jtworks
 - Local checkout: `/Users/JonathanTrubshaw/Documents/weathart/world-instrument`
-- Active implementation branch: none confirmed yet for `JTW-35`; watch for a fresh Cursor PR/branch after release.
+- Active implementation branch: none confirmed yet for `JTW-36`; watch for a fresh Cursor PR/branch after release.
 - Cursor environment setup is complete.
 - Stale pre-setup Cursor draft PRs closed: PR #1 (`cursor/instrument-app-shell-1cf1`) and PR #3 (`cursor/core-contracts-7e26`).
 - Local Node environment: Homebrew `node@24` installed; current shell resolves `node` to `v24.16.0` and `npm` to `11.13.0`.
@@ -38,11 +38,12 @@ This file is the durable project handoff. Keep it current whenever project conve
 - `JTW-32`: Refresh durable handoff after weather merge and quality release. Done.
 - `JTW-33`: Connect weather score to the visual instrument scene. Done; PR #24 merged. Duplicate Cursor PR #25 closed as superseded.
 - `JTW-34`: Add deterministic replay controls and archive playback in the instrument app. Done; PR #27 merged. Duplicate Cursor PR #28 closed as superseded.
-- `JTW-35`: Implement the first deterministic Web Audio output layer. In Progress, delegated to Cursor.
-- `JTW-36`: Add haptic output abstraction and browser vibration prototype. Backlog.
+- `JTW-35`: Implement the first deterministic Web Audio output layer. Done; PR #30 merged. Duplicate Cursor PR #31 closed as superseded.
+- `JTW-36`: Add haptic output abstraction and browser vibration prototype. In Progress, delegated to Cursor.
 - `JTW-37`: Sync durable docs after quality merge and gap-driven backlog creation. Done; PR #23 merged.
 - `JTW-38`: Refresh durable docs after visual score merge and replay release. Done; PR #26 merged.
-- `JTW-39`: Refresh durable docs after replay merge and audio release. Current docs issue.
+- `JTW-39`: Refresh durable docs after replay merge and audio release. Done; PR #29 merged.
+- `JTW-40`: Refresh durable docs after audio merge and haptics release. Current docs issue.
 
 ## Orchestration Rules
 
@@ -99,7 +100,7 @@ This file is the durable project handoff. Keep it current whenever project conve
 
 There is no longer a global pause on Cursor setup. Pick the next issue deliberately, assign/delegate it only when ready, and avoid starting multiple coding-heavy Cursor tasks unless that concurrency is intentional.
 
-Current coding-heavy work is `JTW-35`, delegated to Cursor. Watch for a fresh Cursor branch/PR for the deterministic Web Audio output layer. Do not release another coding-heavy Cursor issue until this work is resolved and merged or explicitly paused.
+Current coding-heavy work is `JTW-36`, delegated to Cursor. Watch for a fresh Cursor branch/PR for the haptic output abstraction and browser vibration prototype. Do not release another coding-heavy Cursor issue until this work is resolved and merged or explicitly paused.
 
 ## Source Checks
 
@@ -137,6 +138,9 @@ Current coding-heavy work is `JTW-35`, delegated to Cursor. Watch for a fresh Cu
 - JTW-34 produced two independent Cursor PRs on 2026-06-15: PR #27 (`cursor/replay-controls-c493`) and PR #28 (`cursor/replay-controls-c944`). Cursor converged on PR #27 and left PR #28 superseded. PR #28 was closed after PR #27 was marked ready for review.
 - PR #27 (`Add deterministic replay controls to instrument app`) merged on 2026-06-15 after CI passed and the latest-head Codex review fallback window elapsed with no known actionable feedback. `JTW-34` was marked Done.
 - JTW-35 was released to Cursor on 2026-06-15 after PR #27 merged. Scope is the first deterministic Web Audio output layer: explicit user activation, deterministic score-to-audio parameter mapping, compact start/stop/mute controls, replay-consistent audio state, browser/autoplay constraint documentation if needed, and verification with `npm run check`, `npm run build`, and `npm run test:smoke`. Haptics remain separate in `JTW-36`.
+- JTW-35 produced two independent Cursor PRs on 2026-06-15: PR #30 (`cursor/deterministic-audio-layer-bcd8`) and PR #31 (`cursor/web-audio-output-1949`). Cursor converged on PR #30 and left PR #31 superseded. PR #31 was closed after PR #30 was marked ready for review.
+- PR #30 (`JTW-35 implement deterministic Web Audio layer`) merged on 2026-06-15 after CI passed and the latest-head Codex review fallback window elapsed with the known P2 modulation-routing feedback addressed. `JTW-35` was marked Done.
+- JTW-36 was released to Cursor on 2026-06-15 after PR #30 merged. Scope is haptics only: haptic output contract, browser vibration adapter where supported, safety limits, capability-aware enable/disable control, deterministic score-to-haptic tests, and verification with `npm run check`, `npm run build`, and `npm run test:smoke`.
 
 ## Cursor Cloud specific instructions
 

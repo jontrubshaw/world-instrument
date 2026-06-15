@@ -71,13 +71,14 @@ The project should be built as a high-quality creative system, not an MVP. Deter
 10. Coverage thresholds and refactor review cadence implemented: `JTW-18`.
 11. Weather score connected to the visual instrument scene: `JTW-33`.
 12. Deterministic replay controls and archive playback implemented: `JTW-34`.
+13. First deterministic Web Audio output layer implemented: `JTW-35`.
 
 ## Current Sequence
 
-1. Monitor `JTW-35`, the active coding-heavy issue delegated to Cursor for the first deterministic Web Audio output layer.
-2. Do not release another coding-heavy Cursor issue until `JTW-35` lands, is explicitly paused, or is confirmed blocked.
-3. Review the `JTW-35` PR when it appears, wait for automatic Codex review unless a documented exception applies, and merge only after checks and actionable feedback are handled.
-4. After `JTW-35` lands, update durable docs and release the next ready issue from the gap-driven backlog.
-5. Current backlog order after `JTW-35` is `JTW-36` haptic output abstraction.
+1. Monitor `JTW-36`, the active coding-heavy issue delegated to Cursor for the haptic output abstraction and browser vibration prototype.
+2. Do not release another coding-heavy Cursor issue until `JTW-36` lands, is explicitly paused, or is confirmed blocked.
+3. Review the `JTW-36` PR when it appears, wait for automatic Codex review unless a documented exception applies, and merge only after checks and actionable feedback are handled.
+4. After `JTW-36` lands, update durable docs and evaluate the built app against the World Instrument intent for the next concrete gaps.
+5. There are no planned backlog implementation issues after `JTW-36`; use gap analysis to create scoped follow-on issues.
 6. Continue creating Linear issues for new problems, follow-on implementation work, refactor reviews, and human decisions as they arise.
 7. If the explicit backlog runs out again, evaluate the built app against the product vision and create new scoped Linear issues for the next concrete gaps rather than pausing the project.
