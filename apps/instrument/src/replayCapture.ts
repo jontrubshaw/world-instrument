@@ -26,6 +26,7 @@ export interface ReplayCaptureFrameInput {
   readonly visualSignature: string;
   readonly audioSignature: string;
   readonly hapticSignature: string;
+  readonly provenance?: JsonObject;
   readonly sourceLabel?: string;
   readonly statusLabel?: string;
 }
@@ -286,6 +287,7 @@ function frameMetadata(frame: CapturedReplayFrame): JsonObject {
     visualSignature: frame.visualSignature,
     audioSignature: frame.audioSignature,
     hapticSignature: frame.hapticSignature,
+    provenance: frame.provenance ?? legacyFrameProvenance(frame),
     streams: frame.streams.map((stream) => ({
       streamId: stream.streamId,
       sourceId: stream.source.id,
@@ -332,6 +334,28 @@ function sourceModeSummary(frames: readonly CapturedReplayFrame[]): string {
   }
 
   return 'mixed';
+}
+
+function legacyFrameProvenance(frame: CapturedReplayFrame): JsonObject {
+  const stream = frame.streams[0];
+
+  return {
+    uiMode: frame.sourceMode,
+    sourceMode: frame.sourceMode,
+    status: stream?.status ?? 'unknown',
+    sourceIdentity:
+      frame.sourceLabel ?? stream?.source.label ?? stream?.source.id ?? 'Captured stream',
+    ...(stream === undefined
+      ? {}
+      : {
+          streamId: stream.streamId,
+          streamSourceId: stream.source.id,
+          sourceKind: stream.source.kind,
+          sourceLabel: stream.source.label ?? '',
+          observedAt: stream.observedAt,
+          receivedAt: stream.receivedAt,
+        }),
+  } satisfies JsonObject;
 }
 
 function captureSourceKind(frame: ReplayCaptureFrameInput): string {
