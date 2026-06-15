@@ -16,6 +16,7 @@ import { serializeAudioParametersForDom } from './audioParameters.ts';
 import {
   BROWSER_SENSOR_POINTER_REFRESH_MS,
   createInitialBrowserSensorRuntimeState,
+  isBrowserSensorStateAtLeastAsFresh,
   requestBrowserSensorPermission,
   updateBrowserSensorMotion,
   updateBrowserSensorOrientation,
@@ -303,6 +304,10 @@ export function App() {
   }, [instrumentMode, selectedSourceId, sourceRefreshToken]);
 
   useEffect(() => {
+    if (!isBrowserSensorStateAtLeastAsFresh(browserSensorState, browserSensorStateRef.current)) {
+      return;
+    }
+
     browserSensorStateRef.current = browserSensorState;
     browserSensorSnapshotRef.current = browserSensorState.snapshot;
   }, [browserSensorState]);

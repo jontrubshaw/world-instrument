@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import {
   createInitialBrowserSensorRuntimeState,
+  isBrowserSensorStateAtLeastAsFresh,
   requestBrowserSensorPermission,
   updateBrowserSensorMotion,
   updateBrowserSensorPointer,
@@ -128,6 +129,34 @@ describe('browser sensor runtime', () => {
     expect(stalePointerState.snapshot.motion).toBeUndefined();
     expect(stalePointerState.snapshot.pointer).toBeDefined();
     expect(stalePointerState.snapshot.capabilities.fallback).toBe('pointer');
+  });
+
+  it('rejects committed sensor state that is older than the ref snapshot', () => {
+    Object.defineProperty(globalThis, 'window', {
+      configurable: true,
+      value: {
+        innerHeight: 500,
+        innerWidth: 1_000,
+        PointerEvent: function PointerEvent() {},
+      },
+    });
+    const initialState = createInitialBrowserSensorRuntimeState(
+      new Date('2026-06-15T12:00:00.000Z'),
+    );
+    const queuedCommittedState = updateBrowserSensorPointer(
+      initialState,
+      createPointerEvent({ buttons: 1, pointerType: 'touch' }),
+      new Date('2026-06-15T12:00:01.000Z'),
+    );
+    const refOnlyFinalState = updateBrowserSensorPointer(
+      queuedCommittedState,
+      createPointerEvent({ buttons: 1, pointerType: 'touch', type: 'pointercancel' }),
+      new Date('2026-06-15T12:00:02.000Z'),
+    );
+
+    expect(isBrowserSensorStateAtLeastAsFresh(queuedCommittedState, refOnlyFinalState)).toBe(false);
+    expect(isBrowserSensorStateAtLeastAsFresh(refOnlyFinalState, queuedCommittedState)).toBe(true);
+    expect(refOnlyFinalState.snapshot.pointer?.active).toBe(false);
   });
 
   it('starts motion and orientation permission prompts before awaiting either result', async () => {

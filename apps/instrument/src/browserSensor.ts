@@ -65,6 +65,20 @@ export function createBrowserSensorSnapshot(options: {
   };
 }
 
+export function isBrowserSensorStateAtLeastAsFresh(
+  candidate: BrowserSensorRuntimeState,
+  current: BrowserSensorRuntimeState,
+): boolean {
+  const candidateObservedAtMs = Date.parse(candidate.snapshot.observedAt);
+  const currentObservedAtMs = Date.parse(current.snapshot.observedAt);
+
+  if (Number.isNaN(candidateObservedAtMs) || Number.isNaN(currentObservedAtMs)) {
+    return candidate.snapshot.observedAt >= current.snapshot.observedAt;
+  }
+
+  return candidateObservedAtMs >= currentObservedAtMs;
+}
+
 export function updateBrowserSensorPointer(
   current: BrowserSensorRuntimeState,
   event: PointerEvent,
