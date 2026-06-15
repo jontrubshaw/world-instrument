@@ -58,17 +58,16 @@
 
 Cursor environment setup is complete. Coding-heavy issues should still be assigned or delegated to Cursor only when intentionally ready to start. Keep planned work in Backlog until it is selected.
 
-There is no current Cursor-delegated implementation issue and no open Cursor-owned PR as of 2026-06-15 22:25 UTC.
+`JTW-59` is the current Cursor-delegated implementation issue as of 2026-06-15 22:34 UTC. A duplicate-session pre-flight check found no existing comments, Cursor sessions, handbacks, attachments, open PRs, or matching branches before release.
 
 Current backlog:
 
 - `JTW-55`: realtime pipeline refactor and hygiene review, human-owned.
-- `JTW-59`: add dedicated browser sensor score mappings.
 - `JTW-60`: allow imported replay archives in the instrument app.
 - `JTW-61`: decide the next external world stream after weather and browser sensors, human decision.
-- `JTW-62`: refresh durable docs after JTW-54 merge and next-gap planning.
+- `JTW-63`: refresh durable docs after JTW-59 release.
 
-Before releasing any coding-heavy backlog issue to Cursor, run the duplicate-session pre-flight check above.
+Do not release another coding-heavy Cursor issue until `JTW-59` lands, is explicitly paused, or is confirmed blocked with a documented decision. Before any restart, reassign, or new Cursor ping on `JTW-59`, run the duplicate-session pre-flight check above.
 
 ## CI
 
