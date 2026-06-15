@@ -262,9 +262,9 @@ test('captures the visible replay fallback when live weather fails before first 
   await expect(streamControls.locator('.live-status')).toHaveText(
     'Live weather adapter error: Weather provider request failed with HTTP 503. Showing replay fallback.',
   );
-  await expect.poll(() => canvas.evaluate((element) => element.dataset.scoreSignature)).toBe(
-    '8f5c7a72',
-  );
+  await expect
+    .poll(() => canvas.evaluate((element) => element.dataset.scoreSignature))
+    .toBe('8f5c7a72');
 
   const captureControls = page.getByRole('region', { name: 'Capture controls' });
   await expect(captureControls).toHaveAttribute('data-capture-state', 'idle');
