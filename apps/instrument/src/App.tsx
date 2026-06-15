@@ -814,7 +814,9 @@ export function App() {
           data-provenance-status={provenanceState.status}
           data-provenance-source-id={provenanceState.sourceId}
           data-provenance-frame-age-ms={
-            provenanceState.frameAgeMs === undefined ? 'unknown' : String(provenanceState.frameAgeMs)
+            provenanceState.frameAgeMs === undefined
+              ? 'unknown'
+              : String(provenanceState.frameAgeMs)
           }
           data-source-id={selectedSourceId}
           data-source-mode={instrumentMode}
@@ -1295,7 +1297,10 @@ function provenanceStatusLabel(status: string): string {
   }
 }
 
-function formatFrameAge(observedAt: string | undefined, now: Date): {
+function formatFrameAge(
+  observedAt: string | undefined,
+  now: Date,
+): {
   readonly label: string;
   readonly ms?: number;
 } {
