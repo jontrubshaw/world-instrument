@@ -20,7 +20,9 @@ export class BrowserVibrationHapticAdapter implements HapticOutputAdapter {
   }
 
   applyPattern(pattern: InstrumentHapticPattern): HapticPlaybackState {
-    if (!this.isSupported) {
+    const vibrate = this.browserNavigator.vibrate;
+
+    if (typeof vibrate !== 'function') {
       return 'unsupported';
     }
 
@@ -28,14 +30,16 @@ export class BrowserVibrationHapticAdapter implements HapticOutputAdapter {
       return this.stop();
     }
 
-    return this.browserNavigator.vibrate(pattern.pattern) ? 'active' : 'rejected';
+    return vibrate.call(this.browserNavigator, pattern.pattern) ? 'active' : 'rejected';
   }
 
   stop(): HapticPlaybackState {
-    if (!this.isSupported) {
+    const vibrate = this.browserNavigator.vibrate;
+
+    if (typeof vibrate !== 'function') {
       return 'unsupported';
     }
 
-    return this.browserNavigator.vibrate(0) ? 'idle' : 'rejected';
+    return vibrate.call(this.browserNavigator, 0) ? 'idle' : 'rejected';
   }
 }
