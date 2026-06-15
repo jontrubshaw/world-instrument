@@ -18,4 +18,4 @@ node --version
 npm --version
 node -e "const major = Number(process.versions.node.split('.')[0]); if (major !== 24) { throw new Error('Expected Node 24, got ' + process.version); }"
 npm install
-npx playwright install --with-deps chromium
+npx playwright install chromium
