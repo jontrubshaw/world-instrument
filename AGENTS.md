@@ -8,7 +8,7 @@ This file is the durable project handoff. Keep it current whenever project conve
 - Linear project: https://linear.app/jtworks/project/world-instrument-1472eb8e5477
 - Linear team: Jtworks
 - Local checkout: `/Users/JonathanTrubshaw/Documents/weathart/world-instrument`
-- Active implementation branch: none confirmed yet for `JTW-34`; watch for a fresh Cursor PR/branch after release.
+- Active implementation branch: none confirmed yet for `JTW-35`; watch for a fresh Cursor PR/branch after release.
 - Cursor environment setup is complete.
 - Stale pre-setup Cursor draft PRs closed: PR #1 (`cursor/instrument-app-shell-1cf1`) and PR #3 (`cursor/core-contracts-7e26`).
 - Local Node environment: Homebrew `node@24` installed; current shell resolves `node` to `v24.16.0` and `npm` to `11.13.0`.
@@ -37,11 +37,12 @@ This file is the durable project handoff. Keep it current whenever project conve
 - `JTW-31`: Refresh durable handoff after app shell merge and weather release. Done.
 - `JTW-32`: Refresh durable handoff after weather merge and quality release. Done.
 - `JTW-33`: Connect weather score to the visual instrument scene. Done; PR #24 merged. Duplicate Cursor PR #25 closed as superseded.
-- `JTW-34`: Add deterministic replay controls and archive playback in the instrument app. In Progress, delegated to Cursor.
-- `JTW-35`: Implement the first deterministic Web Audio output layer. Backlog.
+- `JTW-34`: Add deterministic replay controls and archive playback in the instrument app. Done; PR #27 merged. Duplicate Cursor PR #28 closed as superseded.
+- `JTW-35`: Implement the first deterministic Web Audio output layer. In Progress, delegated to Cursor.
 - `JTW-36`: Add haptic output abstraction and browser vibration prototype. Backlog.
 - `JTW-37`: Sync durable docs after quality merge and gap-driven backlog creation. Done; PR #23 merged.
-- `JTW-38`: Refresh durable docs after visual score merge and replay release. Current docs issue.
+- `JTW-38`: Refresh durable docs after visual score merge and replay release. Done; PR #26 merged.
+- `JTW-39`: Refresh durable docs after replay merge and audio release. Current docs issue.
 
 ## Orchestration Rules
 
@@ -98,7 +99,7 @@ This file is the durable project handoff. Keep it current whenever project conve
 
 There is no longer a global pause on Cursor setup. Pick the next issue deliberately, assign/delegate it only when ready, and avoid starting multiple coding-heavy Cursor tasks unless that concurrency is intentional.
 
-Current coding-heavy work is `JTW-34`, delegated to Cursor. Watch for a fresh Cursor branch/PR for deterministic replay controls and archive playback. Do not release another coding-heavy Cursor issue until this work is resolved and merged or explicitly paused.
+Current coding-heavy work is `JTW-35`, delegated to Cursor. Watch for a fresh Cursor branch/PR for the deterministic Web Audio output layer. Do not release another coding-heavy Cursor issue until this work is resolved and merged or explicitly paused.
 
 ## Source Checks
 
@@ -133,6 +134,9 @@ Current coding-heavy work is `JTW-34`, delegated to Cursor. Watch for a fresh Cu
 - JTW-33 produced two independent Cursor PRs on 2026-06-15: PR #24 (`cursor/connect-weather-visuals-bee3`) and PR #25 (`cursor/weather-score-scene-8092`). PR #24 was selected because it kept recorded weather fixture/export behavior in `packages/adapters`, added a reusable visual-parameter mapping layer, and avoided duplicating app-local fixture/raw-readout-heavy UI. PR #25 was closed as superseded.
 - PR #24 (`JTW-33 connect weather visuals`) merged on 2026-06-15 after CI passed and the latest-head Codex review fallback window elapsed with no known actionable feedback. `JTW-33` was marked Done.
 - JTW-34 was released to Cursor on 2026-06-15 after PR #24 merged. Scope is deterministic replay controls and archive playback in the instrument app: load replay snapshots, play/pause/restart/scrub/step, route replay through the existing weather score and visual mapping, keep controls compact and secondary to the instrument surface, and verify with `npm run check`, `npm run build`, and `npm run test:smoke`.
+- JTW-34 produced two independent Cursor PRs on 2026-06-15: PR #27 (`cursor/replay-controls-c493`) and PR #28 (`cursor/replay-controls-c944`). Cursor converged on PR #27 and left PR #28 superseded. PR #28 was closed after PR #27 was marked ready for review.
+- PR #27 (`Add deterministic replay controls to instrument app`) merged on 2026-06-15 after CI passed and the latest-head Codex review fallback window elapsed with no known actionable feedback. `JTW-34` was marked Done.
+- JTW-35 was released to Cursor on 2026-06-15 after PR #27 merged. Scope is the first deterministic Web Audio output layer: explicit user activation, deterministic score-to-audio parameter mapping, compact start/stop/mute controls, replay-consistent audio state, browser/autoplay constraint documentation if needed, and verification with `npm run check`, `npm run build`, and `npm run test:smoke`. Haptics remain separate in `JTW-36`.
 
 ## Cursor Cloud specific instructions
 
