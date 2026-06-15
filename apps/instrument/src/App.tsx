@@ -360,7 +360,9 @@ export function App() {
       refreshSensorSource();
     };
     const handleOrientation = (event: DeviceOrientationEvent) => {
-      commitBrowserSensorState(updateBrowserSensorOrientation(browserSensorStateRef.current, event));
+      commitBrowserSensorState(
+        updateBrowserSensorOrientation(browserSensorStateRef.current, event),
+      );
       refreshSensorSource();
     };
 
