@@ -59,12 +59,19 @@ This file is the durable project handoff. Keep it current whenever project conve
 - `JTW-53`: Expose source registry selection in the instrument app. In Progress, delegated to Cursor.
 - `JTW-54`: Make live-data provenance legible in the instrument UI. Backlog; blocked by `JTW-53`.
 - `JTW-55`: Run realtime pipeline refactor and hygiene review. Backlog; human-owned hygiene review.
+- `JTW-57`: Harden Cursor duplicate-session release gate. Current docs issue.
 
 ## Orchestration Rules
 
 - Use Linear to track all meaningful work.
 - Create coding-heavy implementation issues as backlog when planning, but do not assign or delegate them to Cursor until they are ready to start.
 - When work is ready to start, assign or delegate coding-heavy implementation issues to Cursor.
+- Before assigning/delegating, reassigning, or re-pinging Cursor on a coding-heavy issue, run a duplicate-session pre-flight check:
+  - Fetch the Linear issue and recent comments.
+  - Check for existing Cursor session links, Cursor handback comments, active attachments, and open PRs/branches for that issue.
+  - If a Cursor session already exists and is active, continue that same session/issue instead of starting another one.
+  - If the existing session is stopped, unavailable, or ambiguous, create or update a human-attention blocker and wait for restart/reassignment unless Jonny explicitly approves superseding it.
+  - If intentionally superseding a stuck session, document the decision in Linear and close or mark stale PRs as superseded before releasing another Cursor session.
 - Assign issues that need human attention to Jonny Trubshaw.
 - Codex handles orchestration, planning, documentation, lightweight scaffolding, issue decomposition, review coordination, and project hygiene.
 - Automatic Codex PR reviews are expected on PR creation and subsequent pushes.
@@ -179,6 +186,7 @@ Current gap-driven backlog:
 - PR #47 (`JTW-44 configure Cursor Cloud Chromium setup`) merged on 2026-06-15 after CI passed, the branch was clean, and no latest-head Codex review appeared after the 15-minute fallback window. `JTW-44` was marked Done.
 - The explicit backlog was empty after JTW-44, so on 2026-06-15 the monitor evaluated the app against the World Instrument intent and created `JTW-52` through `JTW-55`: browser sensor stream source, registry-backed source selection, provenance legibility, and realtime pipeline hygiene review.
 - JTW-53 was released to Cursor on 2026-06-15 before JTW-52 because registry-backed source selection should land before adding another live source path. Scope is source selector/routing only; do not start browser sensor source implementation as part of JTW-53.
+- JTW-57 hardened the Cursor release gate on 2026-06-15 after duplicate session patterns: before launching or re-pinging Cursor, check Linear comments/attachments and open PRs for an existing Cursor session on the same issue. Stopped or unavailable sessions require restart/reassignment or documented supersession, not an independent duplicate.
 
 ## Cursor Cloud specific instructions
 

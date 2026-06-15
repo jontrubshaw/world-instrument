@@ -11,6 +11,13 @@
 - Track all meaningful work in Linear under the `World Instrument` project.
 - Create planned coding work as backlog first.
 - Assign or delegate coding-heavy work to `Cursor` only when the issue is ready to start.
+- Before assigning/delegating, reassigning, or re-pinging Cursor on a coding-heavy issue, run a duplicate-session pre-flight check:
+  - Fetch the Linear issue and recent comments.
+  - Check issue attachments and GitHub for open PRs/branches tied to that issue.
+  - Check for existing Cursor session links, Cursor handback comments, or stopped/unavailable session messages.
+  - If an active Cursor session already exists for the issue, continue that session rather than launching a second one.
+  - If the existing Cursor session is stopped, unavailable, or ambiguous, create or update a human-attention blocker and wait for restart/reassignment unless Jonny explicitly approves superseding it.
+  - If intentionally superseding a stuck session, document the decision in Linear and close or mark stale PRs as superseded before starting another Cursor session.
 - Assign human-attention work to `Jonny Trubshaw`.
 - Create new issues as problems arise.
 - Keep issue descriptions actionable with acceptance criteria.
@@ -50,7 +57,7 @@
 
 Cursor environment setup is complete. Coding-heavy issues should still be assigned or delegated to Cursor only when intentionally ready to start. Keep planned work in Backlog until it is selected.
 
-`JTW-15` is the current coding-heavy work delegated to Cursor. Do not release another coding-heavy Cursor issue until `JTW-15` opens a fresh PR/branch, lands, or is confirmed stalled. While waiting, Codex should continue with non-blocking orchestration work: planning docs, issue grooming, review coordination, and cleanup that does not conflict with `packages/core`.
+`JTW-53` is the current coding-heavy work delegated to Cursor. Do not release another coding-heavy Cursor issue until `JTW-53` lands, is explicitly paused, or is confirmed blocked with a documented decision. Before any restart, reassign, or new Cursor ping on `JTW-53`, run the duplicate-session pre-flight check above.
 
 ## CI
 
