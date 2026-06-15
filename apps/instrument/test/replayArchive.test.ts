@@ -20,6 +20,11 @@ describe('instrument replay archive', () => {
       frameCount: 3,
       elapsedMs: 0,
       durationMs: 30000,
+      audioParameters: {
+        signature: '8f5c7a72',
+        carrierFrequencyHz: 168.41,
+        gain: 0.052,
+      },
     });
   });
 

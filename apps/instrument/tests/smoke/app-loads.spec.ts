@@ -47,6 +47,29 @@ test('loads the instrument shell', async ({ page }) => {
   await expect(page.getByLabel('Archive')).toHaveValue('weather-london-archive');
   await expect(page.getByLabel('Replay time')).toHaveValue('0');
 
+  const audioControls = page.getByRole('region', { name: 'Audio controls' });
+  await expect(audioControls).toBeVisible();
+  await expect(audioControls).toHaveAttribute('data-audio-state', 'stopped');
+  await expect
+    .poll(() =>
+      audioControls.evaluate((element) => {
+        const serializedParameters = element.dataset.audioParameters;
+        const parsedParameters: unknown =
+          serializedParameters === undefined ? undefined : JSON.parse(serializedParameters);
+
+        return parsedParameters;
+      }),
+    )
+    .toEqual({
+      signature: '8f5c7a72',
+      enabled: true,
+      carrierFrequencyHz: 168.41,
+      filterFrequencyHz: 769.84,
+      modulationFrequencyHz: 1.013,
+      gain: 0.052,
+      textureGain: 0.003,
+    });
+
   await page.getByRole('button', { name: 'Step forward' }).click();
   await expect.poll(() => canvas.evaluate((element) => element.dataset.scoreFrameIndex)).toBe('1');
   await expect
@@ -66,6 +89,15 @@ test('loads the instrument shell', async ({ page }) => {
   await expect
     .poll(() => canvas.evaluate((element) => element.dataset.weatherCondition))
     .toBe('rain');
+
+  await page.getByRole('button', { name: 'Start audio' }).click();
+  await expect
+    .poll(() => audioControls.evaluate((element) => element.getAttribute('data-audio-state')))
+    .toBe('running');
+  await page.getByRole('button', { name: 'Mute audio' }).click();
+  await expect(audioControls).toHaveAttribute('data-audio-muted', 'true');
+  await page.getByRole('button', { name: 'Stop audio' }).click();
+  await expect(audioControls).toHaveAttribute('data-audio-state', 'stopped');
 
   await page.getByRole('button', { name: 'Play' }).click();
   await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible();

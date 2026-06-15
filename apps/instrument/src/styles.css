@@ -154,7 +154,8 @@ h1 {
 }
 
 .archive-picker,
-.time-scrubber {
+.time-scrubber,
+.audio-controls {
   display: grid;
   gap: 0.42rem;
   color: rgba(248, 251, 255, 0.64);
@@ -215,6 +216,18 @@ h1 {
 
 .time-scrubber output {
   color: rgba(248, 251, 255, 0.82);
+  letter-spacing: 0.12em;
+}
+
+.audio-controls {
+  gap: 0.55rem;
+  padding-top: 0.2rem;
+}
+
+.audio-controls p {
+  margin: 0;
+  color: rgba(248, 251, 255, 0.74);
+  font-size: 0.72rem;
   letter-spacing: 0.12em;
 }
 
