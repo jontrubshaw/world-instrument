@@ -1,0 +1,28 @@
+import type { RecordedWeatherPayload } from '../weather.ts';
+
+export const recordedOpenMeteoLondonCurrentV1 = {
+  provider: 'open-meteo',
+  observedAt: '2026-06-14T21:00:00.000Z',
+  receivedAt: '2026-06-14T21:00:01.000Z',
+  sourceUri:
+    'https://api.open-meteo.com/v1/forecast?latitude=51.5072&longitude=-0.1276&current=temperature_2m,relative_humidity_2m,precipitation,rain,weather_code,cloud_cover,surface_pressure,wind_speed_10m,wind_direction_10m',
+  location: {
+    id: 'london-uk',
+    label: 'London, UK',
+    latitude: 51.5072,
+    longitude: -0.1276,
+    timezone: 'Europe/London',
+  },
+  current: {
+    temperatureCelsius: 18.4,
+    apparentTemperatureCelsius: 17.9,
+    relativeHumidityPercent: 72,
+    precipitationMm: 0.1,
+    rainMm: 0,
+    weatherCode: 3,
+    cloudCoverPercent: 86,
+    pressureHpa: 1012.4,
+    windSpeedMetersPerSecond: 6.8,
+    windDirectionDegrees: 248,
+  },
+} as const satisfies RecordedWeatherPayload;

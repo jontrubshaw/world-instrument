@@ -106,10 +106,10 @@ body::after {
   width: 14rem;
   height: 14rem;
   pointer-events: none;
-  background: #6ee7f9;
+  background: var(--stage-glow-color, #6ee7f9);
   border-radius: 50%;
   filter: blur(7rem);
-  opacity: 0.18;
+  opacity: var(--stage-glow-opacity, 0.18);
 }
 
 .voice-panel {
