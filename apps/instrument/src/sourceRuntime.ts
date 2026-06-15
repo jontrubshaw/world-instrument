@@ -83,7 +83,9 @@ export function sourceSupportsMode(sourceId: string, mode: StreamSourceMode): bo
 }
 
 export function sourceHasCompatibleScore(sourceId: string): boolean {
-  return streamSourceRegistry.compatibleScoresForSource(sourceId, instrumentScoreMetadata).length > 0;
+  return (
+    streamSourceRegistry.compatibleScoresForSource(sourceId, instrumentScoreMetadata).length > 0
+  );
 }
 
 export function selectableModeForSource(

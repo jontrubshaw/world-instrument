@@ -7,10 +7,7 @@ import {
   parseReplaySnapshot,
   type ReplaySnapshot,
 } from '@world-instrument/core';
-import {
-  normalizeWeatherPayload,
-  type RecordedWeatherPayload,
-} from '@world-instrument/adapters';
+import { normalizeWeatherPayload, type RecordedWeatherPayload } from '@world-instrument/adapters';
 
 import {
   WEATHER_SCORE_V1_ID,
@@ -111,4 +108,3 @@ async function loadWeatherFixture(): Promise<RecordedWeatherPayload> {
 
   return JSON.parse(contents) as RecordedWeatherPayload;
 }
-

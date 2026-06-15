@@ -64,12 +64,13 @@ test('loads the instrument shell', async ({ page }) => {
     'data-provenance-source-id',
     'weather.open-meteo:london-uk',
   );
+  await expect(streamControls).toHaveAttribute('data-provenance-score-id', 'weather-score');
   await expect(streamControls).toHaveAttribute('data-source-id', 'weather.open-meteo');
   await expect(streamControls).toHaveAttribute('data-source-state', 'ready');
   const provenance = page.getByRole('region', { name: 'Current data provenance' });
   await expect(provenance).toBeVisible();
   await expect(provenance.locator('.provenance-summary')).toContainText(
-    'Live output from London, UK weather; ready.',
+    'Live output from London, UK weather via weather-score 1.0.0; ready.',
   );
   await expect(
     provenance.locator('.provenance-metrics dd').getByText('less than 1 min old'),
@@ -138,8 +139,9 @@ test('loads the instrument shell', async ({ page }) => {
     'data-provenance-source-id',
     'sensor.browser-interaction:local-browser',
   );
+  await expect(streamControls).toHaveAttribute('data-provenance-score-id', 'browser-sensor-score');
   await expect(provenance.locator('.provenance-summary')).toContainText(
-    'Live output from Local browser sensor; ready.',
+    'Live output from Local browser sensor via browser-sensor-score 1.0.0; ready.',
   );
   await expect(streamControls.locator('.source-status')).toHaveText(
     'Browser sensor / interaction pointer fallback is driving the instrument; motion/orientation sensors are unavailable or waiting for permission.',
@@ -238,7 +240,7 @@ test('loads the instrument shell', async ({ page }) => {
   await expect(streamControls).toHaveAttribute('data-provenance-mode', 'replay-fallback');
   await expect(streamControls).toHaveAttribute('data-provenance-status', 'unavailable');
   await expect(provenance.locator('.provenance-summary')).toContainText(
-    'Replay fallback is driving output from London weather archive; Browser sensor / interaction is unavailable.',
+    'Replay fallback is driving output from London weather archive via weather-score 1.0.0; Browser sensor / interaction is unavailable.',
   );
   await expect(streamControls.locator('.mode-status')).toHaveText(
     'Browser sensor / interaction has no replay archive yet. Showing deterministic replay fallback.',
@@ -337,7 +339,7 @@ test('loads the instrument shell', async ({ page }) => {
   await expect(streamControls).toHaveAttribute('data-provenance-mode', 'replay');
   await expect(streamControls).toHaveAttribute('data-provenance-status', 'ready');
   await expect(provenance.locator('.provenance-summary')).toContainText(
-    'Replay archive is driving output from London, UK weather.',
+    'Replay archive is driving output from London, UK weather via weather-score 1.0.0.',
   );
   await expect
     .poll(() => canvas.evaluate((element) => element.dataset.scoreSignature))
@@ -487,7 +489,7 @@ test('captures the visible replay fallback when live weather fails before first 
   await expect(streamControls).toHaveAttribute('data-provenance-status', 'error');
   const provenance = page.getByRole('region', { name: 'Current data provenance' });
   await expect(provenance.locator('.provenance-summary')).toContainText(
-    'Replay fallback is driving output from London weather archive; Open-Meteo weather is error.',
+    'Replay fallback is driving output from London weather archive via weather-score 1.0.0; Open-Meteo weather is error.',
   );
   await expect(streamControls.locator('.live-status')).toHaveText(
     'Live weather adapter error: Weather provider request failed with HTTP 503. Showing deterministic replay fallback.',
@@ -571,7 +573,7 @@ test('marks stale and offline provenance without raw feed details', async ({ pag
   await expect(streamControls).toHaveAttribute('data-provenance-mode', 'live');
   await expect(streamControls).toHaveAttribute('data-provenance-status', 'stale');
   await expect(provenance.locator('.provenance-summary')).toContainText(
-    'Live output from London, UK weather; stale.',
+    'Live output from London, UK weather via weather-score 1.0.0; stale.',
   );
   await expect(provenance.locator('.provenance-summary')).toContainText(/Frame \d hr old\./);
 
@@ -587,6 +589,6 @@ test('marks stale and offline provenance without raw feed details', async ({ pag
   await expect(streamControls).toHaveAttribute('data-provenance-mode', 'replay-fallback');
   await expect(streamControls).toHaveAttribute('data-provenance-status', 'offline');
   await expect(provenance.locator('.provenance-summary')).toContainText(
-    'Replay fallback is driving output from London weather archive; Open-Meteo weather is offline.',
+    'Replay fallback is driving output from London weather archive via weather-score 1.0.0; Open-Meteo weather is offline.',
   );
 });

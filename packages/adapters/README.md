@@ -33,11 +33,11 @@ To add a source:
 
 ### Registered Sources
 
-| Source id                    | Kind      | Modes                       | Default score           |
-| ---------------------------- | --------- | --------------------------- | ----------------------- |
-| `weather.open-meteo`         | `weather` | `fixture`, `live`, `replay` | `weather-score`         |
-| `sensor.browser-interaction` | `sensor`  | `fixture`, `live`, `replay` | `browser-sensor-score`  |
-| `sensor.mock-local-device`   | `sensor`  | `fixture`, `replay`         | none yet                |
+| Source id                    | Kind      | Modes                       | Default score          |
+| ---------------------------- | --------- | --------------------------- | ---------------------- |
+| `weather.open-meteo`         | `weather` | `fixture`, `live`, `replay` | `weather-score`        |
+| `sensor.browser-interaction` | `sensor`  | `fixture`, `live`, `replay` | `browser-sensor-score` |
+| `sensor.mock-local-device`   | `sensor`  | `fixture`, `replay`         | none yet               |
 
 ## Weather Adapter v1
 
