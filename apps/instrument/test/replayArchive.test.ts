@@ -25,6 +25,11 @@ describe('instrument replay archive', () => {
         carrierFrequencyHz: 168.41,
         gain: 0.052,
       },
+      hapticPattern: {
+        signature: '8f5c7a72',
+        enabled: true,
+        pattern: [42],
+      },
     });
   });
 

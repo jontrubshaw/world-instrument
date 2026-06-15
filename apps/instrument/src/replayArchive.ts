@@ -11,6 +11,10 @@ import {
   mapScoreOutputToAudioParameters,
   type InstrumentAudioParameters,
 } from './audioParameters.ts';
+import {
+  mapScoreOutputToHapticPattern,
+  type InstrumentHapticPattern,
+} from './hapticParameters.ts';
 import recordedWeatherReplay from './replayArchives/weather-london.v1.replay.json';
 import {
   mapScoreOutputToVisualParameters,
@@ -37,6 +41,7 @@ export interface ReplayInstrumentFrameState {
   readonly output: ScoreOutput;
   readonly visualParameters: InstrumentVisualParameters;
   readonly audioParameters: InstrumentAudioParameters;
+  readonly hapticPattern: InstrumentHapticPattern;
 }
 
 export function loadReplayArchives(): readonly ReplayArchive[] {
@@ -60,6 +65,7 @@ export function evaluateReplayFrame(
   const output = evaluateWeatherScore(frame);
   const visualParameters = mapScoreOutputToVisualParameters(output);
   const audioParameters = mapScoreOutputToAudioParameters(output);
+  const hapticPattern = mapScoreOutputToHapticPattern(output);
   const frameCount = archive.snapshot.frames.length;
   const durationMs = archive.snapshot.frames.at(-1)?.elapsedMs ?? frame.elapsedMs;
 
@@ -77,6 +83,7 @@ export function evaluateReplayFrame(
     output,
     visualParameters,
     audioParameters,
+    hapticPattern,
   };
 }
 
