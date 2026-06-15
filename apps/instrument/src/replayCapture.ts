@@ -6,13 +6,14 @@ import {
   type ReplayFrame,
   type ReplaySnapshot,
   type ScoreOutput,
+  type StreamSourceMode,
 } from '@world-instrument/core';
 import { weatherScoreV1 } from '@world-instrument/scores';
 
 import type { ReplayArchive, ReplayInstrumentFrameState } from './replayArchive.ts';
 import { evaluateWeatherInstrumentFrame } from './weatherInstrument.ts';
 
-export type ReplayCaptureSourceMode = 'live' | 'replay';
+export type ReplayCaptureSourceMode = StreamSourceMode;
 
 export interface ReplayCaptureFrameInput {
   readonly sourceMode: ReplayCaptureSourceMode;
@@ -179,10 +180,12 @@ export function serializeReplaySnapshot(snapshot: ReplaySnapshot): string {
 export function createReplayCaptureSessionId(
   startedAt: string,
   sourceMode: ReplayCaptureSourceMode,
+  sourceKind = 'weather',
 ): string {
   const timestamp = startedAt.replace(/\.\d{3}Z$/, 'Z').replace(/[^0-9A-Za-z]+/g, '-');
+  const safeSourceKind = sourceKind.replace(/[^0-9A-Za-z]+/g, '-').toLowerCase();
 
-  return `captured-${sourceMode}-weather-${timestamp}`;
+  return `captured-${sourceMode}-${safeSourceKind}-${timestamp}`;
 }
 
 export function createReplayDownloadFilename(snapshot: ReplaySnapshot): string {
