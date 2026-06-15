@@ -7,6 +7,7 @@ import {
   type ReplaySnapshot,
   type ScoreOutput,
   type StreamSourceMode,
+  stableStringify,
 } from '@world-instrument/core';
 import { weatherScoreV1 } from '@world-instrument/scores';
 
@@ -26,6 +27,7 @@ export interface ReplayCaptureFrameInput {
   readonly visualSignature: string;
   readonly audioSignature: string;
   readonly hapticSignature: string;
+  readonly provenance?: JsonObject;
   readonly sourceLabel?: string;
   readonly statusLabel?: string;
 }
@@ -221,6 +223,7 @@ export function replayCaptureFrameKey(frame: ReplayCaptureFrameInput): string {
   const streamKeys = frame.streams
     .map((stream) => `${stream.streamId}:${String(stream.sequence)}:${stream.observedAt}`)
     .join(',');
+  const provenanceKey = captureProvenanceKey(frame.provenance);
 
   return [
     frame.sourceMode,
@@ -229,7 +232,20 @@ export function replayCaptureFrameKey(frame: ReplayCaptureFrameInput): string {
     frame.seed,
     frame.visualSignature,
     streamKeys,
+    provenanceKey,
   ].join('|');
+}
+
+function captureProvenanceKey(provenance: JsonObject | undefined): string {
+  if (provenance === undefined) {
+    return '';
+  }
+
+  const stableProvenance = Object.fromEntries(
+    Object.entries(provenance).filter(([key]) => key !== 'frameAgeMs'),
+  );
+
+  return stableStringify(stableProvenance);
 }
 
 function toReplayFrame(frame: CapturedReplayFrame): ReplayFrame {
@@ -286,6 +302,7 @@ function frameMetadata(frame: CapturedReplayFrame): JsonObject {
     visualSignature: frame.visualSignature,
     audioSignature: frame.audioSignature,
     hapticSignature: frame.hapticSignature,
+    provenance: frame.provenance ?? legacyFrameProvenance(frame),
     streams: frame.streams.map((stream) => ({
       streamId: stream.streamId,
       sourceId: stream.source.id,
@@ -332,6 +349,28 @@ function sourceModeSummary(frames: readonly CapturedReplayFrame[]): string {
   }
 
   return 'mixed';
+}
+
+function legacyFrameProvenance(frame: CapturedReplayFrame): JsonObject {
+  const stream = frame.streams[0];
+
+  return {
+    uiMode: frame.sourceMode,
+    sourceMode: frame.sourceMode,
+    status: stream?.status ?? 'unknown',
+    sourceIdentity:
+      frame.sourceLabel ?? stream?.source.label ?? stream?.source.id ?? 'Captured stream',
+    ...(stream === undefined
+      ? {}
+      : {
+          streamId: stream.streamId,
+          streamSourceId: stream.source.id,
+          sourceKind: stream.source.kind,
+          sourceLabel: stream.source.label ?? '',
+          observedAt: stream.observedAt,
+          receivedAt: stream.receivedAt,
+        }),
+  } satisfies JsonObject;
 }
 
 function captureSourceKind(frame: ReplayCaptureFrameInput): string {

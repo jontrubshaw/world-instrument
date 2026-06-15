@@ -58,8 +58,22 @@ test('loads the instrument shell', async ({ page }) => {
   await expect(streamControls).toBeVisible();
   await expect(streamControls).toHaveAttribute('data-instrument-mode', 'live');
   await expect(streamControls).toHaveAttribute('data-live-state', 'ready');
+  await expect(streamControls).toHaveAttribute('data-provenance-mode', 'live');
+  await expect(streamControls).toHaveAttribute('data-provenance-status', 'ready');
+  await expect(streamControls).toHaveAttribute(
+    'data-provenance-source-id',
+    'weather.open-meteo:london-uk',
+  );
   await expect(streamControls).toHaveAttribute('data-source-id', 'weather.open-meteo');
   await expect(streamControls).toHaveAttribute('data-source-state', 'ready');
+  const provenance = page.getByRole('region', { name: 'Current data provenance' });
+  await expect(provenance).toBeVisible();
+  await expect(provenance.locator('.provenance-summary')).toContainText(
+    'Live output from London, UK weather; ready.',
+  );
+  await expect(
+    provenance.locator('.provenance-metrics dd').getByText('less than 1 min old'),
+  ).toBeVisible();
   const sourceSelector = streamControls.locator('.source-picker select');
   await expect(sourceSelector).toHaveValue('weather.open-meteo');
   await expect(streamControls.locator('.live-status')).toHaveText(
@@ -118,6 +132,15 @@ test('loads the instrument shell', async ({ page }) => {
     })
     .toBe('sensor-fallback');
   await expect(streamControls).toHaveAttribute('data-source-state', 'ready');
+  await expect(streamControls).toHaveAttribute('data-provenance-mode', 'live');
+  await expect(streamControls).toHaveAttribute('data-provenance-status', 'ready');
+  await expect(streamControls).toHaveAttribute(
+    'data-provenance-source-id',
+    'sensor.browser-interaction:local-browser',
+  );
+  await expect(provenance.locator('.provenance-summary')).toContainText(
+    'Live output from Local browser sensor; ready.',
+  );
   await expect(streamControls.locator('.source-status')).toHaveText(
     'Browser sensor / interaction pointer fallback is driving the instrument; motion/orientation sensors are unavailable or waiting for permission.',
   );
@@ -160,6 +183,15 @@ test('loads the instrument shell', async ({ page }) => {
       readonly capture: {
         readonly sourceMode: string;
       };
+      readonly frames: readonly {
+        readonly provenance: {
+          readonly registeredSourceId: string;
+          readonly sourceIdentity: string;
+          readonly sourceMode: string;
+          readonly status: string;
+          readonly uiMode: string;
+        };
+      }[];
       readonly sources: readonly {
         readonly kind: string;
       }[];
@@ -189,12 +221,71 @@ test('loads the instrument shell', async ({ page }) => {
       },
     ],
   });
+  expect(
+    sensorReplay.metadata.frames.some(
+      (frame) =>
+        frame.provenance.registeredSourceId === 'sensor.browser-interaction' &&
+        frame.provenance.sourceIdentity === 'Local browser sensor' &&
+        frame.provenance.sourceMode === 'live' &&
+        frame.provenance.status === 'ready' &&
+        frame.provenance.uiMode === 'live',
+    ),
+  ).toBe(true);
+
+  await page.getByRole('button', { name: 'Replay', exact: true }).click();
+  await expect(streamControls).toHaveAttribute('data-source-id', 'sensor.browser-interaction');
+  await expect(streamControls).toHaveAttribute('data-instrument-mode', 'replay');
+  await expect(streamControls).toHaveAttribute('data-provenance-mode', 'replay-fallback');
+  await expect(streamControls).toHaveAttribute('data-provenance-status', 'unavailable');
+  await expect(provenance.locator('.provenance-summary')).toContainText(
+    'Replay fallback is driving output from London weather archive; Browser sensor / interaction is unavailable.',
+  );
+  await expect(streamControls.locator('.mode-status')).toHaveText(
+    'Browser sensor / interaction has no replay archive yet. Showing deterministic replay fallback.',
+  );
+  await expect(page.getByLabel('Archive')).toBeDisabled();
+
+  await page.getByRole('button', { name: 'Start capture' }).click();
+  await expect(sensorCaptureControls).toHaveAttribute('data-capture-state', 'recording');
+  await expect(sensorCaptureControls).toHaveAttribute('data-capture-frame-count', '1');
+  await page.getByRole('button', { name: 'Stop capture' }).click();
+  await expect(sensorCaptureControls).toHaveAttribute('data-capture-state', 'ready');
+  const sensorReplayFallbackDownloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Export replay JSON' }).click();
+  const sensorReplayFallbackDownload = await sensorReplayFallbackDownloadPromise;
+  const sensorReplayFallbackDownloadPath = await sensorReplayFallbackDownload.path();
+
+  expect(JSON.parse(await readFile(sensorReplayFallbackDownloadPath, 'utf8'))).toMatchObject({
+    schemaVersion: 'replay-snapshot.v1',
+    metadata: {
+      capture: {
+        sourceMode: 'replay',
+      },
+      frames: [
+        {
+          provenance: {
+            registeredSourceId: 'sensor.browser-interaction',
+            sourceName: 'Browser sensor / interaction',
+            sourceMode: 'replay',
+            status: 'unavailable',
+            uiMode: 'replay-fallback',
+            fallback: {
+              fromMode: 'replay',
+              reason: 'Browser sensor / interaction has no replay archive yet.',
+            },
+          },
+        },
+      ],
+    },
+  });
 
   await sourceSelector.selectOption('weather.open-meteo');
   await page.getByRole('button', { name: 'Live', exact: true }).click();
   await expect(streamControls).toHaveAttribute('data-source-id', 'weather.open-meteo');
   await expect(streamControls).toHaveAttribute('data-source-mode', 'live');
   await expect(streamControls).toHaveAttribute('data-source-state', 'ready');
+  await expect(streamControls).toHaveAttribute('data-provenance-mode', 'live');
+  await expect(streamControls).toHaveAttribute('data-provenance-status', 'ready');
 
   const captureControls = page.getByRole('region', { name: 'Capture controls' });
   await expect(captureControls).toBeVisible();
@@ -227,11 +318,27 @@ test('loads the instrument shell', async ({ page }) => {
     metadata: {
       fixture: false,
       mode: 'captured',
+      frames: [
+        {
+          provenance: {
+            registeredSourceId: 'weather.open-meteo',
+            sourceIdentity: 'London, UK weather',
+            sourceMode: 'live',
+            status: 'ready',
+            uiMode: 'live',
+          },
+        },
+      ],
     },
   });
 
   await page.getByRole('button', { name: 'Replay', exact: true }).click();
   await expect(streamControls).toHaveAttribute('data-instrument-mode', 'replay');
+  await expect(streamControls).toHaveAttribute('data-provenance-mode', 'replay');
+  await expect(streamControls).toHaveAttribute('data-provenance-status', 'ready');
+  await expect(provenance.locator('.provenance-summary')).toContainText(
+    'Replay archive is driving output from London, UK weather.',
+  );
   await expect
     .poll(() => canvas.evaluate((element) => element.dataset.scoreSignature))
     .toBe('8f5c7a72');
@@ -376,6 +483,12 @@ test('captures the visible replay fallback when live weather fails before first 
   const canvas = page.getByTestId('instrument-canvas');
   await expect(streamControls).toHaveAttribute('data-instrument-mode', 'live');
   await expect(streamControls).toHaveAttribute('data-live-state', 'error');
+  await expect(streamControls).toHaveAttribute('data-provenance-mode', 'replay-fallback');
+  await expect(streamControls).toHaveAttribute('data-provenance-status', 'error');
+  const provenance = page.getByRole('region', { name: 'Current data provenance' });
+  await expect(provenance.locator('.provenance-summary')).toContainText(
+    'Replay fallback is driving output from London weather archive; Open-Meteo weather is error.',
+  );
   await expect(streamControls.locator('.live-status')).toHaveText(
     'Live weather adapter error: Weather provider request failed with HTTP 503. Showing deterministic replay fallback.',
   );
@@ -410,6 +523,70 @@ test('captures the visible replay fallback when live weather fails before first 
         frameCount: 1,
         sourceMode: 'replay',
       },
+      frames: [
+        {
+          provenance: {
+            registeredSourceId: 'weather.open-meteo',
+            sourceMode: 'replay',
+            status: 'error',
+            uiMode: 'replay-fallback',
+          },
+        },
+      ],
     },
   });
+});
+
+test('marks stale and offline provenance without raw feed details', async ({ page }) => {
+  await page.route('https://api.open-meteo.com/v1/forecast**', async (route) => {
+    const observedAt = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+
+    await route.fulfill({
+      json: {
+        latitude: 51.5,
+        longitude: -0.12,
+        timezone: 'GMT',
+        current: {
+          time: observedAt,
+          temperature_2m: 17.2,
+          apparent_temperature: 16.9,
+          relative_humidity_2m: 76,
+          precipitation: 0,
+          rain: 0,
+          weather_code: 3,
+          cloud_cover: 80,
+          surface_pressure: 1010.4,
+          wind_speed_10m: 5.1,
+          wind_direction_10m: 210,
+        },
+      },
+    });
+  });
+
+  await page.goto('/');
+
+  const streamControls = page.getByRole('region', { name: 'Stream controls' });
+  const provenance = page.getByRole('region', { name: 'Current data provenance' });
+  await expect(streamControls).toHaveAttribute('data-live-state', 'stale');
+  await expect(streamControls).toHaveAttribute('data-provenance-mode', 'live');
+  await expect(streamControls).toHaveAttribute('data-provenance-status', 'stale');
+  await expect(provenance.locator('.provenance-summary')).toContainText(
+    'Live output from London, UK weather; stale.',
+  );
+  await expect(provenance.locator('.provenance-summary')).toContainText(/Frame \d hr old\./);
+
+  await page.addInitScript(() => {
+    Object.defineProperty(window.navigator, 'onLine', {
+      configurable: true,
+      value: false,
+    });
+  });
+  await page.reload();
+
+  await expect(streamControls).toHaveAttribute('data-live-state', 'offline');
+  await expect(streamControls).toHaveAttribute('data-provenance-mode', 'replay-fallback');
+  await expect(streamControls).toHaveAttribute('data-provenance-status', 'offline');
+  await expect(provenance.locator('.provenance-summary')).toContainText(
+    'Replay fallback is driving output from London weather archive; Open-Meteo weather is offline.',
+  );
 });

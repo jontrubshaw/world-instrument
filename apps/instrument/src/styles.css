@@ -205,6 +205,66 @@ h1 {
   cursor: not-allowed;
 }
 
+.provenance-card {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.72rem;
+  border: 1px solid rgba(142, 234, 255, 0.16);
+  border-radius: 1rem;
+  background:
+    linear-gradient(135deg, rgba(142, 234, 255, 0.07), rgba(216, 180, 254, 0.045)),
+    rgba(5, 7, 22, 0.38);
+}
+
+.provenance-summary {
+  margin: 0;
+  color: rgba(248, 251, 255, 0.82);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1.45;
+}
+
+.provenance-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+  margin: 0;
+}
+
+.provenance-metrics div {
+  min-width: 0;
+  padding: 0.48rem 0.55rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.8rem;
+  background: rgba(5, 7, 22, 0.34);
+}
+
+.provenance-metrics dt,
+.provenance-metrics dd {
+  margin: 0;
+}
+
+.provenance-metrics dt {
+  color: rgba(142, 234, 255, 0.72);
+  font-size: 0.58rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.provenance-metrics dd {
+  overflow: hidden;
+  margin-top: 0.16rem;
+  color: rgba(248, 251, 255, 0.78);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
 .mode-status {
   margin: 0;
   color: rgba(248, 251, 255, 0.78);

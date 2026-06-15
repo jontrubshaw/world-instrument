@@ -10,6 +10,7 @@ import {
 } from 'react';
 
 import { BROWSER_SENSOR_STREAM_SOURCE_ID } from '@world-instrument/adapters';
+import type { JsonObject, ReplayFrame } from '@world-instrument/core';
 
 import { InstrumentAudioEngine } from './audioEngine.ts';
 import { serializeAudioParametersForDom } from './audioParameters.ts';
@@ -45,6 +46,7 @@ import {
   evaluateReplayFrame,
   loadReplayArchives,
   type ReplayArchive,
+  type ReplayInstrumentFrameState,
 } from './replayArchive.ts';
 import {
   DEFAULT_INSTRUMENT_SOURCE_ID,
@@ -72,6 +74,7 @@ type AudioControlState =
 type HapticControlState = 'checking' | 'unsupported' | 'disabled' | 'enabled' | 'blocked';
 
 type InstrumentMode = 'fixture' | 'live' | 'replay';
+type ProvenanceDisplayMode = InstrumentMode | 'replay-fallback';
 type SourceUiState =
   | SourceReadState
   | {
@@ -84,6 +87,8 @@ type SourceUiState =
       readonly frame?: SourceInstrumentFrameState;
       readonly streamState?: SourceReadState['streamState'];
     };
+
+const PROVENANCE_CLOCK_INTERVAL_MS = 15_000;
 
 export function App() {
   const [archives] = useState(() => loadReplayArchives());
@@ -105,6 +110,7 @@ export function App() {
     status: 'loading',
     message: 'Loading Open-Meteo weather...',
   });
+  const [provenanceNow, setProvenanceNow] = useState(() => new Date());
   const [audioControlState, setAudioControlState] = useState<AudioControlState>('stopped');
   const [isAudioMuted, setIsAudioMuted] = useState(false);
   const [hapticControlState, setHapticControlState] = useState(initialHapticControlState);
@@ -147,6 +153,7 @@ export function App() {
 
     return evaluateReplayFrame(activeArchive, framePosition);
   }, [activeArchive, framePosition]);
+  const activeReplayFrame = activeArchive?.snapshot.frames[replayViewState.framePosition];
   const viewState =
     instrumentMode !== 'replay' && sourceState.frame !== undefined
       ? sourceState.frame
@@ -171,6 +178,44 @@ export function App() {
     hapticsEnabled,
     viewState.hapticPattern.enabled,
   );
+  const sourceStatusLabel = sourceStatusText({
+    sourceState,
+    instrumentMode,
+    sourceName: selectedSource.displayName,
+    sourceReplayAvailable,
+    visibleFallbackActive,
+  });
+  const sourceDataStatus =
+    instrumentMode === 'replay'
+      ? sourceReplayAvailable
+        ? 'ready'
+        : 'unavailable'
+      : sourceState.status;
+  const provenanceState = useMemo(
+    () =>
+      buildProvenanceViewState({
+        activeArchive,
+        activeReplayFrame,
+        instrumentMode,
+        now: provenanceNow,
+        replayViewState,
+        selectedSourceId,
+        selectedSourceName: selectedSource.displayName,
+        sourceState,
+        visibleFallbackActive,
+      }),
+    [
+      activeArchive,
+      activeReplayFrame,
+      instrumentMode,
+      provenanceNow,
+      replayViewState,
+      selectedSource.displayName,
+      selectedSourceId,
+      sourceState,
+      visibleFallbackActive,
+    ],
+  );
   const currentCaptureFrame = useMemo<ReplayCaptureFrameInput | undefined>(() => {
     if (instrumentMode !== 'replay') {
       if (sourceState.frame !== undefined && sourceState.streamState !== undefined) {
@@ -184,26 +229,50 @@ export function App() {
           visualSignature: sourceState.frame.visualParameters.signature,
           audioSignature: sourceState.frame.audioParameters.signature,
           hapticSignature: sourceState.frame.hapticPattern.signature,
+          provenance: provenanceState.captureMetadata,
           sourceLabel: sourceState.frame.sourceLabel,
           statusLabel: sourceState.frame.statusLabel,
         };
       }
 
-      return activeArchive === undefined
+      const fallbackFrame =
+        activeArchive === undefined
+          ? undefined
+          : createReplayCaptureFrameFromArchive({
+              archive: activeArchive,
+              viewState: replayViewState,
+            });
+
+      return fallbackFrame === undefined
+        ? undefined
+        : {
+            ...fallbackFrame,
+            provenance: provenanceState.captureMetadata,
+          };
+    }
+
+    const replayFrame =
+      activeArchive === undefined
         ? undefined
         : createReplayCaptureFrameFromArchive({
             archive: activeArchive,
             viewState: replayViewState,
           });
-    }
 
-    return activeArchive === undefined
+    return replayFrame === undefined
       ? undefined
-      : createReplayCaptureFrameFromArchive({
-          archive: activeArchive,
-          viewState: replayViewState,
-        });
-  }, [activeArchive, instrumentMode, replayViewState, sourceState.frame, sourceState.streamState]);
+      : {
+          ...replayFrame,
+          provenance: provenanceState.captureMetadata,
+        };
+  }, [
+    activeArchive,
+    instrumentMode,
+    provenanceState.captureMetadata,
+    replayViewState,
+    sourceState.frame,
+    sourceState.streamState,
+  ]);
   const captureFrameCount = captureSession?.frames.length ?? 0;
   const captureIsRecording = captureSession?.status === 'recording';
   const captureCanExport = captureFrameCount > 0;
@@ -230,6 +299,16 @@ export function App() {
       window.clearInterval(intervalId);
     };
   }, [instrumentMode, isPlaying, lastFramePosition]);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setProvenanceNow(new Date());
+    }, PROVENANCE_CLOCK_INTERVAL_MS);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, []);
 
   useEffect(() => {
     if (instrumentMode === 'replay') {
@@ -707,19 +786,6 @@ export function App() {
     setHapticsEnabled(true);
   };
 
-  const sourceStatusLabel = sourceStatusText({
-    sourceState,
-    instrumentMode,
-    sourceName: selectedSource.displayName,
-    sourceReplayAvailable,
-    visibleFallbackActive,
-  });
-  const sourceDataStatus =
-    instrumentMode === 'replay'
-      ? sourceReplayAvailable
-        ? 'ready'
-        : 'unavailable'
-      : sourceState.status;
   const canRequestBrowserSensorPermission =
     selectedSourceId === BROWSER_SENSOR_STREAM_SOURCE_ID &&
     instrumentMode === 'live' &&
@@ -744,6 +810,14 @@ export function App() {
           aria-label="Stream controls"
           data-instrument-mode={instrumentMode}
           data-live-state={sourceDataStatus}
+          data-provenance-mode={provenanceState.displayMode}
+          data-provenance-status={provenanceState.status}
+          data-provenance-source-id={provenanceState.sourceId}
+          data-provenance-frame-age-ms={
+            provenanceState.frameAgeMs === undefined
+              ? 'unknown'
+              : String(provenanceState.frameAgeMs)
+          }
           data-source-id={selectedSourceId}
           data-source-mode={instrumentMode}
           data-source-state={sourceDataStatus}
@@ -803,6 +877,36 @@ export function App() {
               Replay
             </button>
           </div>
+
+          <section
+            className="provenance-card"
+            aria-label="Current data provenance"
+            data-provenance-mode={provenanceState.displayMode}
+            data-provenance-status={provenanceState.status}
+            data-provenance-source-id={provenanceState.sourceId}
+          >
+            <p className="provenance-summary" role="status" aria-live="polite">
+              {provenanceState.summary}
+            </p>
+            <dl className="provenance-metrics" aria-label={provenanceState.ariaLabel}>
+              <div>
+                <dt>Mode</dt>
+                <dd>{provenanceModeLabel(provenanceState.displayMode)}</dd>
+              </div>
+              <div>
+                <dt>Status</dt>
+                <dd>{provenanceStatusLabel(provenanceState.status)}</dd>
+              </div>
+              <div>
+                <dt>Frame age</dt>
+                <dd>{provenanceState.frameAgeLabel}</dd>
+              </div>
+              <div>
+                <dt>Source</dt>
+                <dd>{provenanceState.sourceIdentity}</dd>
+              </div>
+            </dl>
+          </section>
 
           {instrumentMode !== 'replay' ? (
             <>
@@ -1018,6 +1122,229 @@ function formatElapsed(elapsedMs: number): string {
 
 function formatHertz(value: number): string {
   return `${value.toFixed(1)} Hz`;
+}
+
+interface ProvenanceViewState {
+  readonly displayMode: ProvenanceDisplayMode;
+  readonly status: string;
+  readonly sourceId: string;
+  readonly sourceIdentity: string;
+  readonly streamStatus: string;
+  readonly frameAgeLabel: string;
+  readonly frameAgeMs?: number;
+  readonly summary: string;
+  readonly ariaLabel: string;
+  readonly captureMetadata: JsonObject;
+}
+
+function buildProvenanceViewState(options: {
+  readonly activeArchive: ReplayArchive | undefined;
+  readonly activeReplayFrame: ReplayFrame | undefined;
+  readonly instrumentMode: InstrumentMode;
+  readonly now: Date;
+  readonly replayViewState: ReplayInstrumentFrameState;
+  readonly selectedSourceId: string;
+  readonly selectedSourceName: string;
+  readonly sourceState: SourceUiState;
+  readonly visibleFallbackActive: boolean;
+}): ProvenanceViewState {
+  const displayMode = options.visibleFallbackActive ? 'replay-fallback' : options.instrumentMode;
+  const replayDriven = displayMode === 'replay' || displayMode === 'replay-fallback';
+  const stream = replayDriven
+    ? options.activeReplayFrame?.streams[0]
+    : options.sourceState.streamState;
+  const observedAt =
+    stream?.observedAt ??
+    (options.instrumentMode === 'replay' ? options.activeReplayFrame?.capturedAt : undefined) ??
+    options.sourceState.frame?.observedAt;
+  const receivedAt = stream?.receivedAt ?? options.sourceState.frame?.receivedAt;
+  const sourceIdentity =
+    stream?.source.label ??
+    options.sourceState.frame?.sourceLabel ??
+    (replayDriven ? options.activeArchive?.label : undefined) ??
+    options.selectedSourceName;
+  const sourceId =
+    stream?.source.id ??
+    (replayDriven ? options.activeArchive?.id : undefined) ??
+    options.selectedSourceId;
+  const status =
+    displayMode === 'replay'
+      ? 'ready'
+      : options.instrumentMode === 'replay'
+        ? 'unavailable'
+        : options.sourceState.status;
+  const streamStatus = stream?.status ?? options.sourceState.frame?.streamStatus ?? status;
+  const frameAge = formatFrameAge(observedAt, options.now);
+  const captureSourceMode = replayDriven ? 'replay' : options.instrumentMode;
+  const summary = provenanceSummaryText({
+    archiveLabel: options.activeArchive?.label,
+    displayMode,
+    frameAgeLabel: frameAge.label,
+    sourceIdentity,
+    sourceName: options.selectedSourceName,
+    status,
+  });
+  const captureMetadata = {
+    uiMode: displayMode,
+    sourceMode: captureSourceMode,
+    status,
+    streamStatus,
+    registeredSourceId: options.selectedSourceId,
+    sourceName: options.selectedSourceName,
+    sourceIdentity,
+    sourceId,
+    ...(stream === undefined
+      ? {}
+      : {
+          streamId: stream.streamId,
+          streamSourceId: stream.source.id,
+          sourceKind: stream.source.kind,
+          sourceLabel: stream.source.label ?? '',
+        }),
+    ...(observedAt === undefined ? {} : { observedAt }),
+    ...(receivedAt === undefined ? {} : { receivedAt }),
+    ...(frameAge.ms === undefined ? {} : { frameAgeMs: frameAge.ms }),
+    ...(options.activeArchive === undefined || !replayDriven
+      ? {}
+      : {
+          archiveId: options.activeArchive.id,
+          archiveLabel: options.activeArchive.label,
+          archiveFramePosition: options.replayViewState.framePosition,
+        }),
+    ...(displayMode !== 'replay-fallback'
+      ? {}
+      : {
+          fallback: {
+            fromMode: options.instrumentMode,
+            reason:
+              options.instrumentMode === 'replay'
+                ? `${options.selectedSourceName} has no replay archive yet.`
+                : options.sourceState.message,
+          },
+        }),
+  } satisfies JsonObject;
+
+  return {
+    displayMode,
+    status,
+    sourceId,
+    sourceIdentity,
+    streamStatus,
+    frameAgeLabel: frameAge.label,
+    ...(frameAge.ms === undefined ? {} : { frameAgeMs: frameAge.ms }),
+    summary,
+    ariaLabel: `${provenanceModeLabel(displayMode)} provenance: ${provenanceStatusLabel(
+      status,
+    )}, ${sourceIdentity}, ${frameAge.label}.`,
+    captureMetadata,
+  };
+}
+
+function provenanceSummaryText(options: {
+  readonly archiveLabel: string | undefined;
+  readonly displayMode: ProvenanceDisplayMode;
+  readonly frameAgeLabel: string;
+  readonly sourceIdentity: string;
+  readonly sourceName: string;
+  readonly status: string;
+}): string {
+  if (options.displayMode === 'replay-fallback') {
+    return `Replay fallback is driving output from ${options.archiveLabel ?? options.sourceIdentity}; ${options.sourceName} is ${provenanceStatusLabel(
+      options.status,
+    ).toLowerCase()}. Frame ${options.frameAgeLabel}.`;
+  }
+
+  if (options.displayMode === 'replay') {
+    return `Replay archive is driving output from ${options.sourceIdentity}. Frame ${options.frameAgeLabel}.`;
+  }
+
+  if (options.status === 'loading') {
+    return `${provenanceModeLabel(options.displayMode)} ${options.sourceName} is loading the latest normalized frame.`;
+  }
+
+  return `${provenanceModeLabel(options.displayMode)} output from ${options.sourceIdentity}; ${provenanceStatusLabel(
+    options.status,
+  ).toLowerCase()}. Frame ${options.frameAgeLabel}.`;
+}
+
+function provenanceModeLabel(mode: ProvenanceDisplayMode): string {
+  switch (mode) {
+    case 'fixture':
+      return 'Fixture';
+    case 'live':
+      return 'Live';
+    case 'replay':
+      return 'Replay';
+    case 'replay-fallback':
+      return 'Replay fallback';
+  }
+}
+
+function provenanceStatusLabel(status: string): string {
+  switch (status) {
+    case 'error':
+      return 'Error';
+    case 'loading':
+      return 'Loading';
+    case 'offline':
+      return 'Offline';
+    case 'stale':
+      return 'Stale';
+    case 'unavailable':
+      return 'Unavailable';
+    default:
+      return 'Ready';
+  }
+}
+
+function formatFrameAge(
+  observedAt: string | undefined,
+  now: Date,
+): {
+  readonly label: string;
+  readonly ms?: number;
+} {
+  if (observedAt === undefined) {
+    return { label: 'age unknown' };
+  }
+
+  const observedAtMs = Date.parse(observedAt);
+
+  if (Number.isNaN(observedAtMs)) {
+    return { label: 'age unknown' };
+  }
+
+  const ageMs = Math.max(0, now.getTime() - observedAtMs);
+  const totalSeconds = Math.floor(ageMs / 1000);
+
+  if (totalSeconds < 60) {
+    return { label: 'less than 1 min old', ms: ageMs };
+  }
+
+  const totalMinutes = Math.floor(totalSeconds / 60);
+
+  if (totalMinutes < 60) {
+    return {
+      label: `${String(totalMinutes)} ${totalMinutes === 1 ? 'min' : 'min'} old`,
+      ms: ageMs,
+    };
+  }
+
+  const totalHours = Math.floor(totalMinutes / 60);
+
+  if (totalHours < 48) {
+    return {
+      label: `${String(totalHours)} ${totalHours === 1 ? 'hr' : 'hr'} old`,
+      ms: ageMs,
+    };
+  }
+
+  const totalDays = Math.floor(totalHours / 24);
+
+  return {
+    label: `${String(totalDays)} ${totalDays === 1 ? 'day' : 'days'} old`,
+    ms: ageMs,
+  };
 }
 
 function sourceStatusText(options: {
