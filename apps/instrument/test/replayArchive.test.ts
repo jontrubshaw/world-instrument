@@ -137,7 +137,8 @@ describe('instrument replay archive', () => {
     unknownScoreSnapshot.score.scoreId = 'unknown-score';
     unknownScoreSnapshot.score.displayName = 'Unknown Score';
     unknownScoreSnapshot.frames = unknownScoreSnapshot.frames.map((frame) => {
-      const { output: _output, ...frameWithoutOutput } = frame;
+      const frameWithoutOutput = { ...frame };
+      delete frameWithoutOutput.output;
 
       return frameWithoutOutput;
     });
