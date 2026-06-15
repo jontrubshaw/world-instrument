@@ -8,7 +8,7 @@ This file is the durable project handoff. Keep it current whenever project conve
 - Linear project: https://linear.app/jtworks/project/world-instrument-1472eb8e5477
 - Linear team: Jtworks
 - Local checkout: `/Users/JonathanTrubshaw/Documents/weathart/world-instrument`
-- Active implementation issue: `JTW-60` is delegated to Cursor as of 2026-06-15 23:18 UTC after a clean duplicate-session pre-flight check.
+- Active implementation issue: none as of 2026-06-15 23:50 UTC. `JTW-60` landed via PR #61 and no Cursor-owned implementation PR is open.
 - Cursor environment setup is complete.
 - Stale pre-setup Cursor draft PRs closed: PR #1 (`cursor/instrument-app-shell-1cf1`) and PR #3 (`cursor/core-contracts-7e26`).
 - Local Node environment: Homebrew `node@24` installed; current shell resolves `node` to `v24.16.0` and `npm` to `11.13.0`.
@@ -62,12 +62,13 @@ This file is the durable project handoff. Keep it current whenever project conve
 - `JTW-57`: Harden Cursor duplicate-session release gate. Done; PR #50 merged.
 - `JTW-58`: Refresh durable docs after JTW-53 merge and JTW-52 release. Done; PR #51 merged.
 - `JTW-59`: Add dedicated browser sensor score mappings. Done; PR #58 merged. Duplicate Cursor PR #57 closed as superseded.
-- `JTW-60`: Allow imported replay archives in the instrument app. In Progress, delegated to Cursor.
+- `JTW-60`: Allow imported replay archives in the instrument app. Done; PR #61 merged.
 - `JTW-61`: Decide the next external world stream after weather and browser sensors. Backlog; human decision.
 - `JTW-62`: Refresh durable docs after JTW-54 merge and next-gap planning. Done; PR #55 merged.
 - `JTW-63`: Refresh durable docs after JTW-59 release. Done; PR #56 merged.
 - `JTW-64`: Refresh durable docs after JTW-59 merge. Done; PR #59 merged.
-- `JTW-65`: Refresh durable docs after JTW-60 release. Current docs issue.
+- `JTW-65`: Refresh durable docs after JTW-60 release. Done; PR #60 merged.
+- `JTW-66`: Refresh durable docs after JTW-60 merge. Current docs issue.
 
 ## Orchestration Rules
 
@@ -131,15 +132,15 @@ This file is the durable project handoff. Keep it current whenever project conve
 
 There is no longer a global pause on Cursor setup. Pick the next issue deliberately, assign/delegate it only when ready, and avoid starting multiple coding-heavy Cursor tasks unless that concurrency is intentional.
 
-`JTW-60` is the active Cursor-delegated implementation issue. Scope is imported replay archive support only: local JSON import, existing replay validation, session-local archive picker integration, provenance preservation, graceful invalid-file errors, and focused import/replay tests.
+There is currently no active Cursor-delegated implementation issue and no open Cursor-owned PR. `JTW-60` landed through PR #61 after CI passed and Codex provided a current-head PR-level `+1` pass signal.
 
 Current gap-driven backlog:
 
 - `JTW-55`: realtime pipeline refactor and hygiene review, human-owned.
 - `JTW-61`: decide the next external world stream, human decision.
-- `JTW-65`: refresh durable docs after JTW-60 release.
+- `JTW-66`: refresh durable docs after JTW-60 merge.
 
-Do not start another coding-heavy Cursor issue until `JTW-60` lands, is explicitly paused, or is confirmed blocked with a documented decision.
+Do not start another coding-heavy Cursor issue until the next issue is intentionally selected and the duplicate-session pre-flight check passes. `JTW-55` and `JTW-61` are human-owned decision/review work by default, not Cursor-ready implementation handoffs.
 
 ## Source Checks
 
@@ -212,6 +213,9 @@ Do not start another coding-heavy Cursor issue until `JTW-60` lands, is explicit
 - PR #58 (`JTW-59 add dedicated browser sensor score mappings`) merged on 2026-06-15 after CI passed, the branch was clean, and no latest-head Codex review or current-head PR-level `+1` appeared after the documented fallback window. `JTW-59` was marked Done and Cursor delegation was cleared.
 - PR #59 (`JTW-64 refresh docs after JTW-59 merge`) merged on 2026-06-15 after local `npm run check`, CI passed, and the docs-only review exception applied. The docs PR briefly attached to `JTW-59`; the attachment was removed and `JTW-59` retained only implementation PR #58.
 - JTW-60 was released to Cursor on 2026-06-15 after a duplicate-session pre-flight check found no comments, attachments, open PRs, or remote branches matching `jtw-60`, `replay/archive`, or `import/replay`. Scope is imported replay archive support only; `JTW-55` hygiene review and `JTW-61` next-stream decision remain separate.
+- PR #60 (`JTW-65 refresh docs after JTW-60 release`) merged on 2026-06-15 after local `npm run check`, CI passed, and the docs-only review exception applied. Linear briefly attached the docs PR to `JTW-60`; `JTW-60` was restored to the active Cursor state at the time and the incorrect docs attachment was removed.
+- JTW-60 produced two Cursor PRs on 2026-06-15: PR #61 (`cursor/import-replay-archives-809b`) and PR #62 (`cursor/import-replay-archives-e600`). PR #61 was retained as the original active Cursor handback; PR #62 was closed as superseded and removed from `JTW-60`.
+- PR #61 (`JTW-60 allow imported replay archives`) merged on 2026-06-15 after CI run #207 passed, the PR was non-draft and mergeable, there were no current-head actionable Codex comments, and a PR-level `+1` reaction from `chatgpt-codex-connector[bot]` was created after head `4b602301ac1d2f18ab619c1a04c0dda16b95797f` was pushed. `JTW-60` was marked Done and Cursor delegation was cleared.
 
 ## Cursor Cloud specific instructions
 
