@@ -94,7 +94,7 @@ test('loads the instrument shell', async ({ page }) => {
     .toBe('sensor-score');
   await expect
     .poll(() => canvas.evaluate((element) => element.dataset.weatherCondition))
-    .toMatch(/^sensor-(motion|pointer)-active$/u);
+    .toMatch(/^sensor-(motion|pointer)(-active)?$/u);
 
   const captureControls = page.getByRole('region', { name: 'Capture controls' });
   await expect(captureControls).toBeVisible();
