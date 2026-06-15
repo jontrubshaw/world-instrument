@@ -109,8 +109,8 @@ export function prepareFrameForCaptureClock(
     capturedAt,
     streams: frame.streams,
     seed: frame.seed,
-    sourceLabel: frame.sourceLabel,
-    statusLabel: frame.statusLabel,
+    ...(frame.sourceLabel === undefined ? {} : { sourceLabel: frame.sourceLabel }),
+    ...(frame.statusLabel === undefined ? {} : { statusLabel: frame.statusLabel }),
   });
 
   return {
