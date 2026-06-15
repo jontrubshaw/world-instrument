@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
   appendCapturedReplayFrame,
   buildReplaySnapshot,
+  createReplayCaptureFrameFromArchive,
   createReplayCaptureSession,
   createReplayCaptureSessionId,
   createReplayDownloadFilename,
@@ -119,6 +120,25 @@ describe('instrument replay capture', () => {
         (output) => output.trace?.find((entry) => entry.key === 'inputHash')?.value,
       ),
     ).toEqual(['8f5c7a72', '6c2d4560', '6247890f']);
+  });
+
+  it('builds a captureable replay frame from the currently rendered archive view', () => {
+    const archive = firstReplayArchive();
+    const viewState = evaluateReplayFrame(archive, 0);
+    const captureInput = createReplayCaptureFrameFromArchive({ archive, viewState });
+
+    expect(captureInput).toMatchObject({
+      sourceMode: 'replay',
+      frameIndex: 0,
+      capturedAt: '2026-06-14T21:00:00.000Z',
+      elapsedMs: 0,
+      seed: 'weather-score-v1:london:0',
+      visualSignature: '8f5c7a72',
+      audioSignature: '8f5c7a72',
+      hapticSignature: '8f5c7a72',
+      sourceLabel: 'London, UK weather',
+      statusLabel: 'overcast archive frame 1/3',
+    });
   });
 
   it('creates stable capture ids and replay JSON filenames', () => {

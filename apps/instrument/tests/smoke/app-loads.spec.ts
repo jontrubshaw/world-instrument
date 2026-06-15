@@ -242,3 +242,57 @@ test('loads the instrument shell', async ({ page }) => {
   await expect.poll(() => canvas.evaluate((element) => element.dataset.scoreFrameIndex)).toBe('0');
   await page.getByRole('button', { name: 'Pause', exact: true }).click();
 });
+
+test('captures the visible replay fallback when live weather fails before first frame', async ({
+  page,
+}) => {
+  await page.route('https://api.open-meteo.com/v1/forecast**', async (route) => {
+    await route.fulfill({
+      status: 503,
+      json: {},
+    });
+  });
+
+  await page.goto('/');
+
+  const streamControls = page.getByRole('region', { name: 'Stream controls' });
+  const canvas = page.getByTestId('instrument-canvas');
+  await expect(streamControls).toHaveAttribute('data-instrument-mode', 'live');
+  await expect(streamControls).toHaveAttribute('data-live-state', 'error');
+  await expect(streamControls.locator('.live-status')).toHaveText(
+    'Live weather adapter error: Weather provider request failed with HTTP 503. Showing replay fallback.',
+  );
+  await expect.poll(() => canvas.evaluate((element) => element.dataset.scoreSignature)).toBe(
+    '8f5c7a72',
+  );
+
+  const captureControls = page.getByRole('region', { name: 'Capture controls' });
+  await expect(captureControls).toHaveAttribute('data-capture-state', 'idle');
+  await page.getByRole('button', { name: 'Start capture' }).click();
+  await expect(captureControls).toHaveAttribute('data-capture-state', 'recording');
+  await expect(captureControls).toHaveAttribute('data-capture-frame-count', '1');
+  await page.getByRole('button', { name: 'Stop capture' }).click();
+  await expect(captureControls).toHaveAttribute('data-capture-state', 'ready');
+
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Export replay JSON' }).click();
+  const download = await downloadPromise;
+  const downloadPath = await download.path();
+
+  expect(JSON.parse(await readFile(downloadPath, 'utf8'))).toMatchObject({
+    schemaVersion: 'replay-snapshot.v1',
+    frames: [
+      {
+        frameIndex: 0,
+        elapsedMs: 0,
+        seed: 'weather-score-v1:london:0',
+      },
+    ],
+    metadata: {
+      capture: {
+        frameCount: 1,
+        sourceMode: 'replay',
+      },
+    },
+  });
+});

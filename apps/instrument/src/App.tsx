@@ -22,6 +22,7 @@ import { mergeLiveWeatherUiState, type LiveWeatherUiState } from './liveWeatherS
 import {
   appendCapturedReplayFrame,
   buildReplaySnapshot,
+  createReplayCaptureFrameFromArchive,
   createReplayCaptureSession,
   createReplayCaptureSessionId,
   createReplayDownloadFilename,
@@ -105,45 +106,36 @@ export function App() {
   );
   const currentCaptureFrame = useMemo<ReplayCaptureFrameInput | undefined>(() => {
     if (instrumentMode === 'live') {
-      if (liveWeatherState.frame === undefined || liveWeatherState.streamState === undefined) {
-        return undefined;
+      if (liveWeatherState.frame !== undefined && liveWeatherState.streamState !== undefined) {
+        return {
+          sourceMode: 'live',
+          frameIndex: liveWeatherState.frame.frameIndex,
+          capturedAt: liveWeatherState.frame.observedAt,
+          streams: [liveWeatherState.streamState],
+          seed: LIVE_WEATHER_SEED,
+          output: liveWeatherState.frame.output,
+          visualSignature: liveWeatherState.frame.visualParameters.signature,
+          audioSignature: liveWeatherState.frame.audioParameters.signature,
+          hapticSignature: liveWeatherState.frame.hapticPattern.signature,
+          sourceLabel: liveWeatherState.frame.sourceLabel,
+          statusLabel: liveWeatherState.frame.statusLabel,
+        };
       }
 
-      return {
-        sourceMode: 'live',
-        frameIndex: liveWeatherState.frame.frameIndex,
-        capturedAt: liveWeatherState.frame.observedAt,
-        streams: [liveWeatherState.streamState],
-        seed: LIVE_WEATHER_SEED,
-        output: liveWeatherState.frame.output,
-        visualSignature: liveWeatherState.frame.visualParameters.signature,
-        audioSignature: liveWeatherState.frame.audioParameters.signature,
-        hapticSignature: liveWeatherState.frame.hapticPattern.signature,
-        sourceLabel: liveWeatherState.frame.sourceLabel,
-        statusLabel: liveWeatherState.frame.statusLabel,
-      };
+      return activeArchive === undefined
+        ? undefined
+        : createReplayCaptureFrameFromArchive({
+            archive: activeArchive,
+            viewState: replayViewState,
+          });
     }
 
-    const replayFrame = activeArchive?.snapshot.frames[replayViewState.framePosition];
-
-    if (replayFrame === undefined) {
-      return undefined;
-    }
-
-    return {
-      sourceMode: 'replay',
-      frameIndex: replayViewState.frameIndex,
-      capturedAt: replayFrame.capturedAt,
-      elapsedMs: replayFrame.elapsedMs,
-      streams: replayFrame.streams,
-      seed: replayFrame.seed,
-      output: replayViewState.output,
-      visualSignature: replayViewState.visualParameters.signature,
-      audioSignature: replayViewState.audioParameters.signature,
-      hapticSignature: replayViewState.hapticPattern.signature,
-      sourceLabel: replayViewState.sourceLabel,
-      statusLabel: replayViewState.statusLabel,
-    };
+    return activeArchive === undefined
+      ? undefined
+      : createReplayCaptureFrameFromArchive({
+          archive: activeArchive,
+          viewState: replayViewState,
+        });
   }, [
     activeArchive,
     instrumentMode,

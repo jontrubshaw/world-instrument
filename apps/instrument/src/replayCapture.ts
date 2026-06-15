@@ -9,6 +9,7 @@ import {
 } from '@world-instrument/core';
 import { weatherScoreV1 } from '@world-instrument/scores';
 
+import type { ReplayArchive, ReplayInstrumentFrameState } from './replayArchive.ts';
 import { evaluateWeatherInstrumentFrame } from './weatherInstrument.ts';
 
 export type ReplayCaptureSourceMode = 'live' | 'replay';
@@ -50,6 +51,11 @@ export interface CreateReplayCaptureSessionOptions {
 export interface BuildReplaySnapshotOptions {
   readonly createdAt: string;
   readonly description?: string;
+}
+
+export interface CreateReplayCaptureFrameFromArchiveOptions {
+  readonly archive: ReplayArchive;
+  readonly viewState: ReplayInstrumentFrameState;
 }
 
 export function createReplayCaptureSession(
@@ -121,6 +127,31 @@ export function prepareFrameForCaptureClock(
     visualSignature: rescoredFrame.visualParameters.signature,
     audioSignature: rescoredFrame.audioParameters.signature,
     hapticSignature: rescoredFrame.hapticPattern.signature,
+  };
+}
+
+export function createReplayCaptureFrameFromArchive(
+  options: CreateReplayCaptureFrameFromArchiveOptions,
+): ReplayCaptureFrameInput | undefined {
+  const replayFrame = options.archive.snapshot.frames[options.viewState.framePosition];
+
+  if (replayFrame === undefined) {
+    return undefined;
+  }
+
+  return {
+    sourceMode: 'replay',
+    frameIndex: options.viewState.frameIndex,
+    capturedAt: replayFrame.capturedAt,
+    elapsedMs: replayFrame.elapsedMs,
+    streams: replayFrame.streams,
+    seed: replayFrame.seed,
+    output: options.viewState.output,
+    visualSignature: options.viewState.visualParameters.signature,
+    audioSignature: options.viewState.audioParameters.signature,
+    hapticSignature: options.viewState.hapticPattern.signature,
+    sourceLabel: options.viewState.sourceLabel,
+    statusLabel: options.viewState.statusLabel,
   };
 }
 
