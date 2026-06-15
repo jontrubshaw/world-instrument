@@ -195,6 +195,14 @@ function evaluateSensorScore(
   const metrics = extractSensorMetrics(sensor);
   const normalized = normalizeSensorMetrics(metrics);
   const generatedAt = input.frame.renderedAt ?? sensor.observedAt;
+  const hapticsAvailable = sensor.status !== 'stale';
+  const hapticPulseIntensity = hapticsAvailable
+    ? clamp(
+        normalized.motion * 0.55 + normalized.precipitation * 0.35 + normalized.tension * 0.1,
+        0,
+        1,
+      )
+    : 0;
 
   return {
     schemaVersion: SCORE_OUTPUT_SCHEMA_VERSION,
@@ -226,16 +234,9 @@ function evaluateSensorScore(
       ],
     },
     haptic: {
-      enabled: metrics.interactionActive || normalized.motion > 0.55,
+      enabled: hapticsAvailable && (metrics.interactionActive || normalized.motion > 0.55),
       parameters: [
-        parameter(
-          'pulseIntensity',
-          clamp(
-            normalized.motion * 0.55 + normalized.precipitation * 0.35 + normalized.tension * 0.1,
-            0,
-            1,
-          ),
-        ),
+        parameter('pulseIntensity', hapticPulseIntensity),
       ],
     },
     trace: [

@@ -182,6 +182,62 @@ describe('weather score v1', () => {
     });
   });
 
+  it('silences haptics for stale browser sensor streams', () => {
+    const staleStream = {
+      ...normalizeBrowserSensorPayload({
+        provider: sensorFixture.provider,
+        observedAt: sensorFixture.observedAt,
+        device: sensorFixture.device,
+        capabilities: {
+          pointer: 'available',
+          deviceMotion: 'available',
+          deviceOrientation: 'available',
+          permission: 'granted',
+          fallback: 'none',
+        },
+        pointer: {
+          position: [0.6, 0.4],
+          velocity: [0.4, 0.1],
+          pressure: 0.9,
+          buttons: 1,
+          active: true,
+        },
+        motion: {
+          acceleration: [5, 0, 0],
+          rotationRate: [0, 120, 0],
+        },
+      }),
+      status: 'stale' as const,
+    };
+
+    const output = weatherScoreV1.evaluate({
+      schemaVersion: SCORE_INPUT_SCHEMA_VERSION,
+      score: weatherScoreV1.metadata,
+      frame: {
+        frameIndex: 4,
+        elapsedMs: 480,
+        renderedAt: '2026-06-15T12:00:03.480Z',
+      },
+      streams: [staleStream],
+      seed: 'world-instrument-test-stale-sensor-v1',
+    });
+
+    expect(output.metadata).toMatchObject({
+      condition: 'sensor-stale',
+      inputKind: 'sensor',
+      streamStatus: 'stale',
+    });
+    expect(output.haptic).toMatchObject({
+      enabled: false,
+      parameters: [
+        {
+          key: 'pulseIntensity',
+          value: 0,
+        },
+      ],
+    });
+  });
+
   it('keeps the adapter fixture aligned with the replay stream fixture', async () => {
     const weatherFixture = await loadWeatherFixture();
     const snapshot = await loadReplaySnapshot();
