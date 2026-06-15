@@ -1148,10 +1148,7 @@ function buildProvenanceViewState(options: {
   readonly sourceState: SourceUiState;
   readonly visibleFallbackActive: boolean;
 }): ProvenanceViewState {
-  const displayMode =
-    options.visibleFallbackActive && options.instrumentMode !== 'replay'
-      ? 'replay-fallback'
-      : options.instrumentMode;
+  const displayMode = options.visibleFallbackActive ? 'replay-fallback' : options.instrumentMode;
   const replayDriven = displayMode === 'replay' || displayMode === 'replay-fallback';
   const stream = replayDriven
     ? options.activeReplayFrame?.streams[0]
@@ -1219,7 +1216,10 @@ function buildProvenanceViewState(options: {
       : {
           fallback: {
             fromMode: options.instrumentMode,
-            reason: options.sourceState.message,
+            reason:
+              options.instrumentMode === 'replay'
+                ? `${options.selectedSourceName} has no replay archive yet.`
+                : options.sourceState.message,
           },
         }),
   } satisfies JsonObject;

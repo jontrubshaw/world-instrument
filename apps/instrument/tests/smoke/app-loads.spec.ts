@@ -232,6 +232,53 @@ test('loads the instrument shell', async ({ page }) => {
     ),
   ).toBe(true);
 
+  await page.getByRole('button', { name: 'Replay', exact: true }).click();
+  await expect(streamControls).toHaveAttribute('data-source-id', 'sensor.browser-interaction');
+  await expect(streamControls).toHaveAttribute('data-instrument-mode', 'replay');
+  await expect(streamControls).toHaveAttribute('data-provenance-mode', 'replay-fallback');
+  await expect(streamControls).toHaveAttribute('data-provenance-status', 'unavailable');
+  await expect(provenance.locator('.provenance-summary')).toContainText(
+    'Replay fallback is driving output from London weather archive; Browser sensor / interaction is unavailable.',
+  );
+  await expect(streamControls.locator('.mode-status')).toHaveText(
+    'Browser sensor / interaction has no replay archive yet. Showing deterministic replay fallback.',
+  );
+  await expect(page.getByLabel('Archive')).toBeDisabled();
+
+  await page.getByRole('button', { name: 'Start capture' }).click();
+  await expect(sensorCaptureControls).toHaveAttribute('data-capture-state', 'recording');
+  await expect(sensorCaptureControls).toHaveAttribute('data-capture-frame-count', '1');
+  await page.getByRole('button', { name: 'Stop capture' }).click();
+  await expect(sensorCaptureControls).toHaveAttribute('data-capture-state', 'ready');
+  const sensorReplayFallbackDownloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Export replay JSON' }).click();
+  const sensorReplayFallbackDownload = await sensorReplayFallbackDownloadPromise;
+  const sensorReplayFallbackDownloadPath = await sensorReplayFallbackDownload.path();
+
+  expect(JSON.parse(await readFile(sensorReplayFallbackDownloadPath, 'utf8'))).toMatchObject({
+    schemaVersion: 'replay-snapshot.v1',
+    metadata: {
+      capture: {
+        sourceMode: 'replay',
+      },
+      frames: [
+        {
+          provenance: {
+            registeredSourceId: 'sensor.browser-interaction',
+            sourceName: 'Browser sensor / interaction',
+            sourceMode: 'replay',
+            status: 'unavailable',
+            uiMode: 'replay-fallback',
+            fallback: {
+              fromMode: 'replay',
+              reason: 'Browser sensor / interaction has no replay archive yet.',
+            },
+          },
+        },
+      ],
+    },
+  });
+
   await sourceSelector.selectOption('weather.open-meteo');
   await page.getByRole('button', { name: 'Live', exact: true }).click();
   await expect(streamControls).toHaveAttribute('data-source-id', 'weather.open-meteo');
