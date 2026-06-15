@@ -39,7 +39,7 @@ jobs:
         run: npm run build
 
       - name: Install Playwright Chromium
-        run: npx playwright install --with-deps chromium
+        run: npm run setup:browsers:with-deps
 
       - name: Run browser smoke tests
         run: npm run test:smoke

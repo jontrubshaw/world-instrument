@@ -68,11 +68,12 @@ Use Node 24 and npm 11 or newer. The repository includes `.nvmrc` and enforces t
 
 ```bash
 npm ci
+npm run setup:browsers
 npm run check
 npm run test:smoke
 ```
 
-`npm run check` is the current required quality gate: TypeScript, ESLint, Prettier, and Vitest. `npm run test:smoke` runs the Playwright browser smoke test against the Vite-powered instrument app.
+`npm run check` is the current required quality gate: TypeScript, ESLint, Prettier, and Vitest. `npm run test:smoke` runs the Playwright browser smoke test against the Vite-powered instrument app. On fresh Linux machines that also need browser system libraries, run `npm run setup:browsers:with-deps` instead of `npm run setup:browsers`.
 
 Run the app locally with:
 

@@ -17,6 +17,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
+    "setup:browsers": "playwright install chromium",
+    "setup:browsers:with-deps": "playwright install --with-deps chromium",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "npm run test:smoke",

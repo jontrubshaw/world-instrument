@@ -12,7 +12,7 @@ World Instrument should be built as a durable creative system.
 - Unit and contract tests must pass with package coverage thresholds enforced.
 - Browser smoke tests must cover the instrument shell.
 
-The current CI gate runs `npm ci`, `npm run check`, `npm run build`, installs the Playwright Chromium browser, and runs `npm run test:smoke`.
+The current CI gate runs `npm ci`, `npm run check`, `npm run build`, installs the Playwright Chromium browser through `npm run setup:browsers:with-deps`, and runs `npm run test:smoke`.
 `npm run check` includes typecheck, lint, format check, and `npm run test:coverage`.
 
 ## Coverage Policy
