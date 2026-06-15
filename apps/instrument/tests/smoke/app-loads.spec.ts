@@ -61,6 +61,13 @@ test('loads the instrument shell', async ({ page }) => {
   await expect(streamControls.locator('.live-status')).toHaveText(
     'Live weather is driving the instrument.',
   );
+  await page.getByRole('button', { name: 'Live weather' }).click();
+  await page.waitForTimeout(50);
+  await expect(streamControls).toHaveAttribute('data-instrument-mode', 'live');
+  await expect(streamControls).toHaveAttribute('data-live-state', 'ready');
+  await expect(streamControls.locator('.live-status')).toHaveText(
+    'Live weather is driving the instrument.',
+  );
   await expect
     .poll(() => canvas.evaluate((element) => element.dataset.scoreId))
     .toBe('weather-score');

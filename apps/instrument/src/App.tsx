@@ -221,6 +221,10 @@ export function App() {
   }, []);
 
   const selectInstrumentMode = (nextMode: InstrumentMode) => {
+    if (nextMode === instrumentMode) {
+      return;
+    }
+
     setInstrumentMode(nextMode);
 
     if (nextMode === 'live') {

@@ -166,7 +166,9 @@ export class WeatherAdapter implements StreamAdapter<WeatherAdapterRaw, WeatherA
   ): Promise<StreamAdapterResult<WeatherAdapterRaw>> {
     const receivedAt = config.receivedAt ?? new Date().toISOString();
     const credentialEnvName = config.credentialEnvName ?? WEATHER_CREDENTIAL_ENV;
-    const apiKey = config.apiKey ?? readCredentialFromEnv(credentialEnvName);
+    const apiKey =
+      config.apiKey ??
+      (config.requiresCredential === true ? readCredentialFromEnv(credentialEnvName) : undefined);
 
     if (config.requiresCredential === true && (apiKey === undefined || apiKey.length === 0)) {
       return createFailureResult(config, {
