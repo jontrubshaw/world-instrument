@@ -16,7 +16,8 @@ export function App() {
   const [frameIndex, setFrameIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const selectedArchive =
-    WEATHER_REPLAY_ARCHIVE.find((entry) => entry.id === selectedArchiveId) ?? DEFAULT_WEATHER_REPLAY;
+    WEATHER_REPLAY_ARCHIVE.find((entry) => entry.id === selectedArchiveId) ??
+    DEFAULT_WEATHER_REPLAY;
   const replaySnapshot = selectedArchive.snapshot;
   const currentFrameIndex = clampReplayFrameIndex(replaySnapshot, frameIndex);
   const viewState = useMemo(
@@ -35,17 +36,20 @@ export function App() {
       return;
     }
 
-    const timeoutId = window.setTimeout(() => {
-      setFrameIndex((current) => {
-        const nextFrameIndex = nextReplayFrameIndex(replaySnapshot, current);
+    const timeoutId = window.setTimeout(
+      () => {
+        setFrameIndex((current) => {
+          const nextFrameIndex = nextReplayFrameIndex(replaySnapshot, current);
 
-        if (nextFrameIndex >= replaySnapshot.frames.length - 1) {
-          setIsPlaying(false);
-        }
+          if (nextFrameIndex >= replaySnapshot.frames.length - 1) {
+            setIsPlaying(false);
+          }
 
-        return nextFrameIndex;
-      });
-    }, replayPlaybackDelayMs(replaySnapshot, currentFrameIndex));
+          return nextFrameIndex;
+        });
+      },
+      replayPlaybackDelayMs(replaySnapshot, currentFrameIndex),
+    );
 
     return () => {
       window.clearTimeout(timeoutId);

@@ -93,7 +93,10 @@ export function loadFixtureWeatherInstrumentState(): Promise<WeatherInstrumentSt
   return Promise.resolve(evaluateWeatherReplayFrame(DEFAULT_WEATHER_REPLAY.snapshot, 0));
 }
 
-export function clampReplayFrameIndex(snapshot: ReplaySnapshot, requestedFrameIndex: number): number {
+export function clampReplayFrameIndex(
+  snapshot: ReplaySnapshot,
+  requestedFrameIndex: number,
+): number {
   const lastFrameIndex = snapshot.frames.length - 1;
 
   if (!Number.isFinite(requestedFrameIndex)) {
@@ -107,7 +110,10 @@ export function nextReplayFrameIndex(snapshot: ReplaySnapshot, currentFrameIndex
   return clampReplayFrameIndex(snapshot, currentFrameIndex + 1);
 }
 
-export function previousReplayFrameIndex(snapshot: ReplaySnapshot, currentFrameIndex: number): number {
+export function previousReplayFrameIndex(
+  snapshot: ReplaySnapshot,
+  currentFrameIndex: number,
+): number {
   return clampReplayFrameIndex(snapshot, currentFrameIndex - 1);
 }
 
