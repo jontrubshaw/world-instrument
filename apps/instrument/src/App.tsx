@@ -375,6 +375,7 @@ export function App() {
     window.addEventListener('pointermove', handlePointer, { passive: true });
     window.addEventListener('pointerdown', handlePointer, { passive: true });
     window.addEventListener('pointerup', handlePointer, { passive: true });
+    window.addEventListener('pointercancel', handlePointer, { passive: true });
     window.addEventListener('devicemotion', handleMotion);
     window.addEventListener('deviceorientation', handleOrientation);
 
@@ -382,6 +383,7 @@ export function App() {
       window.removeEventListener('pointermove', handlePointer);
       window.removeEventListener('pointerdown', handlePointer);
       window.removeEventListener('pointerup', handlePointer);
+      window.removeEventListener('pointercancel', handlePointer);
       window.removeEventListener('devicemotion', handleMotion);
       window.removeEventListener('deviceorientation', handleOrientation);
 

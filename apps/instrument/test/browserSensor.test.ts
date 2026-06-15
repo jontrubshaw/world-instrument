@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import {
   createInitialBrowserSensorRuntimeState,
   requestBrowserSensorPermission,
+  updateBrowserSensorMotion,
   updateBrowserSensorPointer,
 } from '../src/browserSensor.ts';
 
@@ -51,6 +52,48 @@ describe('browser sensor runtime', () => {
     expect(activeTouch.snapshot.pointer?.active).toBe(true);
     expect(liftedTouch.snapshot.pointer?.active).toBe(false);
     expect(liftedPen.snapshot.pointer?.active).toBe(false);
+  });
+
+  it('drops stale motion samples when pointer input refreshes later snapshots', () => {
+    Object.defineProperty(globalThis, 'window', {
+      configurable: true,
+      value: {
+        innerHeight: 500,
+        innerWidth: 1_000,
+        DeviceMotionEvent: function DeviceMotionEvent() {},
+        PointerEvent: function PointerEvent() {},
+      },
+    });
+    const initialState = createInitialBrowserSensorRuntimeState(
+      new Date('2026-06-15T12:00:00.000Z'),
+    );
+    const motionState = updateBrowserSensorMotion(
+      initialState,
+      createDeviceMotionEvent({
+        acceleration: [7.2, 0.4, 0.1],
+        rotationRate: [120, 0, 0],
+      }),
+      new Date('2026-06-15T12:00:01.000Z'),
+    );
+    const freshPointerState = updateBrowserSensorPointer(
+      motionState,
+      createPointerEvent({ buttons: 0, pointerType: 'mouse' }),
+      new Date('2026-06-15T12:00:03.000Z'),
+    );
+    const stalePointerState = updateBrowserSensorPointer(
+      freshPointerState,
+      createPointerEvent({ buttons: 0, pointerType: 'mouse' }),
+      new Date('2026-06-15T12:00:05.000Z'),
+    );
+
+    expect(motionState.snapshot.motion).toMatchObject({
+      acceleration: [7.2, 0.4, 0.1],
+      rotationRate: [120, 0, 0],
+    });
+    expect(freshPointerState.snapshot.motion).toEqual(motionState.snapshot.motion);
+    expect(stalePointerState.snapshot.motion).toBeUndefined();
+    expect(stalePointerState.snapshot.pointer).toBeDefined();
+    expect(stalePointerState.snapshot.capabilities.fallback).toBe('pointer');
   });
 
   it('starts motion and orientation permission prompts before awaiting either result', async () => {
@@ -109,6 +152,25 @@ function createPointerEvent(options: {
     pointerType: options.pointerType,
     pressure: options.buttons > 0 ? 0.7 : 0,
   } as PointerEvent;
+}
+
+function createDeviceMotionEvent(options: {
+  readonly acceleration: readonly [number, number, number];
+  readonly rotationRate: readonly [number, number, number];
+}): DeviceMotionEvent {
+  return {
+    acceleration: {
+      x: options.acceleration[0],
+      y: options.acceleration[1],
+      z: options.acceleration[2],
+    },
+    rotationRate: {
+      alpha: options.rotationRate[0],
+      beta: options.rotationRate[1],
+      gamma: options.rotationRate[2],
+    },
+    interval: 16.7,
+  } as DeviceMotionEvent;
 }
 
 function deferred<T>(): {

@@ -92,7 +92,7 @@ test('loads the instrument shell', async ({ page }) => {
             clientY: 240,
             buttons: 1,
             pressure: 0.7,
-            pointerType: 'mouse',
+            pointerType: 'touch',
           }),
         );
       });
@@ -100,6 +100,23 @@ test('loads the instrument shell', async ({ page }) => {
       return canvas.evaluate((element) => element.dataset.weatherCondition);
     })
     .toBe('sensor-touch');
+  await expect
+    .poll(async () => {
+      await page.evaluate(() => {
+        window.dispatchEvent(
+          new PointerEvent('pointercancel', {
+            clientX: 520,
+            clientY: 240,
+            buttons: 0,
+            pressure: 0,
+            pointerType: 'touch',
+          }),
+        );
+      });
+
+      return canvas.evaluate((element) => element.dataset.weatherCondition);
+    })
+    .toBe('sensor-fallback');
   await expect(streamControls).toHaveAttribute('data-source-state', 'ready');
   await expect(streamControls.locator('.source-status')).toHaveText(
     'Browser sensor / interaction pointer fallback is driving the instrument; motion/orientation sensors are unavailable or waiting for permission.',

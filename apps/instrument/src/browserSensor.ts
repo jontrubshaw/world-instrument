@@ -9,9 +9,17 @@ import type {
 } from '@world-instrument/adapters';
 
 export const BROWSER_SENSOR_POINTER_REFRESH_MS = 120;
+const BROWSER_SENSOR_INPUT_STALE_AFTER_MS = 3_000;
+
+interface BrowserSensorInputObservedAt {
+  readonly pointer?: string;
+  readonly motion?: string;
+  readonly orientation?: string;
+}
 
 export interface BrowserSensorRuntimeState {
   readonly snapshot: RecordedBrowserSensorPayload;
+  readonly inputObservedAt: BrowserSensorInputObservedAt;
   readonly permissionRequestAvailable: boolean;
   readonly permissionState: BrowserSensorPermissionState;
 }
@@ -26,6 +34,7 @@ export function createInitialBrowserSensorRuntimeState(
       observedAt: now.toISOString(),
       capabilities,
     }),
+    inputObservedAt: {},
     permissionRequestAvailable:
       capabilities.deviceMotion === 'permission-required' ||
       capabilities.deviceOrientation === 'permission-required',
@@ -61,6 +70,8 @@ export function updateBrowserSensorPointer(
   event: PointerEvent,
   now = new Date(),
 ): BrowserSensorRuntimeState {
+  const observedAt = now.toISOString();
+  const retainedInputs = retainFreshBrowserSensorInputs(current, now);
   const width = Math.max(window.innerWidth, 1);
   const height = Math.max(window.innerHeight, 1);
   const maxDimension = Math.max(width, height, 1);
@@ -80,20 +91,24 @@ export function updateBrowserSensorPointer(
   const capabilities: BrowserSensorCapabilities = {
     ...current.snapshot.capabilities,
     pointer: 'available',
-    fallback: hasDeviceInput(current.snapshot) ? 'none' : 'pointer',
+    fallback: hasDeviceInput(retainedInputs) ? 'none' : 'pointer',
   };
 
   return {
     ...current,
     snapshot: createBrowserSensorSnapshot({
-      observedAt: now.toISOString(),
+      observedAt,
       capabilities,
       pointer,
-      ...(current.snapshot.motion === undefined ? {} : { motion: current.snapshot.motion }),
-      ...(current.snapshot.orientation === undefined
+      ...(retainedInputs.motion === undefined ? {} : { motion: retainedInputs.motion }),
+      ...(retainedInputs.orientation === undefined
         ? {}
-        : { orientation: current.snapshot.orientation }),
+        : { orientation: retainedInputs.orientation }),
     }),
+    inputObservedAt: {
+      ...retainedInputs.inputObservedAt,
+      pointer: observedAt,
+    },
   };
 }
 
@@ -102,6 +117,8 @@ export function updateBrowserSensorMotion(
   event: DeviceMotionEvent,
   now = new Date(),
 ): BrowserSensorRuntimeState {
+  const observedAt = now.toISOString();
+  const retainedInputs = retainFreshBrowserSensorInputs(current, now);
   const acceleration = tripleFromDeviceMotionAcceleration(event.acceleration);
   const rotationRate = tripleFromDeviceRotationRate(event.rotationRate);
   const motion: BrowserSensorMotionPayload = {
@@ -121,14 +138,18 @@ export function updateBrowserSensorMotion(
     ...current,
     permissionState: capabilities.permission,
     snapshot: createBrowserSensorSnapshot({
-      observedAt: now.toISOString(),
+      observedAt,
       capabilities,
       motion,
-      ...(current.snapshot.pointer === undefined ? {} : { pointer: current.snapshot.pointer }),
-      ...(current.snapshot.orientation === undefined
+      ...(retainedInputs.pointer === undefined ? {} : { pointer: retainedInputs.pointer }),
+      ...(retainedInputs.orientation === undefined
         ? {}
-        : { orientation: current.snapshot.orientation }),
+        : { orientation: retainedInputs.orientation }),
     }),
+    inputObservedAt: {
+      ...retainedInputs.inputObservedAt,
+      motion: observedAt,
+    },
   };
 }
 
@@ -137,6 +158,8 @@ export function updateBrowserSensorOrientation(
   event: DeviceOrientationEvent,
   now = new Date(),
 ): BrowserSensorRuntimeState {
+  const observedAt = now.toISOString();
+  const retainedInputs = retainFreshBrowserSensorInputs(current, now);
   const angles = tripleFromDeviceOrientation(event);
   const orientation: BrowserSensorOrientationPayload = {
     ...(angles === undefined ? {} : { angles }),
@@ -153,12 +176,16 @@ export function updateBrowserSensorOrientation(
     ...current,
     permissionState: capabilities.permission,
     snapshot: createBrowserSensorSnapshot({
-      observedAt: now.toISOString(),
+      observedAt,
       capabilities,
       orientation,
-      ...(current.snapshot.pointer === undefined ? {} : { pointer: current.snapshot.pointer }),
-      ...(current.snapshot.motion === undefined ? {} : { motion: current.snapshot.motion }),
+      ...(retainedInputs.pointer === undefined ? {} : { pointer: retainedInputs.pointer }),
+      ...(retainedInputs.motion === undefined ? {} : { motion: retainedInputs.motion }),
     }),
+    inputObservedAt: {
+      ...retainedInputs.inputObservedAt,
+      orientation: observedAt,
+    },
   };
 }
 
@@ -184,17 +211,20 @@ export async function requestBrowserSensorPermission(
       orientationPermission,
     ),
   };
+  const observedAt = new Date();
+  const retainedInputs = retainFreshBrowserSensorInputs(current, observedAt);
 
   return {
     snapshot: createBrowserSensorSnapshot({
-      observedAt: new Date().toISOString(),
+      observedAt: observedAt.toISOString(),
       capabilities,
-      ...(current.snapshot.pointer === undefined ? {} : { pointer: current.snapshot.pointer }),
-      ...(current.snapshot.motion === undefined ? {} : { motion: current.snapshot.motion }),
-      ...(current.snapshot.orientation === undefined
+      ...(retainedInputs.pointer === undefined ? {} : { pointer: retainedInputs.pointer }),
+      ...(retainedInputs.motion === undefined ? {} : { motion: retainedInputs.motion }),
+      ...(retainedInputs.orientation === undefined
         ? {}
-        : { orientation: current.snapshot.orientation }),
+        : { orientation: retainedInputs.orientation }),
     }),
+    inputObservedAt: retainedInputs.inputObservedAt,
     permissionRequestAvailable: current.permissionRequestAvailable,
     permissionState,
   };
@@ -370,8 +400,85 @@ function hasMotionPayload(motion: BrowserSensorMotionPayload): boolean {
   return motion.acceleration !== undefined || motion.rotationRate !== undefined;
 }
 
-function hasDeviceInput(snapshot: RecordedBrowserSensorPayload): boolean {
-  return snapshot.motion !== undefined || snapshot.orientation !== undefined;
+function hasDeviceInput(input: {
+  readonly motion?: BrowserSensorMotionPayload;
+  readonly orientation?: BrowserSensorOrientationPayload;
+}): boolean {
+  return input.motion !== undefined || input.orientation !== undefined;
+}
+
+function retainFreshBrowserSensorInputs(
+  current: BrowserSensorRuntimeState,
+  now: Date,
+): {
+  readonly pointer?: BrowserSensorPointerPayload;
+  readonly motion?: BrowserSensorMotionPayload;
+  readonly orientation?: BrowserSensorOrientationPayload;
+  readonly inputObservedAt: BrowserSensorInputObservedAt;
+} {
+  const inputObservedAt: Record<keyof BrowserSensorInputObservedAt, string | undefined> = {
+    pointer: undefined,
+    motion: undefined,
+    orientation: undefined,
+  };
+  const retained: {
+    pointer?: BrowserSensorPointerPayload;
+    motion?: BrowserSensorMotionPayload;
+    orientation?: BrowserSensorOrientationPayload;
+  } = {};
+
+  if (
+    current.snapshot.pointer !== undefined &&
+    inputIsFresh(current, 'pointer', now, BROWSER_SENSOR_INPUT_STALE_AFTER_MS)
+  ) {
+    retained.pointer = current.snapshot.pointer;
+    inputObservedAt.pointer = inputObservedAtFor(current, 'pointer');
+  }
+
+  if (
+    current.snapshot.motion !== undefined &&
+    inputIsFresh(current, 'motion', now, BROWSER_SENSOR_INPUT_STALE_AFTER_MS)
+  ) {
+    retained.motion = current.snapshot.motion;
+    inputObservedAt.motion = inputObservedAtFor(current, 'motion');
+  }
+
+  if (
+    current.snapshot.orientation !== undefined &&
+    inputIsFresh(current, 'orientation', now, BROWSER_SENSOR_INPUT_STALE_AFTER_MS)
+  ) {
+    retained.orientation = current.snapshot.orientation;
+    inputObservedAt.orientation = inputObservedAtFor(current, 'orientation');
+  }
+
+  return {
+    ...retained,
+    inputObservedAt: {
+      ...(inputObservedAt.pointer === undefined ? {} : { pointer: inputObservedAt.pointer }),
+      ...(inputObservedAt.motion === undefined ? {} : { motion: inputObservedAt.motion }),
+      ...(inputObservedAt.orientation === undefined
+        ? {}
+        : { orientation: inputObservedAt.orientation }),
+    },
+  };
+}
+
+function inputIsFresh(
+  current: BrowserSensorRuntimeState,
+  input: keyof BrowserSensorInputObservedAt,
+  now: Date,
+  staleAfterMs: number,
+): boolean {
+  const observedAtMs = Date.parse(inputObservedAtFor(current, input));
+
+  return !Number.isNaN(observedAtMs) && now.getTime() - observedAtMs < staleAfterMs;
+}
+
+function inputObservedAtFor(
+  current: BrowserSensorRuntimeState,
+  input: keyof BrowserSensorInputObservedAt,
+): string {
+  return current.inputObservedAt[input] ?? current.snapshot.observedAt;
 }
 
 function isFiniteNumber(value: unknown): value is number {
