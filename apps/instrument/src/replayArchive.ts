@@ -13,7 +13,7 @@ import {
   type InstrumentVisualParameters,
 } from './visualParameters.ts';
 
-export const REPLAY_PLAYBACK_INTERVAL_MS = 700;
+export const REPLAY_PLAYBACK_INTERVAL_MS = 1800;
 
 export interface ReplayArchive {
   readonly id: string;
