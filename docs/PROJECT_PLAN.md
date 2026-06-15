@@ -73,13 +73,14 @@ The project should be built as a high-quality creative system, not an MVP. Deter
 12. Deterministic replay controls and archive playback implemented: `JTW-34`.
 13. First deterministic Web Audio output layer implemented: `JTW-35`.
 14. Haptic output abstraction and browser vibration prototype implemented: `JTW-36`.
+15. Live weather stream mode connected to the instrument pipeline: `JTW-41`.
 
 ## Current Sequence
 
-1. Monitor `JTW-41`, the active coding-heavy issue delegated to Cursor for connecting live weather stream mode to the instrument pipeline.
-2. Do not release another coding-heavy Cursor issue until `JTW-41` lands, is explicitly paused, or is confirmed blocked.
-3. Review the `JTW-41` PR when it appears, wait for automatic Codex review unless a documented exception applies, and merge only after checks and actionable feedback are handled.
-4. After `JTW-41` lands, update durable docs and release the next ready issue from the gap-driven backlog.
-5. Current backlog order after `JTW-41` is `JTW-42` replay capture/provenance export, `JTW-43` stream source registry, and `JTW-44` Cursor Cloud Playwright Chromium setup.
+1. Monitor `JTW-42`, the active coding-heavy issue delegated to Cursor for replay capture and provenance export.
+2. Do not release another coding-heavy Cursor issue until `JTW-42` lands, is explicitly paused, or is confirmed blocked.
+3. Review the `JTW-42` PR when it appears, wait for automatic Codex review unless a documented exception applies, and merge only after checks and actionable feedback are handled.
+4. After `JTW-42` lands, update durable docs and release the next ready issue from the gap-driven backlog.
+5. Current backlog order after `JTW-42` is `JTW-43` stream source registry and `JTW-44` Cursor Cloud Playwright Chromium setup.
 6. Continue creating Linear issues for new problems, follow-on implementation work, refactor reviews, and human decisions as they arise.
 7. If the explicit backlog runs out again, evaluate the built app against the product vision and create new scoped Linear issues for the next concrete gaps rather than pausing the project.
