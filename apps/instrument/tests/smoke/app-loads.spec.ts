@@ -2,13 +2,15 @@ import { expect, test } from '@playwright/test';
 
 test('loads the instrument shell', async ({ page }) => {
   await page.route('https://api.open-meteo.com/v1/forecast**', async (route) => {
+    const observedAt = new Date().toISOString();
+
     await route.fulfill({
       json: {
         latitude: 51.5,
         longitude: -0.12,
         timezone: 'GMT',
         current: {
-          time: '2026-06-14T21:00',
+          time: observedAt,
           temperature_2m: 18.4,
           apparent_temperature: 17.9,
           relative_humidity_2m: 72,
