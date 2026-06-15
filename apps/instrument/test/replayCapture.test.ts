@@ -334,7 +334,7 @@ describe('instrument replay capture', () => {
       capturedAt: stream.observedAt,
       streams: [stream],
       seed: 'world-instrument-live-browser-sensor-v1',
-      sourceLabel: stream.source.label,
+      ...(stream.source.label === undefined ? {} : { sourceLabel: stream.source.label }),
     });
     const session = appendCapturedReplayFrame(
       createReplayCaptureSession({

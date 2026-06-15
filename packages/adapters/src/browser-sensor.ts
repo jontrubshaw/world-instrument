@@ -219,6 +219,7 @@ export function createBrowserSensorFixturePayload(
     options.orientation !== undefined &&
     options.orientation.length >= 3 &&
     options.orientation.every(isFiniteNumber);
+  const orientation = options.orientation;
 
   return {
     provider: 'browser-sensor',
@@ -241,12 +242,12 @@ export function createBrowserSensorFixturePayload(
         active: options.active ?? true,
       },
       ...(hasMotion ? { motion: { acceleration: options.motion } } : {}),
-      ...(hasOrientation
+      ...(hasOrientation && orientation !== undefined
         ? {
             orientation: {
-              alpha: options.orientation?.[0],
-              beta: options.orientation?.[1],
-              gamma: options.orientation?.[2],
+              alpha: orientation[0] ?? 0,
+              beta: orientation[1] ?? 0,
+              gamma: orientation[2] ?? 0,
               absolute: false,
             },
           }

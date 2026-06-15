@@ -28,8 +28,13 @@ interface SensorRuntimeState {
 }
 
 interface PermissionRequestEvent {
-  requestPermission?: () => Promise<BrowserSensorPermissionState>;
+  readonly requestPermission: () => Promise<unknown>;
 }
+
+type SensorWindow = Window & {
+  readonly DeviceMotionEvent?: unknown;
+  readonly DeviceOrientationEvent?: unknown;
+};
 
 const DEFAULT_BROWSER_SENSOR_SESSION: BrowserSensorSession = {
   id: 'local-browser',
@@ -85,8 +90,10 @@ class BrowserSensorRuntime {
       return this.#capability();
     }
 
-    this.#motionPermission = await requestEventPermission(targetWindow.DeviceMotionEvent);
-    this.#orientationPermission = await requestEventPermission(targetWindow.DeviceOrientationEvent);
+    this.#motionPermission = await requestEventPermission(deviceMotionEvent(targetWindow));
+    this.#orientationPermission = await requestEventPermission(
+      deviceOrientationEvent(targetWindow),
+    );
 
     return this.#capability();
   }
@@ -103,8 +110,8 @@ class BrowserSensorRuntime {
       return;
     }
 
-    this.#motionPermission = eventPermissionState(targetWindow.DeviceMotionEvent);
-    this.#orientationPermission = eventPermissionState(targetWindow.DeviceOrientationEvent);
+    this.#motionPermission = eventPermissionState(deviceMotionEvent(targetWindow));
+    this.#orientationPermission = eventPermissionState(deviceOrientationEvent(targetWindow));
     targetWindow.addEventListener('pointermove', this.#handlePointerMove, { passive: true });
     targetWindow.addEventListener('pointerdown', this.#handlePointerMove, { passive: true });
     targetWindow.addEventListener('pointerup', this.#handlePointerMove, { passive: true });
@@ -137,6 +144,8 @@ class BrowserSensorRuntime {
 
   readonly #handleMotion = (event: DeviceMotionEvent): void => {
     this.#motionPermission = 'granted';
+    const intervalMs = finiteOrUndefined(event.interval);
+
     this.#state.motion = {
       acceleration: [
         finiteOrZero(event.accelerationIncludingGravity?.x),
@@ -148,7 +157,7 @@ class BrowserSensorRuntime {
         finiteOrZero(event.rotationRate?.beta),
         finiteOrZero(event.rotationRate?.gamma),
       ],
-      intervalMs: finiteOrUndefined(event.interval),
+      ...(intervalMs === undefined ? {} : { intervalMs }),
     };
     this.#markObserved();
   };
@@ -223,6 +232,14 @@ function browserWindow(): Window | undefined {
   }
 
   return window;
+}
+
+function deviceMotionEvent(targetWindow: Window): unknown {
+  return (targetWindow as SensorWindow).DeviceMotionEvent;
+}
+
+function deviceOrientationEvent(targetWindow: Window): unknown {
+  return (targetWindow as SensorWindow).DeviceOrientationEvent;
 }
 
 function eventPermissionState(eventConstructor: unknown): BrowserSensorPermissionState {

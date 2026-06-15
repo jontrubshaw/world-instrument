@@ -228,7 +228,7 @@ function vectorSampleValue<TLength extends 2 | 3>(
     return fallback;
   }
 
-  return sample.values.slice(0, length) as TLength extends 2
+  return sample.values.slice(0, length) as unknown as TLength extends 2
     ? readonly [number, number]
     : readonly [number, number, number];
 }

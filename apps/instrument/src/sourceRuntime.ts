@@ -36,6 +36,8 @@ import {
   type WeatherInstrumentState,
 } from './weatherInstrument.ts';
 
+export { FIXTURE_BROWSER_SENSOR_SEED, LIVE_BROWSER_SENSOR_SEED } from './browserSensor.ts';
+
 export const DEFAULT_INSTRUMENT_SOURCE_ID = WEATHER_STREAM_SOURCE_ID;
 export const DEFAULT_INSTRUMENT_SOURCE_MODE = 'live' as const satisfies StreamSourceMode;
 export const FIXTURE_WEATHER_SEED = 'world-instrument-fixture-weather-v1';
