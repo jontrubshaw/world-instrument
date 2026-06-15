@@ -45,6 +45,7 @@
 - Use branches tied to Linear issue identifiers.
 - Open PRs for implementation changes.
 - Wait for automatic Codex PR reviews after PR creation and subsequent pushes.
+- When checking Codex review state, inspect both review submissions/comments and PR-level reactions. A `+1` reaction from `chatgpt-codex-connector[bot]` on the PR counts as a no-actionable-findings/pass signal only if it was created after the current PR head commit was pushed and there are no current-head actionable Codex comments.
 - For docs-only or similarly low-risk orchestration updates, use best judgment: if the PR is clean, has no actionable feedback, and Codex has provided a thumbs-up signal or the change is clearly non-runtime, it can merge without waiting the full review window.
 - After pushing to a PR, wait about 10 minutes by default before re-checking review state.
 - If no review appears for the latest PR head after 10 minutes, check timestamps and wait another 5 minutes.
@@ -57,7 +58,17 @@
 
 Cursor environment setup is complete. Coding-heavy issues should still be assigned or delegated to Cursor only when intentionally ready to start. Keep planned work in Backlog until it is selected.
 
-`JTW-52` is the current coding-heavy work delegated to Cursor. Do not release another coding-heavy Cursor issue until `JTW-52` lands, is explicitly paused, or is confirmed blocked with a documented decision. Before any restart, reassign, or new Cursor ping on `JTW-52`, run the duplicate-session pre-flight check above.
+There is no current Cursor-delegated implementation issue and no open Cursor-owned PR as of 2026-06-15 22:25 UTC.
+
+Current backlog:
+
+- `JTW-55`: realtime pipeline refactor and hygiene review, human-owned.
+- `JTW-59`: add dedicated browser sensor score mappings.
+- `JTW-60`: allow imported replay archives in the instrument app.
+- `JTW-61`: decide the next external world stream after weather and browser sensors, human decision.
+- `JTW-62`: refresh durable docs after JTW-54 merge and next-gap planning.
+
+Before releasing any coding-heavy backlog issue to Cursor, run the duplicate-session pre-flight check above.
 
 ## CI
 

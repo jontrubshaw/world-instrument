@@ -8,7 +8,7 @@ This file is the durable project handoff. Keep it current whenever project conve
 - Linear project: https://linear.app/jtworks/project/world-instrument-1472eb8e5477
 - Linear team: Jtworks
 - Local checkout: `/Users/JonathanTrubshaw/Documents/weathart/world-instrument`
-- Active implementation issue: `JTW-52` is delegated to Cursor; watch for a fresh Cursor branch/PR.
+- Active implementation issue: none. There are no open Cursor-owned implementation PRs as of 2026-06-15 22:25 UTC.
 - Cursor environment setup is complete.
 - Stale pre-setup Cursor draft PRs closed: PR #1 (`cursor/instrument-app-shell-1cf1`) and PR #3 (`cursor/core-contracts-7e26`).
 - Local Node environment: Homebrew `node@24` installed; current shell resolves `node` to `v24.16.0` and `npm` to `11.13.0`.
@@ -55,12 +55,16 @@ This file is the durable project handoff. Keep it current whenever project conve
 - `JTW-49`: Refresh durable docs after stream registry merge and Cursor env release. Done; PR #43 merged.
 - `JTW-50`: Refresh durable docs after JTW-44 release. Done; PR #44 merged.
 - `JTW-51`: Refresh durable docs after JTW-44 merge and next-gap planning. Done; PR #48 merged.
-- `JTW-52`: Add browser sensor stream source and route it through the instrument. In Progress, delegated to Cursor.
+- `JTW-52`: Add browser sensor stream source and route it through the instrument. Done; PR #52 merged. Duplicate Cursor PR #53 closed as superseded.
 - `JTW-53`: Expose source registry selection in the instrument app. Done; PR #49 merged.
-- `JTW-54`: Make live-data provenance legible in the instrument UI. Backlog; blocked by `JTW-52`.
+- `JTW-54`: Make live-data provenance legible in the instrument UI. Done; PR #54 merged.
 - `JTW-55`: Run realtime pipeline refactor and hygiene review. Backlog; human-owned hygiene review.
 - `JTW-57`: Harden Cursor duplicate-session release gate. Done; PR #50 merged.
-- `JTW-58`: Refresh durable docs after JTW-53 merge and JTW-52 release. Current docs issue.
+- `JTW-58`: Refresh durable docs after JTW-53 merge and JTW-52 release. Done; PR #51 merged.
+- `JTW-59`: Add dedicated browser sensor score mappings. Backlog.
+- `JTW-60`: Allow imported replay archives in the instrument app. Backlog.
+- `JTW-61`: Decide the next external world stream after weather and browser sensors. Backlog; human decision.
+- `JTW-62`: Refresh durable docs after JTW-54 merge and next-gap planning. Current docs issue.
 
 ## Orchestration Rules
 
@@ -77,6 +81,7 @@ This file is the durable project handoff. Keep it current whenever project conve
 - Codex handles orchestration, planning, documentation, lightweight scaffolding, issue decomposition, review coordination, and project hygiene.
 - Automatic Codex PR reviews are expected on PR creation and subsequent pushes.
 - Do not merge PRs until those reviews complete, except under the 15-minute fallback rule below.
+- When checking Codex review state, inspect both review submissions/comments and PR-level reactions. A `+1` reaction from `chatgpt-codex-connector[bot]` on the PR counts as a no-actionable-findings/pass signal only if it was created after the current PR head commit was pushed and there are no current-head actionable Codex comments. Older `+1` reactions or reactions predating the current head are stale and must not unblock merge.
 - For docs-only or similarly low-risk orchestration updates, use best judgment: if the PR is clean, has no actionable feedback, and Codex has provided a thumbs-up signal or the change is clearly non-runtime, it can merge without waiting the full review window.
 - After pushing to a PR, wait about 10 minutes by default before re-checking automatic Codex review state.
 - If a review has not appeared for the latest PR head after 10 minutes, check timestamps and wait another 5 minutes.
@@ -123,12 +128,15 @@ This file is the durable project handoff. Keep it current whenever project conve
 
 There is no longer a global pause on Cursor setup. Pick the next issue deliberately, assign/delegate it only when ready, and avoid starting multiple coding-heavy Cursor tasks unless that concurrency is intentional.
 
-`JTW-52` is the active Cursor-delegated implementation issue. Scope is the browser sensor/interaction stream source using the registry-backed source-selection boundary that landed in `JTW-53`. Do not start another coding-heavy Cursor issue until `JTW-52` lands, is explicitly paused, or is confirmed blocked with a documented decision.
+There is no active Cursor-delegated implementation issue and no open Cursor-owned PR. Keep coding-heavy issues in Backlog until one is deliberately selected and the duplicate-session pre-flight check passes.
 
 Current gap-driven backlog:
 
-- `JTW-54`: live/fixture/replay provenance legibility, blocked by `JTW-52`.
 - `JTW-55`: realtime pipeline refactor and hygiene review, human-owned.
+- `JTW-59`: dedicated browser sensor score mappings.
+- `JTW-60`: imported replay archives in the instrument app.
+- `JTW-61`: decide the next external world stream, human decision.
+- `JTW-62`: refresh durable docs after JTW-54 merge and next-gap planning.
 
 ## Source Checks
 
@@ -189,6 +197,11 @@ Current gap-driven backlog:
 - JTW-57 hardened the Cursor release gate on 2026-06-15 after duplicate session patterns: before launching or re-pinging Cursor, check Linear comments/attachments and open PRs for an existing Cursor session on the same issue. Stopped or unavailable sessions require restart/reassignment or documented supersession, not an independent duplicate.
 - PR #49 (`JTW-53 expose source registry selection in app`) merged on 2026-06-15 after CI passed, the branch was clean, and no latest-head Codex review appeared after the 15-minute fallback window for follow-up commit `14e4548`. `JTW-53` was marked Done.
 - JTW-52 was released to Cursor on 2026-06-15 after a duplicate-session pre-flight check found no existing Cursor comments/sessions, no PR attachments, no open PRs, and clean local `main`. Scope is the browser sensor/interaction stream source using the registry-backed source-selection boundary from `JTW-53`.
+- JTW-52 produced two independent Cursor PRs on 2026-06-15: PR #52 (`cursor/browser-sensor-source-86a5`) and PR #53 (`cursor/browser-sensor-source-d83f`). PR #52 was selected as the intended handback; PR #53 was closed as superseded.
+- PR #52 (`JTW-52 add browser sensor stream source`) merged on 2026-06-15 after CI passed, the branch was clean, and Jonny approved using the stale-review fallback for unchanged head `9512ba2497f0c11b373d5cf20809d67564521c1b`. `JTW-52` was marked Done.
+- JTW-54 was released to Cursor on 2026-06-15 after JTW-52 merged. Scope was the provenance/status layer for live, fixture, replay, stale, offline, error, fallback, and sensor states.
+- PR #54 (`JTW-54 add instrument provenance indicators`) merged on 2026-06-15 after CI passed, the branch was clean, and a current-head PR-level `+1` reaction from `chatgpt-codex-connector[bot]` was treated as the Codex no-actionable-findings/pass signal. `JTW-54` was marked Done.
+- After PR #54 merged, the monitor evaluated the app against the World Instrument intent and created `JTW-59` through `JTW-62`: dedicated browser sensor score mappings, imported replay archives, next external world stream selection, and durable docs refresh.
 
 ## Cursor Cloud specific instructions
 
