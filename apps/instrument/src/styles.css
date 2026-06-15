@@ -155,7 +155,8 @@ h1 {
 
 .archive-picker,
 .time-scrubber,
-.audio-controls {
+.audio-controls,
+.haptic-controls {
   display: grid;
   gap: 0.42rem;
   color: rgba(248, 251, 255, 0.64);
@@ -219,12 +220,14 @@ h1 {
   letter-spacing: 0.12em;
 }
 
-.audio-controls {
+.audio-controls,
+.haptic-controls {
   gap: 0.55rem;
   padding-top: 0.2rem;
 }
 
-.audio-controls p {
+.audio-controls p,
+.haptic-controls p {
   margin: 0;
   color: rgba(248, 251, 255, 0.74);
   font-size: 0.72rem;

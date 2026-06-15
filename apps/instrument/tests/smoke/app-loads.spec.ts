@@ -1,6 +1,23 @@
 import { expect, test } from '@playwright/test';
 
 test('loads the instrument shell', async ({ page }) => {
+  await page.addInitScript(() => {
+    const vibrationLog: VibratePattern[] = [];
+
+    Object.defineProperty(window, '__worldInstrumentVibrations', {
+      configurable: true,
+      value: vibrationLog,
+    });
+    Object.defineProperty(window.navigator, 'vibrate', {
+      configurable: true,
+      value: (pattern: VibratePattern) => {
+        vibrationLog.push(pattern);
+
+        return true;
+      },
+    });
+  });
+
   await page.goto('/');
 
   await expect(page).toHaveTitle('World Instrument');
@@ -98,6 +115,45 @@ test('loads the instrument shell', async ({ page }) => {
   await expect(audioControls).toHaveAttribute('data-audio-muted', 'true');
   await page.getByRole('button', { name: 'Stop audio' }).click();
   await expect(audioControls).toHaveAttribute('data-audio-state', 'stopped');
+
+  const hapticControls = page.getByRole('region', { name: 'Haptic controls' });
+  await expect(hapticControls).toBeVisible();
+  await expect(hapticControls).toHaveAttribute('data-haptic-state', 'disabled');
+  await expect(hapticControls).toHaveAttribute('data-haptic-supported', 'true');
+  await expect
+    .poll(() =>
+      hapticControls.evaluate((element) => {
+        const serializedPattern = element.dataset.hapticPattern;
+        const parsedPattern: unknown =
+          serializedPattern === undefined ? undefined : JSON.parse(serializedPattern);
+
+        return parsedPattern;
+      }),
+    )
+    .toEqual({
+      signature: '6247890f',
+      enabled: true,
+      intensity: 0.281,
+      pulseDurationMs: 59,
+      repeatCount: 2,
+      pattern: [59, 131, 59],
+    });
+  await page.evaluate(() => {
+    (
+      window as unknown as { readonly __worldInstrumentVibrations: VibratePattern[] }
+    ).__worldInstrumentVibrations.length = 0;
+  });
+  await page.getByRole('button', { name: 'Enable haptics' }).click();
+  await expect(hapticControls).toHaveAttribute('data-haptic-enabled', 'true');
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (window as unknown as { readonly __worldInstrumentVibrations: readonly VibratePattern[] })
+            .__worldInstrumentVibrations,
+      ),
+    )
+    .toEqual([[59, 131, 59]]);
 
   await page.getByRole('button', { name: 'Play' }).click();
   await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible();
