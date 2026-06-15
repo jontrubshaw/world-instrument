@@ -6,13 +6,13 @@ import {
   type ReplayFrame,
   type ReplaySnapshot,
   type ScoreOutput,
+  type ScoreVersionMetadata,
   type StreamSourceMode,
   stableStringify,
 } from '@world-instrument/core';
-import { weatherScoreV1 } from '@world-instrument/scores';
 
 import type { ReplayArchive, ReplayInstrumentFrameState } from './replayArchive.ts';
-import { evaluateWeatherInstrumentFrame } from './weatherInstrument.ts';
+import { evaluateInstrumentFrame, instrumentScoreMetadataForOutput } from './weatherInstrument.ts';
 
 export type ReplayCaptureSourceMode = StreamSourceMode;
 
@@ -137,12 +137,13 @@ export function prepareFrameForCaptureClock(
   }
 
   const elapsedMs = elapsedFromSessionStart(session.startedAt, capturedAt);
-  const rescoredFrame = evaluateWeatherInstrumentFrame({
+  const rescoredFrame = evaluateInstrumentFrame({
     frameIndex: frame.frameIndex,
     elapsedMs,
     capturedAt,
     streams: frame.streams,
     seed: frame.seed,
+    scoreId: frame.output.scoreId,
     ...(frame.sourceLabel === undefined ? {} : { sourceLabel: frame.sourceLabel }),
     ...(frame.statusLabel === undefined ? {} : { statusLabel: frame.statusLabel }),
   });
@@ -188,13 +189,14 @@ export function buildReplaySnapshot(
   options: BuildReplaySnapshotOptions,
 ): ReplaySnapshot {
   const frames = session.frames.map(toReplayFrame);
+  const score = scoreMetadataForCapturedFrames(session.frames);
   const snapshot = {
     schemaVersion: REPLAY_SNAPSHOT_SCHEMA_VERSION,
     snapshotId: session.sessionId,
     createdAt: options.createdAt,
-    score: weatherScoreV1.metadata,
+    score,
     frames,
-    metadata: buildSnapshotMetadata(session, options),
+    metadata: buildSnapshotMetadata(session, options, score),
   } satisfies ReplaySnapshot;
 
   return parseReplaySnapshot(snapshot);
@@ -262,6 +264,7 @@ function toReplayFrame(frame: CapturedReplayFrame): ReplayFrame {
 function buildSnapshotMetadata(
   session: ReplayCaptureSession,
   options: BuildReplaySnapshotOptions,
+  score: ScoreVersionMetadata,
 ): JsonObject {
   return {
     fixture: false,
@@ -279,9 +282,9 @@ function buildSnapshotMetadata(
       sourceMode: sourceModeSummary(session.frames),
     },
     score: {
-      scoreId: weatherScoreV1.metadata.scoreId,
-      scoreVersion: weatherScoreV1.metadata.scoreVersion,
-      displayName: weatherScoreV1.metadata.displayName,
+      scoreId: score.scoreId,
+      scoreVersion: score.scoreVersion,
+      displayName: score.displayName,
     },
     sources: sourceMetadata(session.frames),
     frames: session.frames.map(frameMetadata),
@@ -297,6 +300,10 @@ function frameMetadata(frame: CapturedReplayFrame): JsonObject {
     sourceMode: frame.sourceMode,
     sourceLabel: frame.sourceLabel ?? 'Captured stream',
     statusLabel: frame.statusLabel ?? 'Captured frame',
+    score: {
+      scoreId: frame.output.scoreId,
+      scoreVersion: frame.output.scoreVersion,
+    },
     inputHash: traceValue(frame.output, 'inputHash') ?? '',
     condition: traceValue(frame.output, 'condition') ?? '',
     visualSignature: frame.visualSignature,
@@ -360,6 +367,10 @@ function legacyFrameProvenance(frame: CapturedReplayFrame): JsonObject {
     status: stream?.status ?? 'unknown',
     sourceIdentity:
       frame.sourceLabel ?? stream?.source.label ?? stream?.source.id ?? 'Captured stream',
+    score: {
+      scoreId: frame.output.scoreId,
+      scoreVersion: frame.output.scoreVersion,
+    },
     ...(stream === undefined
       ? {}
       : {
@@ -375,6 +386,29 @@ function legacyFrameProvenance(frame: CapturedReplayFrame): JsonObject {
 
 function captureSourceKind(frame: ReplayCaptureFrameInput): string {
   return frame.streams[0]?.source.kind ?? 'stream';
+}
+
+function scoreMetadataForCapturedFrames(
+  frames: readonly CapturedReplayFrame[],
+): ScoreVersionMetadata {
+  const firstFrame = frames[0];
+
+  if (firstFrame === undefined) {
+    throw new Error('Cannot build a replay snapshot without captured frames.');
+  }
+
+  const score = instrumentScoreMetadataForOutput(firstFrame.output);
+
+  frames.forEach((frame) => {
+    if (
+      frame.output.scoreId !== score.scoreId ||
+      frame.output.scoreVersion !== score.scoreVersion
+    ) {
+      throw new Error('Replay capture export requires all frames to use the same score.');
+    }
+  });
+
+  return score;
 }
 
 function elapsedFromSessionStart(startedAt: string, capturedAt: string): number {

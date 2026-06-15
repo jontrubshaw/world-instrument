@@ -35,6 +35,9 @@ describe('instrument source runtime', () => {
     expect(sourceCapabilitySummary(instrumentSourceDefinitions[0] ?? missingSource())).toContain(
       'score-ready',
     );
+    expect(sourceCapabilitySummary(instrumentSourceDefinitions[1] ?? missingSource())).toContain(
+      'score-ready',
+    );
   });
 
   it('routes a registry weather fixture through the shared output pipeline', async () => {
@@ -92,12 +95,15 @@ describe('instrument source runtime', () => {
         seed: FIXTURE_BROWSER_SENSOR_SEED,
         sourceLabel: 'Studio browser sensor',
         visualParameters: {
-          scoreId: 'weather-score',
+          scoreId: 'browser-sensor-score',
           condition: 'sensor-touch',
         },
         audioParameters: {
-          scoreId: 'weather-score',
+          scoreId: 'browser-sensor-score',
           enabled: true,
+        },
+        hapticPattern: {
+          scoreId: 'browser-sensor-score',
         },
       },
       streamState: {
@@ -156,7 +162,12 @@ describe('instrument source runtime', () => {
         'Browser sensor / interaction pointer fallback is driving the instrument; motion/orientation sensors are unavailable or waiting for permission.',
       frame: {
         streamStatus: 'degraded',
+        output: {
+          scoreId: 'browser-sensor-score',
+          scoreVersion: '1.0.0',
+        },
         visualParameters: {
+          scoreId: 'browser-sensor-score',
           condition: 'sensor-touch',
         },
       },
@@ -193,7 +204,11 @@ describe('instrument source runtime', () => {
         'Browser sensor / interaction input is stale; move the pointer or enable device sensors to refresh the instrument.',
       frame: {
         streamStatus: 'stale',
+        output: {
+          scoreId: 'browser-sensor-score',
+        },
         visualParameters: {
+          scoreId: 'browser-sensor-score',
           condition: 'sensor-stale',
         },
       },

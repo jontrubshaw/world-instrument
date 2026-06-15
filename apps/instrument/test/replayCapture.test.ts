@@ -1,4 +1,5 @@
 import { parseReplaySnapshot, type JsonObject } from '@world-instrument/core';
+import { BROWSER_SENSOR_STREAM_SOURCE_ID } from '@world-instrument/adapters';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -20,6 +21,7 @@ import {
   loadReplayArchives,
   type ReplayArchive,
 } from '../src/replayArchive.ts';
+import { readSourceFrame } from '../src/sourceRuntime.ts';
 
 describe('instrument replay capture', () => {
   it('exports captured generated frames as a parser-compatible replay snapshot', () => {
@@ -122,6 +124,90 @@ describe('instrument replay capture', () => {
         (output) => output.trace?.find((entry) => entry.key === 'inputHash')?.value,
       ),
     ).toEqual(['8f5c7a72', '6c2d4560', '6247890f']);
+  });
+
+  it('exports browser sensor captures with browser sensor score provenance', async () => {
+    const sourceRead = await readSourceFrame({
+      sourceId: BROWSER_SENSOR_STREAM_SOURCE_ID,
+      sourceMode: 'fixture',
+    });
+    const frame = sourceRead.frame;
+    const stream = sourceRead.streamState;
+
+    if (frame === undefined || stream === undefined) {
+      throw new Error('Expected browser sensor fixture frame and stream.');
+    }
+
+    const session = createReplayCaptureSession({
+      sessionId: 'captured-fixture-sensor-score',
+      title: 'Captured sensor score fixture',
+      startedAt: '2026-06-15T12:00:00.000Z',
+    });
+    const capturedSession = appendCapturedReplayFrame(session, {
+      sourceMode: 'fixture',
+      frameIndex: frame.frameIndex,
+      capturedAt: frame.observedAt,
+      streams: [stream],
+      seed: frame.seed,
+      output: frame.output,
+      visualSignature: frame.visualParameters.signature,
+      audioSignature: frame.audioParameters.signature,
+      hapticSignature: frame.hapticPattern.signature,
+      provenance: {
+        uiMode: 'fixture',
+        sourceMode: 'fixture',
+        status: 'ready',
+        score: {
+          scoreId: frame.output.scoreId,
+          scoreVersion: frame.output.scoreVersion,
+        },
+      },
+      sourceLabel: frame.sourceLabel,
+      statusLabel: frame.statusLabel,
+    });
+    const snapshot = buildReplaySnapshot(capturedSession, {
+      createdAt: '2026-06-15T12:00:01.000Z',
+    });
+    const archive: ReplayArchive = {
+      id: 'captured-fixture-sensor-score',
+      label: 'Captured sensor score fixture',
+      snapshot,
+    };
+
+    expect(parseReplaySnapshot(snapshot)).toMatchObject({
+      score: {
+        scoreId: 'browser-sensor-score',
+        scoreVersion: '1.0.0',
+        displayName: 'Browser Sensor Score v1',
+      },
+      frames: [
+        {
+          output: {
+            scoreId: 'browser-sensor-score',
+          },
+        },
+      ],
+    });
+    expect(snapshot.metadata).toMatchObject({
+      score: {
+        scoreId: 'browser-sensor-score',
+        scoreVersion: '1.0.0',
+        displayName: 'Browser Sensor Score v1',
+      },
+    });
+    expect(metadataFrames(snapshot.metadata)[0]).toMatchObject({
+      score: {
+        scoreId: 'browser-sensor-score',
+        scoreVersion: '1.0.0',
+      },
+      provenance: {
+        score: {
+          scoreId: 'browser-sensor-score',
+          scoreVersion: '1.0.0',
+        },
+      },
+    });
+    expect(createReplayScoreSequence(archive)).toEqual(snapshot.frames.map((item) => item.output));
   });
 
   it('builds a captureable replay frame from the currently rendered archive view', () => {

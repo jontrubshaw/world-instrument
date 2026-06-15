@@ -15,7 +15,6 @@ import {
   type StreamSourceDefinition,
   type StreamSourceMode,
 } from '@world-instrument/core';
-import { weatherScoreV1 } from '@world-instrument/scores';
 
 import {
   DEFAULT_LIVE_WEATHER_LOCATION,
@@ -24,7 +23,8 @@ import {
   readLiveWeatherFrame,
 } from './liveWeather.ts';
 import {
-  evaluateWeatherInstrumentFrame,
+  evaluateInstrumentFrame,
+  instrumentScoreMetadatas,
   type WeatherInstrumentState,
 } from './weatherInstrument.ts';
 
@@ -82,9 +82,18 @@ export function sourceSupportsMode(sourceId: string, mode: StreamSourceMode): bo
 }
 
 export function sourceHasCompatibleScore(sourceId: string): boolean {
-  return streamSourceRegistry
-    .compatibleSourcesForScore(weatherScoreV1.metadata)
-    .some((definition) => definition.id === sourceId);
+  return (
+    streamSourceRegistry.compatibleScoresForSource(sourceId, instrumentScoreMetadatas()).length > 0
+  );
+}
+
+export function sourceScoreLabel(sourceId: string): string {
+  const definition = sourceDefinition(sourceId);
+  const score = instrumentScoreMetadatas().find(
+    (metadata) => metadata.scoreId === definition.defaultScoreId,
+  );
+
+  return score?.displayName ?? 'Score pending';
 }
 
 export function selectableModeForSource(
@@ -202,7 +211,12 @@ async function readFixtureSourceFrame(
         ? {}
         : { afterSequence: options.previousSequence }),
     });
-    const frame = evaluateSourceWeatherFrame(result.state, 'fixture', FIXTURE_WEATHER_SEED);
+    const frame = evaluateSourceFrame(
+      result.state,
+      'fixture',
+      FIXTURE_WEATHER_SEED,
+      definition.defaultScoreId,
+    );
 
     return {
       sourceId: definition.id,
@@ -255,7 +269,7 @@ async function readBrowserSensorSourceFrame(
   const result = await adapter.read({
     ...(options.previousSequence === undefined ? {} : { afterSequence: options.previousSequence }),
   });
-  const frame = evaluateSourceWeatherFrame(result.state, sourceMode, seed);
+  const frame = evaluateSourceFrame(result.state, sourceMode, seed, definition.defaultScoreId);
   const status = result.state.status === 'stale' ? 'stale' : 'ready';
 
   return {
@@ -270,17 +284,19 @@ async function readBrowserSensorSourceFrame(
   };
 }
 
-function evaluateSourceWeatherFrame(
+function evaluateSourceFrame(
   streamState: NormalizedStreamState,
   sourceMode: Exclude<StreamSourceMode, 'replay'>,
   seed: string,
+  scoreId: string | undefined,
 ): SourceInstrumentFrameState {
-  const instrumentFrame = evaluateWeatherInstrumentFrame({
+  const instrumentFrame = evaluateInstrumentFrame({
     frameIndex: streamState.sequence,
     elapsedMs: 0,
     capturedAt: streamState.observedAt,
     streams: [streamState],
     seed,
+    ...(scoreId === undefined ? {} : { scoreId }),
     sourceLabel: streamState.source.label ?? streamState.source.id,
   });
 
