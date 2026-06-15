@@ -1,7 +1,13 @@
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 
-export function InstrumentStage() {
+import type { InstrumentSceneParameters } from '../weatherInstrument.ts';
+
+interface InstrumentStageProps {
+  readonly visual: InstrumentSceneParameters;
+}
+
+export function InstrumentStage({ visual }: InstrumentStageProps) {
   const mountRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -11,34 +17,37 @@ export function InstrumentStage() {
       return;
     }
 
+    const backgroundColor = new THREE.Color(visual.palette.background);
+    const bodyColor = new THREE.Color(visual.palette.body);
+    const accentColor = new THREE.Color(visual.palette.accent);
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setClearColor(0x050716, 1);
+    renderer.setClearColor(backgroundColor, 1);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.domElement.dataset.testid = 'instrument-canvas';
     renderer.domElement.setAttribute('aria-label', 'Abstract World Instrument visual surface');
     mount.append(renderer.domElement);
 
     const scene = new THREE.Scene();
-    scene.fog = new THREE.Fog(0x050716, 4, 9);
+    scene.fog = new THREE.Fog(backgroundColor, visual.fog.near, visual.fog.far);
 
     const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
     camera.position.set(0, 0.1, 5.2);
 
     const geometry = new THREE.IcosahedronGeometry(1.35, 3);
     const bodyMaterial = new THREE.MeshStandardMaterial({
-      color: 0x6ee7f9,
-      emissive: 0x162759,
-      emissiveIntensity: 0.72,
-      metalness: 0.34,
-      roughness: 0.28,
+      color: bodyColor,
+      emissive: accentColor,
+      emissiveIntensity: visual.emissiveIntensity,
+      metalness: visual.metalness,
+      roughness: visual.roughness,
     });
     const body = new THREE.Mesh(geometry, bodyMaterial);
     scene.add(body);
 
     const wireMaterial = new THREE.MeshBasicMaterial({
-      color: 0xd8b4fe,
+      color: accentColor,
       transparent: true,
-      opacity: 0.18,
+      opacity: visual.wireOpacity,
       wireframe: true,
     });
     const wire = new THREE.Mesh(geometry, wireMaterial);
@@ -47,18 +56,18 @@ export function InstrumentStage() {
 
     const innerGeometry = new THREE.TorusKnotGeometry(0.62, 0.035, 160, 12, 3, 5);
     const innerMaterial = new THREE.MeshBasicMaterial({
-      color: 0xffffff,
+      color: bodyColor,
       transparent: true,
-      opacity: 0.42,
+      opacity: visual.innerOpacity,
     });
     const innerPulse = new THREE.Mesh(innerGeometry, innerMaterial);
     scene.add(innerPulse);
 
-    const keyLight = new THREE.PointLight(0x87f3ff, 4.8, 12);
+    const keyLight = new THREE.PointLight(bodyColor, visual.keyLightIntensity, 12);
     keyLight.position.set(2.6, 2.1, 3.8);
     scene.add(keyLight);
 
-    const fillLight = new THREE.PointLight(0xff8bd2, 2.2, 10);
+    const fillLight = new THREE.PointLight(accentColor, visual.fillLightIntensity, 10);
     fillLight.position.set(-3.4, -1.6, 2.8);
     scene.add(fillLight);
 
@@ -83,18 +92,18 @@ export function InstrumentStage() {
 
     const renderFrame = () => {
       const elapsed = (window.performance.now() - startTime) / 1000;
-      const pulse = Math.sin(elapsed * 1.7) * 0.08;
+      const pulse = Math.sin(elapsed * visual.pulseRate) * visual.pulseAmplitude;
 
-      body.rotation.x = elapsed * 0.21;
-      body.rotation.y = elapsed * 0.34;
-      body.scale.setScalar(1 + pulse);
+      body.rotation.x = elapsed * visual.rotationRate.x;
+      body.rotation.y = elapsed * visual.rotationRate.y;
+      body.scale.setScalar(visual.bodyScale + pulse);
 
       wire.rotation.x = body.rotation.x + 0.12;
       wire.rotation.y = body.rotation.y - 0.18;
 
-      innerPulse.rotation.x = -elapsed * 0.43;
-      innerPulse.rotation.z = elapsed * 0.52;
-      innerPulse.scale.setScalar(1.2 - pulse);
+      innerPulse.rotation.x = -elapsed * visual.rotationRate.inner;
+      innerPulse.rotation.z = elapsed * (visual.rotationRate.inner + visual.rotationRate.y);
+      innerPulse.scale.setScalar(visual.innerScale - pulse);
 
       renderer.render(scene, camera);
       animationFrameId = window.requestAnimationFrame(renderFrame);
@@ -113,7 +122,17 @@ export function InstrumentStage() {
       innerMaterial.dispose();
       mount.removeChild(renderer.domElement);
     };
-  }, []);
+  }, [visual]);
 
-  return <div ref={mountRef} className="instrument-stage" />;
+  return (
+    <div
+      ref={mountRef}
+      className="instrument-stage"
+      data-testid="instrument-stage"
+      data-weather-condition={visual.condition}
+      data-score-input-hash={visual.inputHash}
+      data-scene-body-color={visual.palette.body}
+      data-scene-pulse-rate={String(visual.pulseRate)}
+    />
+  );
 }
