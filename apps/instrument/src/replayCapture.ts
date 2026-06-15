@@ -8,10 +8,9 @@ import {
   type ScoreOutput,
   type StreamSourceMode,
 } from '@world-instrument/core';
-import { weatherScoreV1 } from '@world-instrument/scores';
 
 import type { ReplayArchive, ReplayInstrumentFrameState } from './replayArchive.ts';
-import { evaluateWeatherInstrumentFrame } from './weatherInstrument.ts';
+import { evaluateWeatherInstrumentFrame, scoreMetadataForOutput } from './weatherInstrument.ts';
 
 export type ReplayCaptureSourceMode = StreamSourceMode;
 
@@ -186,11 +185,12 @@ export function buildReplaySnapshot(
   options: BuildReplaySnapshotOptions,
 ): ReplaySnapshot {
   const frames = session.frames.map(toReplayFrame);
+  const score = scoreMetadataForOutput(session.frames[0]?.output);
   const snapshot = {
     schemaVersion: REPLAY_SNAPSHOT_SCHEMA_VERSION,
     snapshotId: session.sessionId,
     createdAt: options.createdAt,
-    score: weatherScoreV1.metadata,
+    score,
     frames,
     metadata: buildSnapshotMetadata(session, options),
   } satisfies ReplaySnapshot;
@@ -247,13 +247,15 @@ function buildSnapshotMetadata(
   session: ReplayCaptureSession,
   options: BuildReplaySnapshotOptions,
 ): JsonObject {
+  const score = scoreMetadataForOutput(session.frames[0]?.output);
+
   return {
     fixture: false,
     mode: 'captured',
     title: session.title,
     description:
       options.description ??
-      'Captured World Instrument weather session with normalized stream state and score output.',
+      'Captured World Instrument session with normalized stream state and score output.',
     capture: {
       sessionId: session.sessionId,
       status: session.status,
@@ -263,9 +265,9 @@ function buildSnapshotMetadata(
       sourceMode: sourceModeSummary(session.frames),
     },
     score: {
-      scoreId: weatherScoreV1.metadata.scoreId,
-      scoreVersion: weatherScoreV1.metadata.scoreVersion,
-      displayName: weatherScoreV1.metadata.displayName,
+      scoreId: score.scoreId,
+      scoreVersion: score.scoreVersion,
+      displayName: score.displayName,
     },
     sources: sourceMetadata(session.frames),
     frames: session.frames.map(frameMetadata),

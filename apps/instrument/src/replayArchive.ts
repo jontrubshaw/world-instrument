@@ -7,8 +7,9 @@ import {
 
 import recordedWeatherReplay from './replayArchives/weather-london.v1.replay.json';
 import {
+  evaluateInstrumentScore,
   evaluateWeatherInstrumentFrame,
-  evaluateWeatherScore,
+  scoreForMetadata,
   type WeatherInstrumentState,
 } from './weatherInstrument.ts';
 
@@ -48,12 +49,14 @@ export function evaluateReplayFrame(
   const frame = frameAt(archive.snapshot, framePosition);
   const frameCount = archive.snapshot.frames.length;
   const durationMs = archive.snapshot.frames.at(-1)?.elapsedMs ?? frame.elapsedMs;
+  const score = scoreForMetadata(archive.snapshot.score);
   const instrumentFrame = evaluateWeatherInstrumentFrame({
     frameIndex: frame.frameIndex,
     elapsedMs: frame.elapsedMs,
     capturedAt: frame.capturedAt,
     streams: frame.streams,
     seed: frame.seed,
+    score,
     sourceLabel: sourceLabel(frame),
   });
 
@@ -71,7 +74,9 @@ export function evaluateReplayFrame(
 }
 
 export function createReplayScoreSequence(archive: ReplayArchive): readonly ScoreOutput[] {
-  return archive.snapshot.frames.map(evaluateWeatherScore);
+  const score = scoreForMetadata(archive.snapshot.score);
+
+  return archive.snapshot.frames.map((frame) => evaluateInstrumentScore({ ...frame, score }));
 }
 
 export function clampFramePosition(snapshot: ReplaySnapshot, requestedPosition: number): number {

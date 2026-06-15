@@ -1,4 +1,8 @@
 import { parseReplaySnapshot, type JsonObject } from '@world-instrument/core';
+import {
+  createBrowserSensorFixturePayload,
+  normalizeBrowserSensorPayload,
+} from '@world-instrument/adapters';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -19,6 +23,7 @@ import {
   loadReplayArchives,
   type ReplayArchive,
 } from '../src/replayArchive.ts';
+import { evaluateWeatherInstrumentFrame } from '../src/weatherInstrument.ts';
 
 describe('instrument replay capture', () => {
   it('exports captured generated frames as a parser-compatible replay snapshot', () => {
@@ -307,6 +312,86 @@ describe('instrument replay capture', () => {
     expect(parseReplaySnapshot(snapshot).frames[0]?.output?.generatedAt).toBe(
       '2026-06-14T21:05:12.000Z',
     );
+    expect(createReplayScoreSequence(capturedArchive)).toEqual(
+      snapshot.frames.map((frame) => frame.output),
+    );
+  });
+
+  it('exports captured browser sensor frames with sensor score provenance', () => {
+    const stream = normalizeBrowserSensorPayload(
+      createBrowserSensorFixturePayload({
+        observedAt: '2026-06-15T12:05:00.000Z',
+        pointerX: 0.7,
+        pointerY: 0.25,
+        deltaX: 0.1,
+        deltaY: -0.05,
+      }),
+      { mode: 'live', sequence: 4 },
+    );
+    const instrumentState = evaluateWeatherInstrumentFrame({
+      frameIndex: stream.sequence,
+      elapsedMs: 0,
+      capturedAt: stream.observedAt,
+      streams: [stream],
+      seed: 'world-instrument-live-browser-sensor-v1',
+      sourceLabel: stream.source.label,
+    });
+    const session = appendCapturedReplayFrame(
+      createReplayCaptureSession({
+        sessionId: 'captured-live-sensor-test',
+        title: 'Captured browser sensor session',
+        startedAt: '2026-06-15T12:05:00.000Z',
+      }),
+      {
+        sourceMode: 'live',
+        frameIndex: instrumentState.frameIndex,
+        capturedAt: stream.observedAt,
+        streams: [stream],
+        seed: 'world-instrument-live-browser-sensor-v1',
+        output: instrumentState.output,
+        visualSignature: instrumentState.visualParameters.signature,
+        audioSignature: instrumentState.audioParameters.signature,
+        hapticSignature: instrumentState.hapticPattern.signature,
+        sourceLabel: instrumentState.sourceLabel,
+        statusLabel: instrumentState.statusLabel,
+      },
+    );
+    const snapshot = buildReplaySnapshot(session, {
+      createdAt: '2026-06-15T12:05:02.000Z',
+    });
+    const capturedArchive: ReplayArchive = {
+      id: 'captured-live-sensor-test',
+      label: 'Captured browser sensor session',
+      snapshot,
+    };
+
+    expect(parseReplaySnapshot(snapshot)).toMatchObject({
+      score: {
+        scoreId: 'sensor-score',
+        scoreVersion: '1.0.0',
+      },
+      frames: [
+        {
+          frameIndex: 4,
+          seed: 'world-instrument-live-browser-sensor-v1',
+          streams: [
+            {
+              source: {
+                kind: 'sensor',
+              },
+            },
+          ],
+        },
+      ],
+      metadata: {
+        score: {
+          scoreId: 'sensor-score',
+        },
+        capture: {
+          sourceMode: 'live',
+        },
+      },
+    });
     expect(createReplayScoreSequence(capturedArchive)).toEqual(
       snapshot.frames.map((frame) => frame.output),
     );

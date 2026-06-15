@@ -8,12 +8,14 @@ import {
   type SetStateAction,
 } from 'react';
 
+import { BROWSER_SENSOR_STREAM_SOURCE_ID } from '@world-instrument/adapters';
+
 import { InstrumentAudioEngine } from './audioEngine.ts';
 import { serializeAudioParametersForDom } from './audioParameters.ts';
+import { requestBrowserSensorPermission } from './browserSensor.ts';
 import { InstrumentStage } from './components/InstrumentStage.tsx';
 import { BrowserVibrationHapticEngine, type HapticPlaybackState } from './hapticEngine.ts';
 import { serializeHapticPatternForDom, type InstrumentHapticPattern } from './hapticParameters.ts';
-import { LIVE_WEATHER_REFRESH_INTERVAL_MS } from './liveWeather.ts';
 import {
   appendCapturedReplayFrame,
   buildReplaySnapshot,
@@ -37,6 +39,7 @@ import {
   DEFAULT_INSTRUMENT_SOURCE_ID,
   DEFAULT_INSTRUMENT_SOURCE_MODE,
   instrumentSourceDefinitions,
+  liveRefreshIntervalForSource,
   readSourceFrame,
   selectableModeForSource,
   sourceCapabilitySummary,
@@ -283,7 +286,7 @@ export function App() {
         instrumentMode,
       );
       setSourceRefreshToken((currentToken) => currentToken + 1);
-    }, LIVE_WEATHER_REFRESH_INTERVAL_MS);
+    }, liveRefreshIntervalForSource(selectedSourceId));
 
     return () => {
       window.clearInterval(intervalId);
@@ -409,6 +412,15 @@ export function App() {
     setIsPlaying(false);
     markSourceLoading(setSourceState, selectedSourceId, selectedSource.displayName, instrumentMode);
     setSourceRefreshToken((currentToken) => currentToken + 1);
+  };
+
+  const activateBrowserSensors = async () => {
+    if (selectedSourceId !== BROWSER_SENSOR_STREAM_SOURCE_ID || instrumentMode !== 'live') {
+      return;
+    }
+
+    await requestBrowserSensorPermission();
+    refreshSource();
   };
 
   const togglePlayback = () => {
@@ -644,6 +656,17 @@ export function App() {
                     ? `Refreshing ${instrumentMode}`
                     : `Refresh ${instrumentMode}`}
                 </button>
+                {selectedSourceId === BROWSER_SENSOR_STREAM_SOURCE_ID &&
+                instrumentMode === 'live' ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void activateBrowserSensors();
+                    }}
+                  >
+                    Activate device sensors
+                  </button>
+                ) : null}
               </div>
             </>
           ) : (

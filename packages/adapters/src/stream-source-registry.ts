@@ -7,11 +7,11 @@ import {
 } from '@world-instrument/core';
 
 import {
-  MOCK_SENSOR_ADAPTER_ID,
-  MOCK_SENSOR_ADAPTER_VERSION,
-  MockSensorAdapter,
-  type MockSensorAdapterConfig,
-} from './mock-sensor.ts';
+  BROWSER_SENSOR_ADAPTER_ID,
+  BROWSER_SENSOR_ADAPTER_VERSION,
+  BrowserSensorAdapter,
+  type BrowserSensorAdapterConfig,
+} from './browser-sensor.ts';
 import {
   WEATHER_ADAPTER_ID,
   WEATHER_ADAPTER_VERSION,
@@ -20,10 +20,12 @@ import {
 } from './weather.ts';
 
 export const WEATHER_STREAM_SOURCE_ID = WEATHER_ADAPTER_ID;
-export const MOCK_SENSOR_STREAM_SOURCE_ID = MOCK_SENSOR_ADAPTER_ID;
+export const BROWSER_SENSOR_STREAM_SOURCE_ID = BROWSER_SENSOR_ADAPTER_ID;
 
 const WEATHER_SCORE_ID = 'weather-score';
 const WEATHER_SCORE_VERSION = '1.0.0';
+const SENSOR_SCORE_ID = 'sensor-score';
+const SENSOR_SCORE_VERSION = '1.0.0';
 
 export const weatherStreamSourceDefinition = {
   schemaVersion: STREAM_SOURCE_REGISTRY_SCHEMA_VERSION,
@@ -156,92 +158,143 @@ export const weatherStreamSourceDefinition = {
   ],
 } as const satisfies StreamSourceDefinition;
 
-export const mockSensorStreamSourceDefinition = {
+export const browserSensorStreamSourceDefinition = {
   schemaVersion: STREAM_SOURCE_REGISTRY_SCHEMA_VERSION,
-  id: MOCK_SENSOR_STREAM_SOURCE_ID,
+  id: BROWSER_SENSOR_STREAM_SOURCE_ID,
   kind: 'sensor',
-  displayName: 'Mock local sensor',
+  displayName: 'Browser sensors',
   description:
-    'Fixture-only local device feed that proves non-weather sources can share the registry boundary.',
+    'Credential-free browser pointer, motion, and orientation frames normalized for local interaction streams.',
   adapter: {
-    id: MOCK_SENSOR_ADAPTER_ID,
-    version: MOCK_SENSOR_ADAPTER_VERSION,
+    id: BROWSER_SENSOR_ADAPTER_ID,
+    version: BROWSER_SENSOR_ADAPTER_VERSION,
     packageName: '@world-instrument/adapters',
-    description: 'Normalizes recorded mock device motion/contact readings.',
+    description:
+      'Normalizes pointer interaction with optional DeviceMotion and DeviceOrientation readings.',
   },
   capabilities: [
     {
       mode: 'fixture',
-      description: 'Reads recorded mock device readings from tests or fixtures.',
+      description:
+        'Reads deterministic browser interaction fixtures from tests or package helpers.',
+    },
+    {
+      mode: 'live',
+      description:
+        'Reads local pointer movement and uses DeviceMotion or DeviceOrientation where supported and permissioned.',
+      requiresCredential: false,
     },
     {
       mode: 'replay',
-      description: 'Replays archived normalized sensor stream frames.',
+      description: 'Replays archived normalized browser sensor stream frames.',
     },
   ],
-  defaultMode: 'fixture',
+  defaultMode: 'live',
   mapping: {
     streamKind: 'sensor',
     streamIdPrefix: 'sensor',
     streamSchema: STREAM_STATE_SCHEMA_VERSION,
     description:
-      'Sensor payloads map into device motion vectors, contact state, and battery level samples.',
-    metadataKeys: ['provider', 'mode', 'device'],
+      'Browser sensor payloads map pointer position and movement plus optional motion/orientation into replay-safe samples.',
+    metadataKeys: ['provider', 'mode', 'session', 'capability', 'eventCount'],
     samples: [
       {
-        key: 'acceleration',
+        key: 'pointerPosition',
         kind: 'vector',
         required: true,
+        unit: 'normalized',
+        description: 'Two-axis pointer position ordered x, y in viewport-normalized units.',
+      },
+      {
+        key: 'pointerDelta',
+        kind: 'vector',
+        required: true,
+        unit: 'normalized',
+        description: 'Two-axis pointer movement delta ordered x, y in viewport-normalized units.',
+      },
+      {
+        key: 'pointerPressure',
+        kind: 'numeric',
+        required: false,
+        unit: 'normalized',
+        description: 'Pointer pressure where the browser supplies it.',
+      },
+      {
+        key: 'motion',
+        kind: 'vector',
+        required: false,
         unit: 'm/s2',
-        description: 'Three-axis acceleration ordered x, y, z.',
+        description: 'Three-axis DeviceMotion acceleration ordered x, y, z.',
+      },
+      {
+        key: 'rotationRate',
+        kind: 'vector',
+        required: false,
+        unit: 'degrees/s',
+        description: 'Three-axis DeviceMotion rotation ordered alpha, beta, gamma.',
       },
       {
         key: 'orientation',
         kind: 'vector',
         required: false,
         unit: 'degrees',
-        description: 'Three-axis orientation ordered pitch, roll, yaw.',
+        description: 'Three-axis DeviceOrientation angles ordered alpha, beta, gamma.',
       },
       {
-        key: 'contact',
+        key: 'interactionActive',
         kind: 'boolean',
         required: false,
-        description: 'Whether the device reports contact with a surface or body.',
+        description: 'Whether pointer interaction is currently active.',
       },
       {
-        key: 'battery',
-        kind: 'numeric',
-        required: false,
-        unit: 'percent',
-        description: 'Device battery level.',
+        key: 'fallbackActive',
+        kind: 'boolean',
+        required: true,
+        description: 'True when pointer or idle fallback is standing in for device sensors.',
+      },
+      {
+        key: 'sensorCapability',
+        kind: 'categorical',
+        required: true,
+        description:
+          'Capability summary such as device-sensor, pointer, idle-pointer, or unavailable.',
       },
     ],
   },
-  scoreCompatibility: [],
+  scoreCompatibility: [
+    {
+      scoreId: SENSOR_SCORE_ID,
+      scoreVersion: SENSOR_SCORE_VERSION,
+      supportedStreamSchemas: [STREAM_STATE_SCHEMA_VERSION],
+      description: 'Sensor Score v1 consumes browser sensor stream samples and stream-state.v1.',
+    },
+  ],
+  defaultScoreId: SENSOR_SCORE_ID,
   fixtures: [
     {
-      id: 'mock-sensor-device-v1',
-      description: 'Inline fixture payload shape for future sensor score work.',
+      id: 'browser-pointer-fixture-v1',
+      description:
+        'Deterministic browser pointer fixture generated by createBrowserSensorFixturePayload.',
     },
   ],
 } as const satisfies StreamSourceDefinition;
 
 export const streamSourceRegistry = createStreamSourceRegistry([
   weatherStreamSourceDefinition,
-  mockSensorStreamSourceDefinition,
+  browserSensorStreamSourceDefinition,
 ]);
 
-export type RegisteredStreamAdapterConfig = MockSensorAdapterConfig | WeatherAdapterConfig;
-export type RegisteredStreamAdapter = MockSensorAdapter | WeatherAdapter;
+export type RegisteredStreamAdapterConfig = BrowserSensorAdapterConfig | WeatherAdapterConfig;
+export type RegisteredStreamAdapter = BrowserSensorAdapter | WeatherAdapter;
 
 export function createRegisteredStreamAdapter(
   sourceId: typeof WEATHER_STREAM_SOURCE_ID,
   config: WeatherAdapterConfig,
 ): WeatherAdapter;
 export function createRegisteredStreamAdapter(
-  sourceId: typeof MOCK_SENSOR_STREAM_SOURCE_ID,
-  config: MockSensorAdapterConfig,
-): MockSensorAdapter;
+  sourceId: typeof BROWSER_SENSOR_STREAM_SOURCE_ID,
+  config: BrowserSensorAdapterConfig,
+): BrowserSensorAdapter;
 export function createRegisteredStreamAdapter(
   sourceId: string,
   config: RegisteredStreamAdapterConfig,
@@ -253,8 +306,8 @@ export function createRegisteredStreamAdapter(
   switch (sourceId) {
     case WEATHER_STREAM_SOURCE_ID:
       return new WeatherAdapter(config as WeatherAdapterConfig);
-    case MOCK_SENSOR_STREAM_SOURCE_ID:
-      return new MockSensorAdapter(config as MockSensorAdapterConfig);
+    case BROWSER_SENSOR_STREAM_SOURCE_ID:
+      return new BrowserSensorAdapter(config as BrowserSensorAdapterConfig);
     default:
       throw new Error(`Stream source '${sourceId}' is not registered with an adapter factory.`);
   }

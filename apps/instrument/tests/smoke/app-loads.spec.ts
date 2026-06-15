@@ -80,15 +80,66 @@ test('loads the instrument shell', async ({ page }) => {
     .poll(() => canvas.evaluate((element) => element.dataset.weatherCondition))
     .toBe('overcast');
 
-  await sourceSelector.selectOption('sensor.mock-local-device');
-  await expect(streamControls).toHaveAttribute('data-source-id', 'sensor.mock-local-device');
-  await expect(streamControls).toHaveAttribute('data-source-mode', 'fixture');
-  await expect(streamControls).toHaveAttribute('data-source-state', 'unavailable');
-  await expect(page.getByRole('button', { name: 'Live', exact: true })).toBeDisabled();
+  await sourceSelector.selectOption('sensor.browser-interaction');
+  await expect(streamControls).toHaveAttribute('data-source-id', 'sensor.browser-interaction');
+  await expect(streamControls).toHaveAttribute('data-source-mode', 'live');
+  await page.mouse.move(320, 180);
+  await page.getByRole('button', { name: 'Refresh live' }).click();
+  await expect(streamControls).toHaveAttribute('data-source-state', 'degraded');
   await expect(streamControls.locator('.source-status')).toHaveText(
-    'Mock local sensor fixture is available, but no compatible score is registered yet; replay remains available. Showing deterministic replay fallback.',
+    'Browser interaction is driving the instrument through pointer fallback.',
   );
-  await expect(page.getByText('replay fallback', { exact: true })).toBeVisible();
+  await expect
+    .poll(() => canvas.evaluate((element) => element.dataset.scoreId))
+    .toBe('sensor-score');
+  await expect
+    .poll(() => canvas.evaluate((element) => element.dataset.weatherCondition))
+    .toBe('sensor-pointer-active');
+
+  const captureControls = page.getByRole('region', { name: 'Capture controls' });
+  await expect(captureControls).toBeVisible();
+  await expect(captureControls).toHaveAttribute('data-capture-state', 'idle');
+  await page.getByRole('button', { name: 'Start capture' }).click();
+  await expect(captureControls).toHaveAttribute('data-capture-state', 'recording');
+  await expect(captureControls).toHaveAttribute('data-capture-frame-count', '1');
+  await page.getByRole('button', { name: 'Stop capture' }).click();
+  await expect(captureControls).toHaveAttribute('data-capture-state', 'ready');
+
+  const sensorDownloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Export replay JSON' }).click();
+  const sensorDownload = await sensorDownloadPromise;
+  const sensorDownloadPath = await sensorDownload.path();
+
+  expect(sensorDownload.suggestedFilename()).toMatch(
+    /^world-instrument-captured-live-sensor-.*\.replay\.json$/,
+  );
+  expect(JSON.parse(await readFile(sensorDownloadPath, 'utf8'))).toMatchObject({
+    schemaVersion: 'replay-snapshot.v1',
+    score: {
+      scoreId: 'sensor-score',
+      scoreVersion: '1.0.0',
+    },
+    frames: [
+      {
+        seed: 'world-instrument-live-browser-sensor-v1',
+        streams: [
+          {
+            source: {
+              kind: 'sensor',
+            },
+          },
+        ],
+      },
+    ],
+    metadata: {
+      score: {
+        scoreId: 'sensor-score',
+      },
+      capture: {
+        sourceMode: 'live',
+      },
+    },
+  });
 
   await sourceSelector.selectOption('weather.open-meteo');
   await page.getByRole('button', { name: 'Live', exact: true }).click();
@@ -96,9 +147,7 @@ test('loads the instrument shell', async ({ page }) => {
   await expect(streamControls).toHaveAttribute('data-source-mode', 'live');
   await expect(streamControls).toHaveAttribute('data-source-state', 'ready');
 
-  const captureControls = page.getByRole('region', { name: 'Capture controls' });
-  await expect(captureControls).toBeVisible();
-  await expect(captureControls).toHaveAttribute('data-capture-state', 'idle');
+  await expect(captureControls).toHaveAttribute('data-capture-state', 'ready');
   await page.getByRole('button', { name: 'Start capture' }).click();
   await expect(captureControls).toHaveAttribute('data-capture-state', 'recording');
   await expect(captureControls).toHaveAttribute('data-capture-frame-count', '1');

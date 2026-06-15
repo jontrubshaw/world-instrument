@@ -1,10 +1,11 @@
 import {
-  MOCK_SENSOR_STREAM_SOURCE_ID,
+  BROWSER_SENSOR_STREAM_SOURCE_ID,
   WEATHER_STREAM_SOURCE_ID,
   createRegisteredStreamAdapter,
+  createBrowserSensorFixturePayload,
   recordedOpenMeteoLondonCurrentV1,
   streamSourceRegistry,
-  type RecordedMockSensorPayload,
+  type BrowserSensorRead,
   type WeatherFetch,
   type WeatherLocation,
 } from '@world-instrument/adapters';
@@ -14,11 +15,19 @@ import {
   type StreamSourceDefinition,
   type StreamSourceMode,
 } from '@world-instrument/core';
-import { weatherScoreV1 } from '@world-instrument/scores';
+import { sensorScoreV1, weatherScoreV1 } from '@world-instrument/scores';
 
+import {
+  FIXTURE_BROWSER_SENSOR_SEED,
+  LIVE_BROWSER_SENSOR_REFRESH_INTERVAL_MS,
+  LIVE_BROWSER_SENSOR_SEED,
+  LIVE_BROWSER_SENSOR_STALE_AFTER_MS,
+  readBrowserSensor,
+} from './browserSensor.ts';
 import {
   DEFAULT_LIVE_WEATHER_LOCATION,
   LIVE_WEATHER_SEED,
+  LIVE_WEATHER_REFRESH_INTERVAL_MS,
   OPEN_METEO_FORECAST_ENDPOINT,
   readLiveWeatherFrame,
 } from './liveWeather.ts';
@@ -31,7 +40,7 @@ export const DEFAULT_INSTRUMENT_SOURCE_ID = WEATHER_STREAM_SOURCE_ID;
 export const DEFAULT_INSTRUMENT_SOURCE_MODE = 'live' as const satisfies StreamSourceMode;
 export const FIXTURE_WEATHER_SEED = 'world-instrument-fixture-weather-v1';
 
-export type SourceReadStatus = 'error' | 'offline' | 'ready' | 'stale' | 'unavailable';
+export type SourceReadStatus = 'degraded' | 'error' | 'offline' | 'ready' | 'stale' | 'unavailable';
 
 export interface SourceInstrumentFrameState extends WeatherInstrumentState {
   readonly observedAt: string;
@@ -58,6 +67,7 @@ export interface ReadSourceFrameOptions {
   readonly sourceMode: Exclude<StreamSourceMode, 'replay'>;
   readonly endpointUrl?: string;
   readonly fetchWeather?: WeatherFetch;
+  readonly readSensor?: BrowserSensorRead;
   readonly location?: WeatherLocation;
   readonly now?: Date;
   readonly online?: boolean;
@@ -77,9 +87,11 @@ export function sourceSupportsMode(sourceId: string, mode: StreamSourceMode): bo
 }
 
 export function sourceHasCompatibleScore(sourceId: string): boolean {
-  return streamSourceRegistry
-    .compatibleSourcesForScore(weatherScoreV1.metadata)
-    .some((definition) => definition.id === sourceId);
+  return [weatherScoreV1.metadata, sensorScoreV1.metadata].some((score) =>
+    streamSourceRegistry
+      .compatibleSourcesForScore(score)
+      .some((definition) => definition.id === sourceId),
+  );
 }
 
 export function selectableModeForSource(
@@ -100,6 +112,12 @@ export function sourceCapabilitySummary(definition: StreamSourceDefinition): str
     : 'score unavailable';
 
   return `${supportedModes}; ${scoreSummary}`;
+}
+
+export function liveRefreshIntervalForSource(sourceId: string): number {
+  return sourceId === BROWSER_SENSOR_STREAM_SOURCE_ID
+    ? LIVE_BROWSER_SENSOR_REFRESH_INTERVAL_MS
+    : LIVE_WEATHER_REFRESH_INTERVAL_MS;
 }
 
 export async function readSourceFrame(options: ReadSourceFrameOptions): Promise<SourceReadState> {
@@ -124,6 +142,10 @@ async function readLiveSourceFrame(
   definition: StreamSourceDefinition,
   options: ReadSourceFrameOptions,
 ): Promise<SourceReadState> {
+  if (definition.id === BROWSER_SENSOR_STREAM_SOURCE_ID) {
+    return readLiveBrowserSensorFrame(definition, options);
+  }
+
   if (definition.id !== WEATHER_STREAM_SOURCE_ID) {
     return unavailableState(
       definition,
@@ -165,6 +187,67 @@ async function readLiveSourceFrame(
   };
 }
 
+async function readLiveBrowserSensorFrame(
+  definition: StreamSourceDefinition,
+  options: ReadSourceFrameOptions,
+): Promise<SourceReadState> {
+  const now = options.now ?? new Date();
+  const adapter = createRegisteredStreamAdapter(BROWSER_SENSOR_STREAM_SOURCE_ID, {
+    mode: 'live',
+    readSensor: options.readSensor ?? readBrowserSensor,
+    receivedAt: now.toISOString(),
+  });
+  const result = await adapter.read({
+    ...(options.previousSequence === undefined ? {} : { afterSequence: options.previousSequence }),
+    ...(options.signal === undefined ? {} : { signal: options.signal }),
+  });
+  const observedAtMs = Date.parse(result.state.observedAt);
+
+  if (Number.isNaN(observedAtMs)) {
+    return {
+      sourceId: definition.id,
+      sourceName: definition.displayName,
+      sourceMode: 'live',
+      status: 'error',
+      message: 'Browser sensor input returned an invalid observation time.',
+      streamState: result.state,
+    };
+  }
+
+  const staleAfterMs = options.staleAfterMs ?? LIVE_BROWSER_SENSOR_STALE_AFTER_MS;
+  const isStale = now.valueOf() - observedAtMs > staleAfterMs;
+  const streamState =
+    isStale || result.state.status === 'stale'
+      ? {
+          ...result.state,
+          status: 'stale' as const,
+        }
+      : result.state;
+
+  if (streamState.status === 'error') {
+    return unavailableState(
+      definition,
+      'live',
+      'Browser sensors are unavailable in this environment; replay remains available.',
+      streamState,
+    );
+  }
+
+  const frame = evaluateSourceFrame(streamState, 'live', LIVE_BROWSER_SENSOR_SEED);
+  const status = isStale ? 'stale' : streamState.status === 'degraded' ? 'degraded' : 'ready';
+
+  return {
+    sourceId: definition.id,
+    sourceName: definition.displayName,
+    sourceMode: 'live',
+    status,
+    message: browserSensorMessage(status, streamState),
+    seed: LIVE_BROWSER_SENSOR_SEED,
+    frame,
+    streamState,
+  };
+}
+
 async function readFixtureSourceFrame(
   definition: StreamSourceDefinition,
   options: ReadSourceFrameOptions,
@@ -179,7 +262,7 @@ async function readFixtureSourceFrame(
         ? {}
         : { afterSequence: options.previousSequence }),
     });
-    const frame = evaluateSourceWeatherFrame(result.state, 'fixture', FIXTURE_WEATHER_SEED);
+    const frame = evaluateSourceFrame(result.state, 'fixture', FIXTURE_WEATHER_SEED);
 
     return {
       sourceId: definition.id,
@@ -193,10 +276,10 @@ async function readFixtureSourceFrame(
     };
   }
 
-  if (definition.id === MOCK_SENSOR_STREAM_SOURCE_ID) {
-    const adapter = createRegisteredStreamAdapter(MOCK_SENSOR_STREAM_SOURCE_ID, {
+  if (definition.id === BROWSER_SENSOR_STREAM_SOURCE_ID) {
+    const adapter = createRegisteredStreamAdapter(BROWSER_SENSOR_STREAM_SOURCE_ID, {
       mode: 'fixture',
-      fixture: MOCK_SENSOR_FIXTURE,
+      fixture: createBrowserSensorFixturePayload(),
     });
     const result = await adapter.read({
       ...(options.previousSequence === undefined
@@ -204,12 +287,18 @@ async function readFixtureSourceFrame(
         : { afterSequence: options.previousSequence }),
     });
 
-    return unavailableState(
-      definition,
-      'fixture',
-      `${definition.displayName} fixture is available, but no compatible score is registered yet; replay remains available.`,
-      result.state,
-    );
+    const frame = evaluateSourceFrame(result.state, 'fixture', FIXTURE_BROWSER_SENSOR_SEED);
+
+    return {
+      sourceId: definition.id,
+      sourceName: definition.displayName,
+      sourceMode: 'fixture',
+      status: result.state.status === 'degraded' ? 'degraded' : 'ready',
+      message: `${definition.displayName} fixture is driving the instrument.`,
+      seed: FIXTURE_BROWSER_SENSOR_SEED,
+      frame,
+      streamState: result.state,
+    };
   }
 
   return unavailableState(
@@ -219,7 +308,7 @@ async function readFixtureSourceFrame(
   );
 }
 
-function evaluateSourceWeatherFrame(
+function evaluateSourceFrame(
   streamState: NormalizedStreamState,
   sourceMode: Exclude<StreamSourceMode, 'replay'>,
   seed: string,
@@ -261,18 +350,37 @@ function unavailableState(
   };
 }
 
-const MOCK_SENSOR_FIXTURE: RecordedMockSensorPayload = {
-  provider: 'mock-sensor',
-  observedAt: '2026-06-15T12:00:00.000Z',
-  receivedAt: '2026-06-15T12:00:01.000Z',
-  device: {
-    id: 'studio-controller',
-    label: 'Studio Controller',
-  },
-  reading: {
-    acceleration: [0.1, -0.2, 0.3],
-    orientation: [12.125, 0, 181.988],
-    contact: true,
-    batteryPercent: 87.45,
-  },
-};
+function browserSensorMessage(
+  status: SourceReadStatus,
+  streamState: NormalizedStreamState,
+): string {
+  const capability = streamState.metadata?.capability;
+  const capabilitySummary =
+    isCapabilityMetadata(capability) &&
+    (capability.motion === 'prompt' || capability.orientation === 'prompt')
+      ? ' Device sensors can be activated; pointer input is already available.'
+      : '';
+
+  if (status === 'stale') {
+    return 'Browser sensor input is stale; outputs are using the latest interaction frame.';
+  }
+
+  if (status === 'degraded') {
+    return `Browser interaction is driving the instrument through pointer fallback.${capabilitySummary}`;
+  }
+
+  return 'Browser sensors are driving the instrument.';
+}
+
+function isCapabilityMetadata(
+  value: unknown,
+): value is { readonly motion: string; readonly orientation: string } {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'motion' in value &&
+    'orientation' in value &&
+    typeof value.motion === 'string' &&
+    typeof value.orientation === 'string'
+  );
+}

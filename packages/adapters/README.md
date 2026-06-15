@@ -33,10 +33,10 @@ To add a source:
 
 ### Registered Sources
 
-| Source id                  | Kind      | Modes                       | Default score   |
-| -------------------------- | --------- | --------------------------- | --------------- |
-| `weather.open-meteo`       | `weather` | `fixture`, `live`, `replay` | `weather-score` |
-| `sensor.mock-local-device` | `sensor`  | `fixture`, `replay`         | none yet        |
+| Source id                    | Kind      | Modes                       | Default score   |
+| ---------------------------- | --------- | --------------------------- | --------------- |
+| `weather.open-meteo`         | `weather` | `fixture`, `live`, `replay` | `weather-score` |
+| `sensor.browser-interaction` | `sensor`  | `fixture`, `live`, `replay` | `sensor-score`  |
 
 ## Weather Adapter v1
 
@@ -50,10 +50,18 @@ normalized samples include `temperature`, `relativeHumidity`, `windSpeed`, `cond
 and `windVector`, plus optional supporting weather measurements. `weather-score` v1 declares
 compatibility with this mapping through `stream-state.v1`.
 
-## Mock Sensor Fixture Source
+## Browser Sensor Adapter v1
 
-`MockSensorAdapter` is intentionally fixture-only. It proves that non-weather streams can enter the
-same boundary before a production sensor or local-device integration exists. It maps to
-`source.kind = "sensor"` and `streamId` values prefixed with `sensor:`. Its samples are
-`acceleration`, `orientation`, `contact`, and `battery`. No deterministic sensor score is registered
-yet, so app output should not select it until a follow-on score issue adds compatibility.
+`BrowserSensorAdapter` supports deterministic fixtures plus a live app-provided browser sampler. The
+live sampler uses pointer movement as the credential-free baseline and includes DeviceMotion or
+DeviceOrientation readings when the browser supports them and permission has been granted.
+
+Browser sensors map to `source.kind = "sensor"` and `streamId` values prefixed with `sensor:`. Its
+samples are `pointerPosition`, `pointerDelta`, optional `pointerPressure`, optional `motion`,
+optional `rotationRate`, optional `orientation`, `interactionActive`, `fallbackActive`, and
+`sensorCapability`. Capability and fallback metadata are part of replay-safe normalized stream
+state, so captured sessions can explain whether output came from device sensors, pointer fallback, or
+idle fallback.
+
+`MockSensorAdapter` remains as a legacy fixture helper for contract tests, but it is no longer an
+app-facing registered source.

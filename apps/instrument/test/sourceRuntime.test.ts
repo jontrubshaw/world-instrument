@@ -1,10 +1,16 @@
-import { MOCK_SENSOR_STREAM_SOURCE_ID, WEATHER_STREAM_SOURCE_ID } from '@world-instrument/adapters';
+import {
+  BROWSER_SENSOR_STREAM_SOURCE_ID,
+  WEATHER_STREAM_SOURCE_ID,
+  createBrowserSensorFixturePayload,
+} from '@world-instrument/adapters';
 import { describe, expect, it } from 'vitest';
 
 import {
   DEFAULT_INSTRUMENT_SOURCE_ID,
+  FIXTURE_BROWSER_SENSOR_SEED,
   FIXTURE_WEATHER_SEED,
   instrumentSourceDefinitions,
+  liveRefreshIntervalForSource,
   readSourceFrame,
   selectableModeForSource,
   sourceCapabilitySummary,
@@ -17,14 +23,15 @@ describe('instrument source runtime', () => {
     expect(DEFAULT_INSTRUMENT_SOURCE_ID).toBe(WEATHER_STREAM_SOURCE_ID);
     expect(instrumentSourceDefinitions.map((definition) => definition.id)).toEqual([
       WEATHER_STREAM_SOURCE_ID,
-      MOCK_SENSOR_STREAM_SOURCE_ID,
+      BROWSER_SENSOR_STREAM_SOURCE_ID,
     ]);
     expect(sourceSupportsMode(WEATHER_STREAM_SOURCE_ID, 'live')).toBe(true);
-    expect(sourceSupportsMode(MOCK_SENSOR_STREAM_SOURCE_ID, 'fixture')).toBe(true);
-    expect(sourceSupportsMode(MOCK_SENSOR_STREAM_SOURCE_ID, 'live')).toBe(false);
+    expect(sourceSupportsMode(BROWSER_SENSOR_STREAM_SOURCE_ID, 'fixture')).toBe(true);
+    expect(sourceSupportsMode(BROWSER_SENSOR_STREAM_SOURCE_ID, 'live')).toBe(true);
     expect(sourceHasCompatibleScore(WEATHER_STREAM_SOURCE_ID)).toBe(true);
-    expect(sourceHasCompatibleScore(MOCK_SENSOR_STREAM_SOURCE_ID)).toBe(false);
-    expect(selectableModeForSource(MOCK_SENSOR_STREAM_SOURCE_ID, 'live')).toBe('fixture');
+    expect(sourceHasCompatibleScore(BROWSER_SENSOR_STREAM_SOURCE_ID)).toBe(true);
+    expect(selectableModeForSource(BROWSER_SENSOR_STREAM_SOURCE_ID, 'live')).toBe('live');
+    expect(liveRefreshIntervalForSource(BROWSER_SENSOR_STREAM_SOURCE_ID)).toBe(500);
     expect(sourceCapabilitySummary(instrumentSourceDefinitions[0] ?? missingSource())).toContain(
       'score-ready',
     );
@@ -68,47 +75,118 @@ describe('instrument source runtime', () => {
     });
   });
 
-  it('surfaces a non-weather fixture as registered but score-unavailable', async () => {
+  it('routes a registry browser sensor fixture through the shared output pipeline', async () => {
     const frame = await readSourceFrame({
-      sourceId: MOCK_SENSOR_STREAM_SOURCE_ID,
+      sourceId: BROWSER_SENSOR_STREAM_SOURCE_ID,
       sourceMode: 'fixture',
     });
 
     expect(frame).toMatchObject({
-      sourceId: MOCK_SENSOR_STREAM_SOURCE_ID,
-      sourceName: 'Mock local sensor',
+      sourceId: BROWSER_SENSOR_STREAM_SOURCE_ID,
+      sourceName: 'Browser sensors',
       sourceMode: 'fixture',
-      status: 'unavailable',
-      message:
-        'Mock local sensor fixture is available, but no compatible score is registered yet; replay remains available.',
+      status: 'degraded',
+      seed: FIXTURE_BROWSER_SENSOR_SEED,
+      frame: {
+        sourceMode: 'fixture',
+        seed: FIXTURE_BROWSER_SENSOR_SEED,
+        sourceLabel: 'Studio browser sensor',
+        visualParameters: {
+          scoreId: 'sensor-score',
+          condition: 'sensor-pointer-active',
+        },
+        audioParameters: {
+          scoreId: 'sensor-score',
+        },
+        hapticPattern: {
+          scoreId: 'sensor-score',
+        },
+      },
       streamState: {
         source: {
           kind: 'sensor',
-          label: 'Studio Controller sensor',
+          label: 'Studio browser sensor',
+        },
+        status: 'degraded',
+        metadata: {
+          mode: 'fixture',
         },
       },
     });
     expect(
-      frame.streamState?.samples.find((sample) => sample.key === 'acceleration'),
+      frame.streamState?.samples.find((sample) => sample.key === 'pointerPosition'),
     ).toMatchObject({
-      key: 'acceleration',
+      key: 'pointerPosition',
       kind: 'vector',
+      values: [0.62, 0.38],
     });
-    expect(frame.frame).toBeUndefined();
   });
 
-  it('reports unsupported modes without invoking an unavailable source path', async () => {
+  it('routes live browser sensor frames through the shared output pipeline', async () => {
     const frame = await readSourceFrame({
-      sourceId: MOCK_SENSOR_STREAM_SOURCE_ID,
+      sourceId: BROWSER_SENSOR_STREAM_SOURCE_ID,
       sourceMode: 'live',
+      now: new Date('2026-06-15T12:05:01.000Z'),
+      readSensor: () =>
+        createBrowserSensorFixturePayload({
+          observedAt: '2026-06-15T12:05:01.000Z',
+          pointerX: 0.25,
+          pointerY: 0.75,
+          deltaX: 0.08,
+          deltaY: -0.02,
+          motion: [0.2, 0.1, 9.8],
+          orientation: [30, 8, -12],
+        }),
     });
 
-    expect(frame).toEqual({
-      sourceId: MOCK_SENSOR_STREAM_SOURCE_ID,
-      sourceName: 'Mock local sensor',
+    expect(frame).toMatchObject({
+      sourceId: BROWSER_SENSOR_STREAM_SOURCE_ID,
+      sourceName: 'Browser sensors',
       sourceMode: 'live',
-      status: 'unavailable',
-      message: 'Mock local sensor does not support live input yet.',
+      status: 'ready',
+      seed: 'world-instrument-live-browser-sensor-v1',
+      frame: {
+        visualParameters: {
+          scoreId: 'sensor-score',
+          condition: 'sensor-motion-active',
+        },
+      },
+      streamState: {
+        status: 'ok',
+        metadata: {
+          capability: {
+            fallback: 'none',
+          },
+        },
+      },
+    });
+  });
+
+  it('marks old browser sensor observations as stale while preserving output', async () => {
+    const frame = await readSourceFrame({
+      sourceId: BROWSER_SENSOR_STREAM_SOURCE_ID,
+      sourceMode: 'live',
+      now: new Date('2026-06-15T12:05:20.000Z'),
+      staleAfterMs: 1_000,
+      readSensor: () =>
+        createBrowserSensorFixturePayload({
+          observedAt: '2026-06-15T12:05:01.000Z',
+          pointerX: 0.4,
+          pointerY: 0.45,
+        }),
+    });
+
+    expect(frame).toMatchObject({
+      status: 'stale',
+      message: 'Browser sensor input is stale; outputs are using the latest interaction frame.',
+      frame: {
+        visualParameters: {
+          scoreId: 'sensor-score',
+        },
+      },
+      streamState: {
+        status: 'stale',
+      },
     });
   });
 });

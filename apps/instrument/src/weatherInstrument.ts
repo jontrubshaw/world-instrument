@@ -2,9 +2,11 @@ import {
   SCORE_INPUT_SCHEMA_VERSION,
   parseReplaySnapshot,
   type NormalizedStreamState,
+  type Score,
   type ScoreOutput,
+  type ScoreVersionMetadata,
 } from '@world-instrument/core';
-import { weatherScoreV1 } from '@world-instrument/scores';
+import { sensorScoreV1, weatherScoreV1 } from '@world-instrument/scores';
 
 import type { InstrumentAudioParameters } from './audioParameters.ts';
 import { mapScoreOutputToAudioParameters } from './audioParameters.ts';
@@ -31,6 +33,7 @@ export interface WeatherInstrumentFrameInput {
   readonly capturedAt: string;
   readonly streams: readonly NormalizedStreamState[];
   readonly seed: string;
+  readonly score?: Score;
   readonly sourceLabel?: string;
   readonly statusLabel?: string;
 }
@@ -58,14 +61,15 @@ export function loadFixtureWeatherInstrumentState(): Promise<WeatherInstrumentSt
 export function evaluateWeatherInstrumentFrame(
   input: WeatherInstrumentFrameInput,
 ): WeatherInstrumentState {
-  const output = evaluateWeatherScore(input);
+  const output = evaluateInstrumentScore(input);
 
   return {
     frameIndex: input.frameIndex,
     elapsedMs: input.elapsedMs,
     sourceLabel: input.sourceLabel ?? sourceLabel(input.streams),
     statusLabel:
-      input.statusLabel ?? `${mapScoreOutputToVisualParameters(output).condition} weather frame`,
+      input.statusLabel ??
+      `${mapScoreOutputToVisualParameters(output).condition} ${sourceKind(input.streams)} frame`,
     output,
     visualParameters: mapScoreOutputToVisualParameters(output),
     audioParameters: mapScoreOutputToAudioParameters(output),
@@ -74,9 +78,18 @@ export function evaluateWeatherInstrumentFrame(
 }
 
 export function evaluateWeatherScore(input: WeatherInstrumentFrameInput): ScoreOutput {
-  return weatherScoreV1.evaluate({
+  return evaluateInstrumentScore({
+    ...input,
+    score: weatherScoreV1,
+  });
+}
+
+export function evaluateInstrumentScore(input: WeatherInstrumentFrameInput): ScoreOutput {
+  const score = input.score ?? scoreForStreams(input.streams);
+
+  return score.evaluate({
     schemaVersion: SCORE_INPUT_SCHEMA_VERSION,
-    score: weatherScoreV1.metadata,
+    score: score.metadata,
     frame: {
       frameIndex: input.frameIndex,
       elapsedMs: input.elapsedMs,
@@ -87,8 +100,42 @@ export function evaluateWeatherScore(input: WeatherInstrumentFrameInput): ScoreO
   });
 }
 
+export function scoreForStreams(streams: readonly NormalizedStreamState[]): Score {
+  return streams.some(
+    (stream) => stream.source.kind === 'sensor' || stream.streamId.startsWith('sensor:'),
+  )
+    ? sensorScoreV1
+    : weatherScoreV1;
+}
+
+export function scoreForMetadata(metadata: ScoreVersionMetadata): Score {
+  if (
+    metadata.scoreId === sensorScoreV1.metadata.scoreId &&
+    metadata.scoreVersion === sensorScoreV1.metadata.scoreVersion
+  ) {
+    return sensorScoreV1;
+  }
+
+  return weatherScoreV1;
+}
+
+export function scoreMetadataForOutput(output: ScoreOutput | undefined): ScoreVersionMetadata {
+  if (
+    output?.scoreId === sensorScoreV1.metadata.scoreId &&
+    output.scoreVersion === sensorScoreV1.metadata.scoreVersion
+  ) {
+    return sensorScoreV1.metadata;
+  }
+
+  return weatherScoreV1.metadata;
+}
+
 function sourceLabel(streams: readonly NormalizedStreamState[]): string {
   const stream = streams[0];
 
-  return stream?.source.label ?? stream?.source.id ?? 'Weather stream';
+  return stream?.source.label ?? stream?.source.id ?? 'Instrument stream';
+}
+
+function sourceKind(streams: readonly NormalizedStreamState[]): string {
+  return streams[0]?.source.kind ?? 'stream';
 }
