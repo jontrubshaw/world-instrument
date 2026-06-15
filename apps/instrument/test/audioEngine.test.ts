@@ -55,7 +55,7 @@ class FakeAudioParam {
   value = 0;
   readonly targets: AutomationTarget[] = [];
 
-  setTargetAtTime(value: number, startTime: number, timeConstant: number): FakeAudioParam {
+  setTargetAtTime(value: number, startTime: number, timeConstant: number): this {
     this.value = value;
     this.targets.push({ value, startTime, timeConstant });
 
