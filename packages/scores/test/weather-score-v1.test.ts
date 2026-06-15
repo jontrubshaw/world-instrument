@@ -177,7 +177,9 @@ describe('weather score v1', () => {
       key: 'condition',
       value: 'sensor-still',
     });
-    expect(output.haptic.enabled).toBe(false);
+    expect(output.haptic).toMatchObject({
+      enabled: false,
+    });
   });
 
   it('keeps the adapter fixture aligned with the replay stream fixture', async () => {
