@@ -90,9 +90,9 @@ export function evaluateInstrumentFrame(
 
 export function evaluateInstrumentScore(input: WeatherInstrumentFrameInput): ScoreOutput {
   const score = resolveInstrumentScore({
-    score: input.score,
-    scoreId: input.scoreId,
     streams: input.streams,
+    ...(input.score === undefined ? {} : { score: input.score }),
+    ...(input.scoreId === undefined ? {} : { scoreId: input.scoreId }),
   });
 
   return score.evaluate({
@@ -146,8 +146,9 @@ export function resolveInstrumentScore(
   } = {},
 ): Score {
   if (options.score !== undefined) {
+    const requestedScore = options.score;
     const scoreForMetadata = instrumentScores.find((score) =>
-      scoreMetadataMatches(score.metadata, options.score),
+      scoreMetadataMatches(score.metadata, requestedScore),
     );
 
     if (scoreForMetadata === undefined) {
