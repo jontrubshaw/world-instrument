@@ -1019,7 +1019,14 @@ export function App() {
             </p>
           )}
 
-          <section className="replay-controls" aria-label="Replay controls">
+          <section
+            className="replay-controls"
+            aria-label="Replay controls"
+            data-replay-import-state={replayImportState.status}
+            data-replay-import-archive-id={
+              replayImportState.status === 'ready' ? replayImportState.archiveId : ''
+            }
+          >
             <label className="archive-picker">
               <span>Archive</span>
               <select
