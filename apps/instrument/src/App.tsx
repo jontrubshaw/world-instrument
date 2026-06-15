@@ -31,8 +31,7 @@ export function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioControlState, setAudioControlState] = useState<AudioControlState>('stopped');
   const [isAudioMuted, setIsAudioMuted] = useState(false);
-  const [hapticControlState, setHapticControlState] =
-    useState<HapticControlState>('checking');
+  const [hapticControlState, setHapticControlState] = useState(initialHapticControlState);
   const [hapticsEnabled, setHapticsEnabled] = useState(false);
   const audioEngineRef = useRef<InstrumentAudioEngine | undefined>(undefined);
   const hapticEngineRef = useRef<BrowserVibrationHapticEngine | undefined>(undefined);
@@ -101,7 +100,6 @@ export function App() {
   useEffect(() => {
     const engine = new BrowserVibrationHapticEngine();
     hapticEngineRef.current = engine;
-    setHapticControlState(engine.state === 'supported' ? 'disabled' : 'unsupported');
 
     return () => {
       void audioEngineRef.current?.stop();
@@ -381,6 +379,14 @@ function hapticControlStateFromPlayback(state: HapticPlaybackState): HapticContr
   }
 
   return 'enabled';
+}
+
+function initialHapticControlState(): HapticControlState {
+  if (typeof navigator === 'undefined') {
+    return 'unsupported';
+  }
+
+  return typeof navigator.vibrate === 'function' ? 'disabled' : 'unsupported';
 }
 
 function hapticStatusText(
