@@ -15,6 +15,7 @@ export interface ReplayCaptureFrameInput {
   readonly sourceMode: ReplayCaptureSourceMode;
   readonly frameIndex: number;
   readonly capturedAt: string;
+  readonly elapsedMs?: number;
   readonly streams: readonly NormalizedStreamState[];
   readonly seed: string;
   readonly output: ScoreOutput;
@@ -76,7 +77,7 @@ export function appendCapturedReplayFrame(
   session: ReplayCaptureSession,
   frame: ReplayCaptureFrameInput,
 ): ReplayCaptureSession {
-  const elapsedMs = elapsedFromSessionStart(session.startedAt, frame.capturedAt);
+  const elapsedMs = frame.elapsedMs ?? elapsedFromSessionStart(session.startedAt, frame.capturedAt);
 
   return {
     ...session,

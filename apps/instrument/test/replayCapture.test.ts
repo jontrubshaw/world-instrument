@@ -23,7 +23,7 @@ describe('instrument replay capture', () => {
     const session = createReplayCaptureSession({
       sessionId: 'captured-replay-weather-2026-06-14T21-00-00Z',
       title: 'Captured replay validation',
-      startedAt: '2026-06-14T21:00:00.000Z',
+      startedAt: '2026-06-14T22:00:00.000Z',
     });
     const capturedSession = [0, 1].reduce(
       (currentSession, position) =>
@@ -51,6 +51,7 @@ describe('instrument replay capture', () => {
         },
         {
           frameIndex: 1,
+          elapsedMs: 15000,
           seed: 'weather-score-v1:london:1',
         },
       ],
@@ -165,6 +166,7 @@ function captureInputForReplayFrame(
     sourceMode: 'replay',
     frameIndex: instrumentState.frameIndex,
     capturedAt: frame.capturedAt,
+    elapsedMs: frame.elapsedMs,
     streams: frame.streams,
     seed: frame.seed,
     output: instrumentState.output,

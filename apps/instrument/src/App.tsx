@@ -7,7 +7,6 @@ import {
   type Dispatch,
   type SetStateAction,
 } from 'react';
-import type { NormalizedStreamState } from '@world-instrument/core';
 
 import { InstrumentAudioEngine } from './audioEngine.ts';
 import { serializeAudioParametersForDom } from './audioParameters.ts';
@@ -18,9 +17,8 @@ import {
   LIVE_WEATHER_SEED,
   LIVE_WEATHER_REFRESH_INTERVAL_MS,
   readLiveWeatherFrame,
-  type LiveWeatherInstrumentFrameState,
-  type LiveWeatherReadStatus,
 } from './liveWeather.ts';
+import { mergeLiveWeatherUiState, type LiveWeatherUiState } from './liveWeatherState.ts';
 import {
   appendCapturedReplayFrame,
   buildReplaySnapshot,
@@ -50,15 +48,6 @@ type AudioControlState =
 type HapticControlState = 'checking' | 'unsupported' | 'disabled' | 'enabled' | 'blocked';
 
 type InstrumentMode = 'live' | 'replay';
-
-type LiveWeatherUiStatus = LiveWeatherReadStatus | 'idle' | 'loading';
-
-interface LiveWeatherUiState {
-  readonly status: LiveWeatherUiStatus;
-  readonly message: string;
-  readonly frame?: LiveWeatherInstrumentFrameState;
-  readonly streamState?: NormalizedStreamState;
-}
 
 export function App() {
   const [archives] = useState(() => loadReplayArchives());
@@ -144,6 +133,7 @@ export function App() {
       sourceMode: 'replay',
       frameIndex: replayViewState.frameIndex,
       capturedAt: replayFrame.capturedAt,
+      elapsedMs: replayFrame.elapsedMs,
       streams: replayFrame.streams,
       seed: replayFrame.seed,
       output: replayViewState.output,
@@ -210,17 +200,7 @@ export function App() {
           liveSequenceRef.current = nextState.frame.streamSequence;
         }
 
-        setLiveWeatherState((currentState) => {
-          const frame = nextState.frame ?? currentState.frame;
-          const streamState = nextState.streamState ?? currentState.streamState;
-
-          return {
-            status: nextState.status,
-            message: nextState.message,
-            ...(frame === undefined ? {} : { frame }),
-            ...(streamState === undefined ? {} : { streamState }),
-          };
-        });
+        setLiveWeatherState((currentState) => mergeLiveWeatherUiState(currentState, nextState));
       })
       .catch((error: unknown) => {
         if (!isCurrentRequest || abortController.signal.aborted) {
