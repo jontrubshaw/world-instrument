@@ -1,5 +1,6 @@
 import {
   SCORE_INPUT_SCHEMA_VERSION,
+  parseReplaySnapshot,
   type NormalizedStreamState,
   type ScoreOutput,
 } from '@world-instrument/core';
@@ -11,6 +12,7 @@ import type { InstrumentHapticPattern } from './hapticParameters.ts';
 import { mapScoreOutputToHapticPattern } from './hapticParameters.ts';
 import type { InstrumentVisualParameters } from './visualParameters.ts';
 import { mapScoreOutputToVisualParameters } from './visualParameters.ts';
+import recordedWeatherReplay from './replayArchives/weather-london.v1.replay.json';
 
 export interface WeatherInstrumentState {
   readonly frameIndex: number;
@@ -34,15 +36,23 @@ export interface WeatherInstrumentFrameInput {
 }
 
 export function loadFixtureWeatherInstrumentState(): Promise<WeatherInstrumentState> {
-  return import('./replayArchive.ts').then(({ evaluateReplayFrame, loadReplayArchives }) => {
-    const archive = loadReplayArchives()[0];
+  const snapshot = parseReplaySnapshot(recordedWeatherReplay);
+  const frame = snapshot.frames[0];
 
-    if (archive === undefined) {
-      throw new Error('Expected at least one recorded weather replay archive.');
-    }
+  if (frame === undefined) {
+    throw new Error('Expected at least one recorded weather replay frame.');
+  }
 
-    return evaluateReplayFrame(archive, 0);
-  });
+  return Promise.resolve(
+    evaluateWeatherInstrumentFrame({
+      frameIndex: frame.frameIndex,
+      elapsedMs: frame.elapsedMs,
+      capturedAt: frame.capturedAt,
+      streams: frame.streams,
+      seed: frame.seed,
+      sourceLabel: sourceLabel(frame.streams),
+    }),
+  );
 }
 
 export function evaluateWeatherInstrumentFrame(
