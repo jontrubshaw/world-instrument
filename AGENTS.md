@@ -164,6 +164,7 @@ There is no longer a global pause on Cursor setup. Pick the next issue deliberat
 - PR #42 (`JTW-43 define stream source registry`) merged on 2026-06-15 after CI passed, the branch was clean, and the documented latest-head Codex review fallback window elapsed with no review appearing. `JTW-43` was marked Done.
 - PR #43 (`JTW-49 refresh durable docs after registry merge`) merged on 2026-06-15 after CI passed; docs-only review exception applied. `JTW-49` was marked Done.
 - JTW-44 was released to Cursor on 2026-06-15 after PR #43 merged. Scope is Cursor Cloud setup only: install Playwright Chromium under Node 24 so `npm run test:smoke` works without manual browser installation, preserve `engine-strict`, and document durable setup conventions.
+- JTW-44 setup branch `cursor/playwright-chromium-setup-6dfd` verified on 2026-06-15 in Cursor Cloud: `bash .cursor/install.sh` selected Node `v24.16.0` / npm `11.13.0`, ran `npm install`, and installed Playwright Chromium; `node --version`, `npm run check`, `npm run build`, and `npm run test:smoke` passed. Build still reports the expected large initial bundle warning from the Three.js app shell.
 
 ## Cursor Cloud specific instructions
 
