@@ -235,9 +235,7 @@ function evaluateSensorScore(
     },
     haptic: {
       enabled: hapticsAvailable && (metrics.interactionActive || normalized.motion > 0.55),
-      parameters: [
-        parameter('pulseIntensity', hapticPulseIntensity),
-      ],
+      parameters: [parameter('pulseIntensity', hapticPulseIntensity)],
     },
     trace: [
       {
