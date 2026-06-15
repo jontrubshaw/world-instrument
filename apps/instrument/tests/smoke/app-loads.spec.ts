@@ -88,10 +88,6 @@ test('loads the instrument shell', async ({ page }) => {
   const download = await downloadPromise;
   const downloadPath = await download.path();
 
-  if (downloadPath === null) {
-    throw new Error('Expected exported replay JSON to be available as a Playwright download.');
-  }
-
   expect(download.suggestedFilename()).toMatch(/^generated-weather-session-.+\.replay\.json$/);
 
   const exportedReplay = JSON.parse(await readFile(downloadPath, 'utf8')) as {

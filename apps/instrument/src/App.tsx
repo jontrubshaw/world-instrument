@@ -34,6 +34,7 @@ import {
   REPLAY_PLAYBACK_INTERVAL_MS,
   evaluateReplayFrame,
   loadReplayArchives,
+  type ReplayArchive,
 } from './replayArchive.ts';
 
 type AudioControlState =
@@ -110,10 +111,11 @@ export function App() {
   );
 
   useEffect(() => {
-    if (!isPlaying || instrumentMode !== 'replay') {
+    if (!isPlaying || instrumentMode !== 'replay' || activeArchive === undefined) {
       return;
     }
 
+    const playbackArchive = activeArchive;
     const intervalId = window.setInterval(() => {
       setFramePosition((currentPosition) => {
         if (currentPosition >= lastFramePosition) {
@@ -122,14 +124,24 @@ export function App() {
           return currentPosition;
         }
 
-        return currentPosition + 1;
+        const nextPosition = currentPosition + 1;
+        const nextReplayState = evaluateReplayFrame(playbackArchive, nextPosition);
+        const capturedFrame = createCapturedReplayFrame(
+          playbackArchive,
+          nextPosition,
+          nextReplayState.output,
+        );
+
+        setCapturedFrames((currentFrames) => appendCapturedFrame(currentFrames, capturedFrame));
+
+        return nextPosition;
       });
     }, REPLAY_PLAYBACK_INTERVAL_MS);
 
     return () => {
       window.clearInterval(intervalId);
     };
-  }, [instrumentMode, isPlaying, lastFramePosition]);
+  }, [activeArchive, instrumentMode, isPlaying, lastFramePosition]);
 
   useEffect(() => {
     if (instrumentMode !== 'live') {
@@ -152,6 +164,11 @@ export function App() {
 
         if (nextState.frame !== undefined) {
           liveSequenceRef.current = nextState.frame.streamSequence;
+        }
+
+        if (nextState.frame !== undefined && nextState.streamState !== undefined) {
+          const capturedFrame = createCapturedLiveFrame(nextState.streamState, nextState.frame);
+          setCapturedFrames((currentFrames) => appendCapturedFrame(currentFrames, capturedFrame));
         }
 
         setLiveWeatherState((currentState) => {
@@ -236,40 +253,6 @@ export function App() {
     };
   }, []);
 
-  useEffect(() => {
-    if (instrumentMode === 'live') {
-      if (liveWeatherState.frame === undefined || liveWeatherState.streamState === undefined) {
-        return;
-      }
-
-      const capturedFrame = createCapturedLiveFrame(
-        liveWeatherState.streamState,
-        liveWeatherState.frame,
-      );
-      setCapturedFrames((currentFrames) => appendCapturedFrame(currentFrames, capturedFrame));
-
-      return;
-    }
-
-    if (activeArchive === undefined) {
-      return;
-    }
-
-    const capturedFrame = createCapturedReplayFrame(
-      activeArchive,
-      framePosition,
-      replayViewState.output,
-    );
-    setCapturedFrames((currentFrames) => appendCapturedFrame(currentFrames, capturedFrame));
-  }, [
-    activeArchive,
-    framePosition,
-    instrumentMode,
-    liveWeatherState.frame,
-    liveWeatherState.streamState,
-    replayViewState.output,
-  ]);
-
   const selectInstrumentMode = (nextMode: InstrumentMode) => {
     if (nextMode === instrumentMode) {
       return;
@@ -280,14 +263,21 @@ export function App() {
     if (nextMode === 'live') {
       setIsPlaying(false);
       markLiveWeatherLoading(setLiveWeatherState);
+      captureCurrentLiveFrame();
+      return;
     }
+
+    captureReplayPosition(framePosition);
   };
 
   const selectArchive = (nextArchiveId: string) => {
+    const nextArchive = archives.find((archive) => archive.id === nextArchiveId);
+
     setArchiveId(nextArchiveId);
     setFramePosition(0);
     setIsPlaying(false);
     setInstrumentMode('replay');
+    captureReplayPosition(0, nextArchive);
   };
 
   const refreshLiveWeather = () => {
@@ -305,6 +295,7 @@ export function App() {
 
     if (framePosition >= lastFramePosition) {
       setFramePosition(0);
+      captureReplayPosition(0);
     }
 
     setIsPlaying(true);
@@ -313,18 +304,21 @@ export function App() {
   const restartReplay = () => {
     setFramePosition(0);
     setIsPlaying(false);
+    captureReplayPosition(0);
   };
 
   const stepReplay = (direction: -1 | 1) => {
+    const nextPosition = Math.min(Math.max(framePosition + direction, 0), lastFramePosition);
+
     setIsPlaying(false);
-    setFramePosition((currentPosition) =>
-      Math.min(Math.max(currentPosition + direction, 0), lastFramePosition),
-    );
+    setFramePosition(nextPosition);
+    captureReplayPosition(nextPosition);
   };
 
   const scrubReplay = (nextPosition: number) => {
     setIsPlaying(false);
     setFramePosition(nextPosition);
+    captureReplayPosition(nextPosition);
   };
 
   const startAudio = async () => {
@@ -394,6 +388,35 @@ export function App() {
     window.setTimeout(() => {
       URL.revokeObjectURL(objectUrl);
     }, 0);
+  };
+
+  const captureCurrentLiveFrame = () => {
+    if (liveWeatherState.frame === undefined || liveWeatherState.streamState === undefined) {
+      return;
+    }
+
+    const capturedFrame = createCapturedLiveFrame(
+      liveWeatherState.streamState,
+      liveWeatherState.frame,
+    );
+    setCapturedFrames((currentFrames) => appendCapturedFrame(currentFrames, capturedFrame));
+  };
+
+  const captureReplayPosition = (
+    nextPosition: number,
+    replayArchive: ReplayArchive | undefined = activeArchive,
+  ) => {
+    if (replayArchive === undefined) {
+      return;
+    }
+
+    const nextReplayState = evaluateReplayFrame(replayArchive, nextPosition);
+    const capturedFrame = createCapturedReplayFrame(
+      replayArchive,
+      nextPosition,
+      nextReplayState.output,
+    );
+    setCapturedFrames((currentFrames) => appendCapturedFrame(currentFrames, capturedFrame));
   };
 
   return (
