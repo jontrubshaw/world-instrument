@@ -47,6 +47,24 @@ export {
   type VisualOutputState,
 } from './score.ts';
 export {
+  STREAM_SOURCE_REGISTRY_SCHEMA_VERSION,
+  StreamSourceRegistry,
+  createStreamSourceRegistry,
+  isStreamSourceCompatibleWithScore,
+  streamSourceModes,
+  supportsStreamSourceMode,
+  type ScoreCompatibilityCandidate,
+  type StreamSourceAdapterMetadata,
+  type StreamSourceCapability,
+  type StreamSourceDefinition,
+  type StreamSourceFixtureReference,
+  type StreamSourceMode,
+  type StreamSourceNormalizedMapping,
+  type StreamSourceRegistrySchemaVersion,
+  type StreamSourceSampleDefinition,
+  type StreamSourceScoreCompatibility,
+} from './stream-source-registry.ts';
+export {
   REPLAY_SNAPSHOT_SCHEMA_VERSION,
   ReplaySnapshotValidationError,
   isReplaySnapshot,

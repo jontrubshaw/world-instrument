@@ -16,4 +16,26 @@ export {
   type WeatherLiveAdapterConfig,
   type WeatherLocation,
 } from './weather.ts';
+export {
+  MOCK_SENSOR_ADAPTER_ID,
+  MOCK_SENSOR_ADAPTER_VERSION,
+  MockSensorAdapter,
+  normalizeMockSensorPayload,
+  type MockSensorAdapterConfig,
+  type MockSensorDevice,
+  type MockSensorFixtureAdapterConfig,
+  type MockSensorReadingPayload,
+  type NormalizeMockSensorOptions,
+  type RecordedMockSensorPayload,
+} from './mock-sensor.ts';
+export {
+  MOCK_SENSOR_STREAM_SOURCE_ID,
+  WEATHER_STREAM_SOURCE_ID,
+  createRegisteredStreamAdapter,
+  mockSensorStreamSourceDefinition,
+  streamSourceRegistry,
+  weatherStreamSourceDefinition,
+  type RegisteredStreamAdapter,
+  type RegisteredStreamAdapterConfig,
+} from './stream-source-registry.ts';
 export { recordedOpenMeteoLondonCurrentV1 } from './fixtures/open-meteo-london-current-v1.ts';

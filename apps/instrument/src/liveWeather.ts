@@ -1,5 +1,6 @@
 import {
-  WeatherAdapter,
+  WEATHER_STREAM_SOURCE_ID,
+  createRegisteredStreamAdapter,
   type WeatherFetch,
   type WeatherLocation,
 } from '@world-instrument/adapters';
@@ -64,7 +65,7 @@ export async function readLiveWeatherFrame(
   }
 
   const now = options.now ?? new Date();
-  const adapter = new WeatherAdapter({
+  const adapter = createRegisteredStreamAdapter(WEATHER_STREAM_SOURCE_ID, {
     mode: 'live',
     endpointUrl: options.endpointUrl ?? OPEN_METEO_FORECAST_ENDPOINT,
     location: options.location ?? DEFAULT_LIVE_WEATHER_LOCATION,
