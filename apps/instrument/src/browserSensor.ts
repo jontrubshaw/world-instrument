@@ -75,6 +75,7 @@ export function updateBrowserSensorPointer(
   const width = Math.max(window.innerWidth, 1);
   const height = Math.max(window.innerHeight, 1);
   const maxDimension = Math.max(width, height, 1);
+  const active = event.type === 'pointercancel' ? false : event.buttons > 0;
   const pointer: BrowserSensorPointerPayload = {
     position: [
       round(clamp(event.clientX / width, 0, 1)),
@@ -86,7 +87,7 @@ export function updateBrowserSensorPointer(
     ],
     pressure: round(clamp(event.pressure, 0, 1)),
     buttons: event.buttons,
-    active: event.buttons > 0,
+    active,
   };
   const capabilities: BrowserSensorCapabilities = {
     ...current.snapshot.capabilities,

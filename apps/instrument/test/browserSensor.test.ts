@@ -54,6 +54,40 @@ describe('browser sensor runtime', () => {
     expect(liftedPen.snapshot.pointer?.active).toBe(false);
   });
 
+  it('marks cancelled pointers inactive even when buttons are still reported', () => {
+    Object.defineProperty(globalThis, 'window', {
+      configurable: true,
+      value: {
+        innerHeight: 500,
+        innerWidth: 1_000,
+        PointerEvent: function PointerEvent() {},
+      },
+    });
+    const initialState = createInitialBrowserSensorRuntimeState(
+      new Date('2026-06-15T12:00:00.000Z'),
+    );
+
+    const activeTouch = updateBrowserSensorPointer(
+      initialState,
+      createPointerEvent({ buttons: 1, pointerType: 'touch', type: 'pointermove' }),
+      new Date('2026-06-15T12:00:01.000Z'),
+    );
+    const cancelledTouch = updateBrowserSensorPointer(
+      activeTouch,
+      createPointerEvent({ buttons: 1, pointerType: 'touch', type: 'pointercancel' }),
+      new Date('2026-06-15T12:00:02.000Z'),
+    );
+
+    expect(activeTouch.snapshot.pointer).toMatchObject({
+      active: true,
+      buttons: 1,
+    });
+    expect(cancelledTouch.snapshot.pointer).toMatchObject({
+      active: false,
+      buttons: 1,
+    });
+  });
+
   it('drops stale motion samples when pointer input refreshes later snapshots', () => {
     Object.defineProperty(globalThis, 'window', {
       configurable: true,
@@ -142,6 +176,7 @@ describe('browser sensor runtime', () => {
 function createPointerEvent(options: {
   readonly buttons: number;
   readonly pointerType: string;
+  readonly type?: string;
 }): PointerEvent {
   return {
     buttons: options.buttons,
@@ -151,6 +186,7 @@ function createPointerEvent(options: {
     movementY: 0,
     pointerType: options.pointerType,
     pressure: options.buttons > 0 ? 0.7 : 0,
+    type: options.type ?? 'pointermove',
   } as PointerEvent;
 }
 
