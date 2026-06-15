@@ -1,0 +1,430 @@
+{
+  "schemaVersion": "replay-snapshot.v1",
+  "snapshotId": "weather-score-v1-london-archive-2026-06-14T21:00:00Z",
+  "createdAt": "2026-06-14T22:15:00.000Z",
+  "score": {
+    "schemaVersion": "score-version.v1",
+    "scoreId": "weather-score",
+    "scoreVersion": "1.0.0",
+    "displayName": "Weather Score v1",
+    "deterministic": true,
+    "supportedStreamSchemas": ["stream-state.v1"],
+    "description": "Maps normalized weather streams into abstract visual, audio, and haptic controls.",
+    "createdAt": "2026-06-14T22:00:00.000Z",
+    "metadata": {
+      "inputKind": "weather",
+      "outputSurface": "abstract-instrument"
+    }
+  },
+  "frames": [
+    {
+      "frameIndex": 0,
+      "elapsedMs": 0,
+      "capturedAt": "2026-06-14T21:00:00.000Z",
+      "seed": "weather-score-v1:london:0",
+      "streams": [
+        {
+          "schemaVersion": "stream-state.v1",
+          "streamId": "weather:london-uk",
+          "source": {
+            "id": "weather.open-meteo:london-uk",
+            "kind": "weather",
+            "label": "London, UK weather",
+            "uri": "https://api.open-meteo.com/v1/forecast?latitude=51.5072&longitude=-0.1276"
+          },
+          "status": "ok",
+          "observedAt": "2026-06-14T21:00:00.000Z",
+          "receivedAt": "2026-06-14T21:00:01.000Z",
+          "sequence": 0,
+          "samples": [
+            {
+              "kind": "numeric",
+              "key": "temperature",
+              "label": "Temperature",
+              "observedAt": "2026-06-14T21:00:00.000Z",
+              "quality": "measured",
+              "value": 18.4,
+              "unit": "celsius"
+            },
+            {
+              "kind": "numeric",
+              "key": "relativeHumidity",
+              "label": "Relative humidity",
+              "observedAt": "2026-06-14T21:00:00.000Z",
+              "quality": "measured",
+              "value": 72,
+              "unit": "percent"
+            },
+            {
+              "kind": "numeric",
+              "key": "precipitation",
+              "label": "Precipitation",
+              "observedAt": "2026-06-14T21:00:00.000Z",
+              "quality": "measured",
+              "value": 0.1,
+              "unit": "mm"
+            },
+            {
+              "kind": "numeric",
+              "key": "pressure",
+              "label": "Surface pressure",
+              "observedAt": "2026-06-14T21:00:00.000Z",
+              "quality": "measured",
+              "value": 1012.4,
+              "unit": "hPa"
+            },
+            {
+              "kind": "numeric",
+              "key": "cloudCover",
+              "label": "Cloud cover",
+              "observedAt": "2026-06-14T21:00:00.000Z",
+              "quality": "measured",
+              "value": 86,
+              "unit": "percent"
+            },
+            {
+              "kind": "numeric",
+              "key": "windSpeed",
+              "label": "Wind speed",
+              "observedAt": "2026-06-14T21:00:00.000Z",
+              "quality": "measured",
+              "value": 6.8,
+              "unit": "m/s"
+            },
+            {
+              "kind": "categorical",
+              "key": "condition",
+              "label": "Weather condition",
+              "observedAt": "2026-06-14T21:00:00.000Z",
+              "quality": "estimated",
+              "value": "overcast",
+              "confidence": 0.86
+            },
+            {
+              "kind": "boolean",
+              "key": "isRaining",
+              "label": "Is raining",
+              "observedAt": "2026-06-14T21:00:00.000Z",
+              "quality": "measured",
+              "value": true,
+              "confidence": 0.9
+            }
+          ],
+          "metadata": {
+            "provider": "open-meteo",
+            "mode": "recorded-replay",
+            "location": "London, UK"
+          }
+        }
+      ]
+    },
+    {
+      "frameIndex": 1,
+      "elapsedMs": 60000,
+      "capturedAt": "2026-06-14T21:01:00.000Z",
+      "seed": "weather-score-v1:london:1",
+      "streams": [
+        {
+          "schemaVersion": "stream-state.v1",
+          "streamId": "weather:london-uk",
+          "source": {
+            "id": "weather.open-meteo:london-uk",
+            "kind": "weather",
+            "label": "London, UK weather",
+            "uri": "https://api.open-meteo.com/v1/forecast?latitude=51.5072&longitude=-0.1276"
+          },
+          "status": "ok",
+          "observedAt": "2026-06-14T21:01:00.000Z",
+          "receivedAt": "2026-06-14T21:01:01.000Z",
+          "sequence": 1,
+          "samples": [
+            {
+              "kind": "numeric",
+              "key": "temperature",
+              "label": "Temperature",
+              "observedAt": "2026-06-14T21:01:00.000Z",
+              "quality": "measured",
+              "value": 17.8,
+              "unit": "celsius"
+            },
+            {
+              "kind": "numeric",
+              "key": "relativeHumidity",
+              "label": "Relative humidity",
+              "observedAt": "2026-06-14T21:01:00.000Z",
+              "quality": "measured",
+              "value": 79,
+              "unit": "percent"
+            },
+            {
+              "kind": "numeric",
+              "key": "precipitation",
+              "label": "Precipitation",
+              "observedAt": "2026-06-14T21:01:00.000Z",
+              "quality": "measured",
+              "value": 2.4,
+              "unit": "mm"
+            },
+            {
+              "kind": "numeric",
+              "key": "pressure",
+              "label": "Surface pressure",
+              "observedAt": "2026-06-14T21:01:00.000Z",
+              "quality": "measured",
+              "value": 1008.2,
+              "unit": "hPa"
+            },
+            {
+              "kind": "numeric",
+              "key": "cloudCover",
+              "label": "Cloud cover",
+              "observedAt": "2026-06-14T21:01:00.000Z",
+              "quality": "measured",
+              "value": 94,
+              "unit": "percent"
+            },
+            {
+              "kind": "numeric",
+              "key": "windSpeed",
+              "label": "Wind speed",
+              "observedAt": "2026-06-14T21:01:00.000Z",
+              "quality": "measured",
+              "value": 9.6,
+              "unit": "m/s"
+            },
+            {
+              "kind": "categorical",
+              "key": "condition",
+              "label": "Weather condition",
+              "observedAt": "2026-06-14T21:01:00.000Z",
+              "quality": "estimated",
+              "value": "rain",
+              "confidence": 0.91
+            },
+            {
+              "kind": "boolean",
+              "key": "isRaining",
+              "label": "Is raining",
+              "observedAt": "2026-06-14T21:01:00.000Z",
+              "quality": "measured",
+              "value": true,
+              "confidence": 0.95
+            }
+          ],
+          "metadata": {
+            "provider": "open-meteo",
+            "mode": "recorded-replay",
+            "location": "London, UK"
+          }
+        }
+      ]
+    },
+    {
+      "frameIndex": 2,
+      "elapsedMs": 120000,
+      "capturedAt": "2026-06-14T21:02:00.000Z",
+      "seed": "weather-score-v1:london:2",
+      "streams": [
+        {
+          "schemaVersion": "stream-state.v1",
+          "streamId": "weather:london-uk",
+          "source": {
+            "id": "weather.open-meteo:london-uk",
+            "kind": "weather",
+            "label": "London, UK weather",
+            "uri": "https://api.open-meteo.com/v1/forecast?latitude=51.5072&longitude=-0.1276"
+          },
+          "status": "ok",
+          "observedAt": "2026-06-14T21:02:00.000Z",
+          "receivedAt": "2026-06-14T21:02:01.000Z",
+          "sequence": 2,
+          "samples": [
+            {
+              "kind": "numeric",
+              "key": "temperature",
+              "label": "Temperature",
+              "observedAt": "2026-06-14T21:02:00.000Z",
+              "quality": "measured",
+              "value": 16.9,
+              "unit": "celsius"
+            },
+            {
+              "kind": "numeric",
+              "key": "relativeHumidity",
+              "label": "Relative humidity",
+              "observedAt": "2026-06-14T21:02:00.000Z",
+              "quality": "measured",
+              "value": 84,
+              "unit": "percent"
+            },
+            {
+              "kind": "numeric",
+              "key": "precipitation",
+              "label": "Precipitation",
+              "observedAt": "2026-06-14T21:02:00.000Z",
+              "quality": "measured",
+              "value": 6.8,
+              "unit": "mm"
+            },
+            {
+              "kind": "numeric",
+              "key": "pressure",
+              "label": "Surface pressure",
+              "observedAt": "2026-06-14T21:02:00.000Z",
+              "quality": "measured",
+              "value": 999.4,
+              "unit": "hPa"
+            },
+            {
+              "kind": "numeric",
+              "key": "cloudCover",
+              "label": "Cloud cover",
+              "observedAt": "2026-06-14T21:02:00.000Z",
+              "quality": "measured",
+              "value": 98,
+              "unit": "percent"
+            },
+            {
+              "kind": "numeric",
+              "key": "windSpeed",
+              "label": "Wind speed",
+              "observedAt": "2026-06-14T21:02:00.000Z",
+              "quality": "measured",
+              "value": 14.8,
+              "unit": "m/s"
+            },
+            {
+              "kind": "categorical",
+              "key": "condition",
+              "label": "Weather condition",
+              "observedAt": "2026-06-14T21:02:00.000Z",
+              "quality": "estimated",
+              "value": "storm",
+              "confidence": 0.74
+            },
+            {
+              "kind": "boolean",
+              "key": "isRaining",
+              "label": "Is raining",
+              "observedAt": "2026-06-14T21:02:00.000Z",
+              "quality": "measured",
+              "value": true,
+              "confidence": 0.98
+            }
+          ],
+          "metadata": {
+            "provider": "open-meteo",
+            "mode": "recorded-replay",
+            "location": "London, UK"
+          }
+        }
+      ]
+    },
+    {
+      "frameIndex": 3,
+      "elapsedMs": 180000,
+      "capturedAt": "2026-06-14T21:03:00.000Z",
+      "seed": "weather-score-v1:london:3",
+      "streams": [
+        {
+          "schemaVersion": "stream-state.v1",
+          "streamId": "weather:london-uk",
+          "source": {
+            "id": "weather.open-meteo:london-uk",
+            "kind": "weather",
+            "label": "London, UK weather",
+            "uri": "https://api.open-meteo.com/v1/forecast?latitude=51.5072&longitude=-0.1276"
+          },
+          "status": "ok",
+          "observedAt": "2026-06-14T21:03:00.000Z",
+          "receivedAt": "2026-06-14T21:03:01.000Z",
+          "sequence": 3,
+          "samples": [
+            {
+              "kind": "numeric",
+              "key": "temperature",
+              "label": "Temperature",
+              "observedAt": "2026-06-14T21:03:00.000Z",
+              "quality": "measured",
+              "value": 19.3,
+              "unit": "celsius"
+            },
+            {
+              "kind": "numeric",
+              "key": "relativeHumidity",
+              "label": "Relative humidity",
+              "observedAt": "2026-06-14T21:03:00.000Z",
+              "quality": "measured",
+              "value": 63,
+              "unit": "percent"
+            },
+            {
+              "kind": "numeric",
+              "key": "precipitation",
+              "label": "Precipitation",
+              "observedAt": "2026-06-14T21:03:00.000Z",
+              "quality": "measured",
+              "value": 0,
+              "unit": "mm"
+            },
+            {
+              "kind": "numeric",
+              "key": "pressure",
+              "label": "Surface pressure",
+              "observedAt": "2026-06-14T21:03:00.000Z",
+              "quality": "measured",
+              "value": 1014.7,
+              "unit": "hPa"
+            },
+            {
+              "kind": "numeric",
+              "key": "cloudCover",
+              "label": "Cloud cover",
+              "observedAt": "2026-06-14T21:03:00.000Z",
+              "quality": "measured",
+              "value": 28,
+              "unit": "percent"
+            },
+            {
+              "kind": "numeric",
+              "key": "windSpeed",
+              "label": "Wind speed",
+              "observedAt": "2026-06-14T21:03:00.000Z",
+              "quality": "measured",
+              "value": 4.2,
+              "unit": "m/s"
+            },
+            {
+              "kind": "categorical",
+              "key": "condition",
+              "label": "Weather condition",
+              "observedAt": "2026-06-14T21:03:00.000Z",
+              "quality": "estimated",
+              "value": "clear",
+              "confidence": 0.8
+            },
+            {
+              "kind": "boolean",
+              "key": "isRaining",
+              "label": "Is raining",
+              "observedAt": "2026-06-14T21:03:00.000Z",
+              "quality": "measured",
+              "value": false,
+              "confidence": 0.96
+            }
+          ],
+          "metadata": {
+            "provider": "open-meteo",
+            "mode": "recorded-replay",
+            "location": "London, UK"
+          }
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "fixture": true,
+    "provider": "open-meteo",
+    "archive": "local"
+  }
+}

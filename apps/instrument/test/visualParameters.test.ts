@@ -4,7 +4,16 @@ import {
   serializeVisualParametersForCanvas,
   type InstrumentVisualParameters,
 } from '../src/visualParameters.ts';
-import { loadFixtureWeatherInstrumentState } from '../src/weatherInstrument.ts';
+import {
+  DEFAULT_WEATHER_REPLAY,
+  clampReplayFrameIndex,
+  evaluateWeatherReplayFrame,
+  evaluateWeatherReplaySequence,
+  loadFixtureWeatherInstrumentState,
+  nextReplayFrameIndex,
+  previousReplayFrameIndex,
+  replayPlaybackDelayMs,
+} from '../src/weatherInstrument.ts';
 
 describe('weather score visual parameters', () => {
   it('maps the fixture weather score into stable scene controls', async () => {
@@ -50,6 +59,52 @@ describe('weather score visual parameters', () => {
     expect(second.visualParameters).toEqual(first.visualParameters);
   });
 
+  it('drives every archive frame through the weather score path', () => {
+    const sequence = evaluateWeatherReplaySequence(DEFAULT_WEATHER_REPLAY.snapshot);
+
+    expect(sequence).toHaveLength(4);
+    expect(sequence.map((frame) => frame.visualParameters.condition)).toEqual([
+      'overcast',
+      'rain',
+      'storm',
+      'clear',
+    ]);
+    expect(sequence.map((frame) => frame.visualParameters.scoreId)).toEqual([
+      'weather-score',
+      'weather-score',
+      'weather-score',
+      'weather-score',
+    ]);
+    expect(new Set(sequence.map((frame) => frame.scoreSignature)).size).toBe(sequence.length);
+  });
+
+  it('restarts the same replay into an identical score signature sequence', () => {
+    const firstRun = evaluateWeatherReplaySequence(DEFAULT_WEATHER_REPLAY.snapshot).map(
+      (frame) => frame.scoreSignature,
+    );
+    const restartedRun = evaluateWeatherReplaySequence(DEFAULT_WEATHER_REPLAY.snapshot).map(
+      (frame) => frame.scoreSignature,
+    );
+
+    expect(restartedRun).toEqual(firstRun);
+  });
+
+  it('keeps replay stepping and scrubbing within the recorded archive bounds', () => {
+    const snapshot = DEFAULT_WEATHER_REPLAY.snapshot;
+
+    expect(clampReplayFrameIndex(snapshot, -10)).toBe(0);
+    expect(clampReplayFrameIndex(snapshot, 1.4)).toBe(1);
+    expect(clampReplayFrameIndex(snapshot, 99)).toBe(3);
+    expect(previousReplayFrameIndex(snapshot, 0)).toBe(0);
+    expect(nextReplayFrameIndex(snapshot, 3)).toBe(3);
+    expect(nextReplayFrameIndex(snapshot, 1)).toBe(2);
+  });
+
+  it('uses accelerated recorded frame deltas for compact playback', () => {
+    expect(replayPlaybackDelayMs(DEFAULT_WEATHER_REPLAY.snapshot, 0)).toBe(1_000);
+    expect(replayPlaybackDelayMs(DEFAULT_WEATHER_REPLAY.snapshot, 3)).toBe(0);
+  });
+
   it('serializes a compact score-driven canvas signature', async () => {
     const state = await loadFixtureWeatherInstrumentState();
 
@@ -63,5 +118,22 @@ describe('weather score visual parameters', () => {
       wireOpacity: 0.372,
       glowOpacity: 0.24,
     });
+  });
+
+  it('maps a scrubbed replay frame into stable scene controls', () => {
+    const state = evaluateWeatherReplayFrame(DEFAULT_WEATHER_REPLAY.snapshot, 3);
+
+    expect(serializeVisualParametersForCanvas(state.visualParameters)).toBe(
+      JSON.stringify({
+        condition: 'clear',
+        signature: state.scoreSignature,
+        bodyColor: '#f8d56b',
+        accentColor: '#76d7ff',
+        rotationSpeedY: 0.277,
+        pulseAmplitude: 0.072,
+        wireOpacity: 0.303,
+        glowOpacity: 0.273,
+      }),
+    );
   });
 });
