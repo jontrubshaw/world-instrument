@@ -461,9 +461,10 @@ test('loads the instrument shell', async ({ page }) => {
     )
     .toEqual([[59, 131, 59]]);
 
+  await page.getByRole('button', { name: 'Restart' }).click();
+  await expect.poll(() => canvas.evaluate((element) => element.dataset.scoreFrameIndex)).toBe('0');
   await page.getByRole('button', { name: 'Play', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Pause', exact: true })).toBeVisible();
-  await expect.poll(() => canvas.evaluate((element) => element.dataset.scoreFrameIndex)).toBe('0');
   await page.getByRole('button', { name: 'Pause', exact: true }).click();
 
   const replayControls = page.getByRole('region', { name: 'Replay controls' });
