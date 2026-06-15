@@ -251,6 +251,10 @@ export function App() {
       return;
     }
 
+    if (activeArchive === undefined) {
+      return;
+    }
+
     const capturedFrame = createCapturedReplayFrame(
       activeArchive,
       framePosition,
