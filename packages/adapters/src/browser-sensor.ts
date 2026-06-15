@@ -209,7 +209,7 @@ export function createDeterministicBrowserSensorSnapshot(
   const acceleration = [
     round(Math.sin(phase) * 2.4),
     round(Math.cos(phase * 1.3) * 1.8),
-    round(9.81 + Math.sin(phase * 0.5) * 0.25),
+    round(Math.sin(phase * 0.5) * 0.25),
   ] as const;
 
   return {
@@ -301,7 +301,7 @@ function createBrowserSensorSamples(
     ),
     vectorSample(
       'acceleration',
-      'Device acceleration',
+      'Device acceleration without gravity',
       payload.motion?.acceleration,
       observedAt,
       ['x', 'y', 'z'],
@@ -341,7 +341,7 @@ function sensorStreamStatus(
     if (
       !Number.isNaN(observedAtMs) &&
       !Number.isNaN(nowMs) &&
-      nowMs - observedAtMs > staleAfterMs
+      nowMs - observedAtMs >= staleAfterMs
     ) {
       return 'stale';
     }
@@ -480,10 +480,7 @@ function calculateMotionIntensity(payload: RecordedBrowserSensorPayload): number
   return round(
     clamp(
       (pointerVelocity === undefined ? 0 : normalize(pointerVelocity, 0, 0.35)) * 0.45 +
-        (accelerationMagnitude === undefined
-          ? 0
-          : normalize(Math.abs(accelerationMagnitude - 9.81), 0, 8)) *
-          0.35 +
+        (accelerationMagnitude === undefined ? 0 : normalize(accelerationMagnitude, 0, 8)) * 0.35 +
         (rotationMagnitude === undefined ? 0 : normalize(rotationMagnitude, 0, 180)) * 0.2,
       0,
       1,

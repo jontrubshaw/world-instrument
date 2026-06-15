@@ -10,6 +10,7 @@ import {
   FIXTURE_BROWSER_SENSOR_SEED,
   FIXTURE_WEATHER_SEED,
   LIVE_BROWSER_SENSOR_SEED,
+  browserSensorStaleRefreshDelayMs,
   instrumentSourceDefinitions,
   readSourceFrame,
   selectableModeForSource,
@@ -197,6 +198,22 @@ describe('instrument source runtime', () => {
         },
       },
     });
+  });
+
+  it('calculates the browser sensor stale refresh deadline for stopped input', () => {
+    expect(
+      browserSensorStaleRefreshDelayMs(
+        '2026-06-15T12:00:00.000Z',
+        new Date('2026-06-15T12:00:02.000Z'),
+      ),
+    ).toBe(1_000);
+    expect(
+      browserSensorStaleRefreshDelayMs(
+        '2026-06-15T12:00:00.000Z',
+        new Date('2026-06-15T12:00:03.000Z'),
+      ),
+    ).toBe(0);
+    expect(browserSensorStaleRefreshDelayMs('not-a-date')).toBeUndefined();
   });
 });
 

@@ -230,6 +230,42 @@ describe('stream source registry', () => {
     });
   });
 
+  it('keeps still gravity-removed accelerometer readings from becoming motion input', () => {
+    const state = normalizeBrowserSensorPayload({
+      provider: sensorFixture.provider,
+      observedAt: sensorFixture.observedAt,
+      device: sensorFixture.device,
+      capabilities: {
+        pointer: 'available',
+        deviceMotion: 'available',
+        deviceOrientation: 'unavailable',
+        permission: 'granted',
+        fallback: 'none',
+      },
+      pointer: {
+        position: [0.5, 0.5],
+        velocity: [0, 0],
+        pressure: 0,
+        buttons: 0,
+        active: false,
+      },
+      motion: {
+        acceleration: [0, 0, 0],
+        rotationRate: [0, 0, 0],
+      },
+    });
+
+    expect(state.samples.find((sample) => sample.key === 'acceleration')).toMatchObject({
+      kind: 'vector',
+      label: 'Device acceleration without gravity',
+      values: [0, 0, 0],
+    });
+    expect(state.samples.find((sample) => sample.key === 'motionIntensity')).toMatchObject({
+      kind: 'numeric',
+      value: 0,
+    });
+  });
+
   it('supports live browser sensor adapter snapshots and reconfiguration', async () => {
     const pointerOnlySnapshot: RecordedBrowserSensorPayload = {
       provider: sensorFixture.provider,

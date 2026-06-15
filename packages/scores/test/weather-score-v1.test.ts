@@ -132,6 +132,54 @@ describe('weather score v1', () => {
     });
   });
 
+  it('does not score a still gravity-removed accelerometer as sensor motion', () => {
+    const stream = normalizeBrowserSensorPayload({
+      provider: sensorFixture.provider,
+      observedAt: sensorFixture.observedAt,
+      device: sensorFixture.device,
+      capabilities: {
+        pointer: 'available',
+        deviceMotion: 'available',
+        deviceOrientation: 'unavailable',
+        permission: 'granted',
+        fallback: 'none',
+      },
+      pointer: {
+        position: [0.5, 0.5],
+        velocity: [0, 0],
+        pressure: 0,
+        buttons: 0,
+        active: false,
+      },
+      motion: {
+        acceleration: [0, 0, 0],
+        rotationRate: [0, 0, 0],
+      },
+    });
+
+    const output = weatherScoreV1.evaluate({
+      schemaVersion: SCORE_INPUT_SCHEMA_VERSION,
+      score: weatherScoreV1.metadata,
+      frame: {
+        frameIndex: 3,
+        elapsedMs: 360,
+        renderedAt: '2026-06-15T12:00:00.360Z',
+      },
+      streams: [stream],
+      seed: 'world-instrument-test-still-sensor-v1',
+    });
+
+    expect(output.metadata).toMatchObject({
+      condition: 'sensor-still',
+      inputKind: 'sensor',
+    });
+    expect(output.trace?.find((entry) => entry.key === 'condition')).toEqual({
+      key: 'condition',
+      value: 'sensor-still',
+    });
+    expect(output.haptic.enabled).toBe(false);
+  });
+
   it('keeps the adapter fixture aligned with the replay stream fixture', async () => {
     const weatherFixture = await loadWeatherFixture();
     const snapshot = await loadReplaySnapshot();

@@ -286,14 +286,14 @@ function extractSensorMetrics(stream: NormalizedStreamState): SensorMetrics {
   const samples = stream.samples;
   const pointerPosition = vectorSampleValue(samples, 'pointerPosition', [0.5, 0.5]);
   const pointerVelocity = vectorSampleValue(samples, 'pointerVelocity', [0, 0]);
-  const acceleration = vectorSampleValue(samples, 'acceleration', [0, 0, 9.81]);
+  const acceleration = vectorSampleValue(samples, 'acceleration', [0, 0, 0]);
   const rotationRate = vectorSampleValue(samples, 'rotationRate', [0, 0, 0]);
   const orientation = vectorSampleValue(samples, 'orientation', [0, 0, 0]);
   const motionIntensity = numericSampleValue(samples, 'motionIntensity', 0);
   const pointerPressure = numericSampleValue(samples, 'pointerPressure', 0);
   const interactionActive = booleanSampleValue(samples, 'interactionActive', false);
   const pointerSpeed = vectorMagnitude(pointerVelocity);
-  const accelerationMagnitude = Math.abs(vectorMagnitude(acceleration) - 9.81);
+  const accelerationMagnitude = vectorMagnitude(acceleration);
   const rotationMagnitude = vectorMagnitude(rotationRate);
   const orientationTilt = Math.min(
     Math.abs(orientation[1] ?? 0) + Math.abs(orientation[2] ?? 0),

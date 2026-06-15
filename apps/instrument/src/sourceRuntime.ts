@@ -107,6 +107,20 @@ export function sourceCapabilitySummary(definition: StreamSourceDefinition): str
   return `${supportedModes}; ${scoreSummary}`;
 }
 
+export function browserSensorStaleRefreshDelayMs(
+  observedAt: string,
+  now = new Date(),
+  staleAfterMs = BROWSER_SENSOR_STALE_AFTER_MS,
+): number | undefined {
+  const observedAtMs = Date.parse(observedAt);
+
+  if (Number.isNaN(observedAtMs)) {
+    return undefined;
+  }
+
+  return Math.max(observedAtMs + staleAfterMs - now.getTime(), 0);
+}
+
 export async function readSourceFrame(options: ReadSourceFrameOptions): Promise<SourceReadState> {
   const definition = sourceDefinition(options.sourceId);
 

@@ -48,6 +48,7 @@ import {
 import {
   DEFAULT_INSTRUMENT_SOURCE_ID,
   DEFAULT_INSTRUMENT_SOURCE_MODE,
+  browserSensorStaleRefreshDelayMs,
   instrumentSourceDefinitions,
   readSourceFrame,
   selectableModeForSource,
@@ -326,6 +327,10 @@ export function App() {
       return;
     }
 
+    if (selectedSourceId !== BROWSER_SENSOR_STREAM_SOURCE_ID || instrumentMode !== 'live') {
+      return;
+    }
+
     let lastRefreshAt = 0;
 
     const refreshSensorSource = () => {
@@ -337,11 +342,7 @@ export function App() {
 
       lastRefreshAt = now;
 
-      if (
-        selectedSourceId !== BROWSER_SENSOR_STREAM_SOURCE_ID ||
-        instrumentMode !== 'live' ||
-        browserSensorRefreshRef.current !== undefined
-      ) {
+      if (browserSensorRefreshRef.current !== undefined) {
         return;
       }
 
@@ -385,6 +386,42 @@ export function App() {
       }
     };
   }, [commitBrowserSensorState, instrumentMode, selectedSourceId]);
+
+  useEffect(() => {
+    if (
+      typeof window === 'undefined' ||
+      selectedSourceId !== BROWSER_SENSOR_STREAM_SOURCE_ID ||
+      instrumentMode !== 'live' ||
+      sourceState.status === 'loading' ||
+      sourceState.status === 'stale' ||
+      sourceState.sourceId !== selectedSourceId ||
+      sourceState.sourceMode !== 'live' ||
+      sourceState.streamState === undefined
+    ) {
+      return;
+    }
+
+    const delayMs = browserSensorStaleRefreshDelayMs(sourceState.streamState.observedAt);
+
+    if (delayMs === undefined) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setSourceRefreshToken((currentToken) => currentToken + 1);
+    }, delayMs);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [
+    instrumentMode,
+    selectedSourceId,
+    sourceState.sourceId,
+    sourceState.sourceMode,
+    sourceState.status,
+    sourceState.streamState,
+  ]);
 
   useEffect(() => {
     audioEngineRef.current?.applyParameters(viewState.audioParameters);
