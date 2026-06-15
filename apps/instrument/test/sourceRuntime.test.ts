@@ -1,9 +1,16 @@
-import { MOCK_SENSOR_STREAM_SOURCE_ID, WEATHER_STREAM_SOURCE_ID } from '@world-instrument/adapters';
+import {
+  BROWSER_SENSOR_STREAM_SOURCE_ID,
+  WEATHER_STREAM_SOURCE_ID,
+  createDeterministicBrowserSensorSnapshot,
+} from '@world-instrument/adapters';
 import { describe, expect, it } from 'vitest';
 
 import {
   DEFAULT_INSTRUMENT_SOURCE_ID,
+  FIXTURE_BROWSER_SENSOR_SEED,
   FIXTURE_WEATHER_SEED,
+  LIVE_BROWSER_SENSOR_SEED,
+  browserSensorStaleRefreshDelayMs,
   instrumentSourceDefinitions,
   readSourceFrame,
   selectableModeForSource,
@@ -17,14 +24,14 @@ describe('instrument source runtime', () => {
     expect(DEFAULT_INSTRUMENT_SOURCE_ID).toBe(WEATHER_STREAM_SOURCE_ID);
     expect(instrumentSourceDefinitions.map((definition) => definition.id)).toEqual([
       WEATHER_STREAM_SOURCE_ID,
-      MOCK_SENSOR_STREAM_SOURCE_ID,
+      BROWSER_SENSOR_STREAM_SOURCE_ID,
     ]);
     expect(sourceSupportsMode(WEATHER_STREAM_SOURCE_ID, 'live')).toBe(true);
-    expect(sourceSupportsMode(MOCK_SENSOR_STREAM_SOURCE_ID, 'fixture')).toBe(true);
-    expect(sourceSupportsMode(MOCK_SENSOR_STREAM_SOURCE_ID, 'live')).toBe(false);
+    expect(sourceSupportsMode(BROWSER_SENSOR_STREAM_SOURCE_ID, 'fixture')).toBe(true);
+    expect(sourceSupportsMode(BROWSER_SENSOR_STREAM_SOURCE_ID, 'live')).toBe(true);
     expect(sourceHasCompatibleScore(WEATHER_STREAM_SOURCE_ID)).toBe(true);
-    expect(sourceHasCompatibleScore(MOCK_SENSOR_STREAM_SOURCE_ID)).toBe(false);
-    expect(selectableModeForSource(MOCK_SENSOR_STREAM_SOURCE_ID, 'live')).toBe('fixture');
+    expect(sourceHasCompatibleScore(BROWSER_SENSOR_STREAM_SOURCE_ID)).toBe(true);
+    expect(selectableModeForSource(BROWSER_SENSOR_STREAM_SOURCE_ID, 'live')).toBe('live');
     expect(sourceCapabilitySummary(instrumentSourceDefinitions[0] ?? missingSource())).toContain(
       'score-ready',
     );
@@ -68,48 +75,145 @@ describe('instrument source runtime', () => {
     });
   });
 
-  it('surfaces a non-weather fixture as registered but score-unavailable', async () => {
+  it('routes a browser sensor fixture through the shared output pipeline', async () => {
     const frame = await readSourceFrame({
-      sourceId: MOCK_SENSOR_STREAM_SOURCE_ID,
+      sourceId: BROWSER_SENSOR_STREAM_SOURCE_ID,
       sourceMode: 'fixture',
     });
 
     expect(frame).toMatchObject({
-      sourceId: MOCK_SENSOR_STREAM_SOURCE_ID,
-      sourceName: 'Mock local sensor',
+      sourceId: BROWSER_SENSOR_STREAM_SOURCE_ID,
+      sourceName: 'Browser sensor / interaction',
       sourceMode: 'fixture',
-      status: 'unavailable',
-      message:
-        'Mock local sensor fixture is available, but no compatible score is registered yet; replay remains available.',
+      status: 'ready',
+      seed: FIXTURE_BROWSER_SENSOR_SEED,
+      frame: {
+        sourceMode: 'fixture',
+        seed: FIXTURE_BROWSER_SENSOR_SEED,
+        sourceLabel: 'Studio browser sensor',
+        visualParameters: {
+          scoreId: 'weather-score',
+          condition: 'sensor-touch',
+        },
+        audioParameters: {
+          scoreId: 'weather-score',
+          enabled: true,
+        },
+      },
       streamState: {
         source: {
           kind: 'sensor',
-          label: 'Studio Controller sensor',
+          label: 'Studio browser sensor',
+        },
+        metadata: {
+          activeInputs: ['pointer', 'deviceMotion', 'deviceOrientation'],
         },
       },
     });
     expect(
-      frame.streamState?.samples.find((sample) => sample.key === 'acceleration'),
+      frame.streamState?.samples.find((sample) => sample.key === 'pointerPosition'),
     ).toMatchObject({
-      key: 'acceleration',
+      key: 'pointerPosition',
       kind: 'vector',
     });
-    expect(frame.frame).toBeUndefined();
   });
 
-  it('reports unsupported modes without invoking an unavailable source path', async () => {
-    const frame = await readSourceFrame({
-      sourceId: MOCK_SENSOR_STREAM_SOURCE_ID,
-      sourceMode: 'live',
+  it('routes live browser sensor snapshots and reports pointer fallback capability state', async () => {
+    const sensorSnapshot = createDeterministicBrowserSensorSnapshot({
+      observedAt: '2026-06-15T12:00:00.000Z',
+      receivedAt: '2026-06-15T12:00:00.200Z',
     });
 
-    expect(frame).toEqual({
-      sourceId: MOCK_SENSOR_STREAM_SOURCE_ID,
-      sourceName: 'Mock local sensor',
+    const frame = await readSourceFrame({
+      sourceId: BROWSER_SENSOR_STREAM_SOURCE_ID,
       sourceMode: 'live',
-      status: 'unavailable',
-      message: 'Mock local sensor does not support live input yet.',
+      now: new Date('2026-06-15T12:00:01.000Z'),
+      browserSensorSnapshot: {
+        provider: sensorSnapshot.provider,
+        observedAt: sensorSnapshot.observedAt,
+        ...(sensorSnapshot.receivedAt === undefined
+          ? {}
+          : { receivedAt: sensorSnapshot.receivedAt }),
+        device: sensorSnapshot.device,
+        ...(sensorSnapshot.pointer === undefined ? {} : { pointer: sensorSnapshot.pointer }),
+        capabilities: {
+          pointer: 'available',
+          deviceMotion: 'permission-required',
+          deviceOrientation: 'unavailable',
+          permission: 'not-requested',
+          fallback: 'pointer',
+        },
+      },
     });
+
+    expect(frame).toMatchObject({
+      sourceId: BROWSER_SENSOR_STREAM_SOURCE_ID,
+      sourceName: 'Browser sensor / interaction',
+      sourceMode: 'live',
+      status: 'ready',
+      seed: LIVE_BROWSER_SENSOR_SEED,
+      message:
+        'Browser sensor / interaction pointer fallback is driving the instrument; motion/orientation sensors are unavailable or waiting for permission.',
+      frame: {
+        streamStatus: 'degraded',
+        visualParameters: {
+          condition: 'sensor-touch',
+        },
+      },
+      streamState: {
+        status: 'degraded',
+        metadata: {
+          capabilities: {
+            deviceMotion: 'permission-required',
+            fallback: 'pointer',
+          },
+          activeInputs: ['pointer'],
+        },
+      },
+    });
+  });
+
+  it('reports stale live browser sensor snapshots without leaving the shared pipeline', async () => {
+    const frame = await readSourceFrame({
+      sourceId: BROWSER_SENSOR_STREAM_SOURCE_ID,
+      sourceMode: 'live',
+      now: new Date('2026-06-15T12:00:05.000Z'),
+      staleAfterMs: 1_000,
+      browserSensorSnapshot: createDeterministicBrowserSensorSnapshot({
+        observedAt: '2026-06-15T12:00:00.000Z',
+      }),
+    });
+
+    expect(frame).toMatchObject({
+      sourceId: BROWSER_SENSOR_STREAM_SOURCE_ID,
+      sourceName: 'Browser sensor / interaction',
+      sourceMode: 'live',
+      status: 'stale',
+      message:
+        'Browser sensor / interaction input is stale; move the pointer or enable device sensors to refresh the instrument.',
+      frame: {
+        streamStatus: 'stale',
+        visualParameters: {
+          condition: 'sensor-stale',
+        },
+      },
+    });
+  });
+
+  it('calculates the browser sensor stale refresh deadline for stopped input', () => {
+    expect(
+      browserSensorStaleRefreshDelayMs(
+        '2026-06-15T12:00:00.000Z',
+        new Date('2026-06-15T12:00:02.000Z'),
+      ),
+    ).toBe(1_000);
+    expect(
+      browserSensorStaleRefreshDelayMs(
+        '2026-06-15T12:00:00.000Z',
+        new Date('2026-06-15T12:00:03.000Z'),
+      ),
+    ).toBe(0);
+    expect(browserSensorStaleRefreshDelayMs('not-a-date')).toBeUndefined();
   });
 });
 

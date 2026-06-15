@@ -80,15 +80,115 @@ test('loads the instrument shell', async ({ page }) => {
     .poll(() => canvas.evaluate((element) => element.dataset.weatherCondition))
     .toBe('overcast');
 
-  await sourceSelector.selectOption('sensor.mock-local-device');
-  await expect(streamControls).toHaveAttribute('data-source-id', 'sensor.mock-local-device');
-  await expect(streamControls).toHaveAttribute('data-source-mode', 'fixture');
-  await expect(streamControls).toHaveAttribute('data-source-state', 'unavailable');
-  await expect(page.getByRole('button', { name: 'Live', exact: true })).toBeDisabled();
+  await sourceSelector.selectOption('sensor.browser-interaction');
+  await expect(streamControls).toHaveAttribute('data-source-id', 'sensor.browser-interaction');
+  await expect(streamControls).toHaveAttribute('data-source-mode', 'live');
+  await expect
+    .poll(async () => {
+      await page.evaluate(() => {
+        window.dispatchEvent(
+          new PointerEvent('pointerdown', {
+            clientX: 520,
+            clientY: 240,
+            buttons: 1,
+            pressure: 0.7,
+            pointerType: 'touch',
+          }),
+        );
+      });
+
+      return canvas.evaluate((element) => element.dataset.weatherCondition);
+    })
+    .toBe('sensor-touch');
+  await expect
+    .poll(async () => {
+      await page.evaluate(() => {
+        window.dispatchEvent(
+          new PointerEvent('pointercancel', {
+            clientX: 520,
+            clientY: 240,
+            buttons: 0,
+            pressure: 0,
+            pointerType: 'touch',
+          }),
+        );
+      });
+
+      return canvas.evaluate((element) => element.dataset.weatherCondition);
+    })
+    .toBe('sensor-fallback');
+  await expect(streamControls).toHaveAttribute('data-source-state', 'ready');
   await expect(streamControls.locator('.source-status')).toHaveText(
-    'Mock local sensor fixture is available, but no compatible score is registered yet; replay remains available. Showing deterministic replay fallback.',
+    'Browser sensor / interaction pointer fallback is driving the instrument; motion/orientation sensors are unavailable or waiting for permission.',
   );
-  await expect(page.getByText('replay fallback', { exact: true })).toBeVisible();
+  await expect(page.getByText('live mode', { exact: true })).toBeVisible();
+
+  const sensorCaptureControls = page.getByRole('region', { name: 'Capture controls' });
+  await page.getByRole('button', { name: 'Start capture' }).click();
+  await expect(sensorCaptureControls).toHaveAttribute('data-capture-state', 'recording');
+  await expect
+    .poll(() =>
+      sensorCaptureControls.evaluate((element) =>
+        Number(element.getAttribute('data-capture-frame-count')),
+      ),
+    )
+    .toBeGreaterThanOrEqual(1);
+  await page.getByRole('button', { name: 'Stop capture' }).click();
+  const sensorDownloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Export replay JSON' }).click();
+  const sensorDownload = await sensorDownloadPromise;
+  const sensorDownloadPath = await sensorDownload.path();
+
+  expect(sensorDownload.suggestedFilename()).toMatch(
+    /^world-instrument-captured-live-sensor-.*\.replay\.json$/,
+  );
+  const sensorReplay = JSON.parse(await readFile(sensorDownloadPath, 'utf8')) as {
+    readonly schemaVersion: string;
+    readonly frames: readonly {
+      readonly seed: string;
+      readonly streams: readonly {
+        readonly source: {
+          readonly kind: string;
+        };
+        readonly metadata?: {
+          readonly mode?: string;
+          readonly provider?: string;
+        };
+      }[];
+    }[];
+    readonly metadata: {
+      readonly capture: {
+        readonly sourceMode: string;
+      };
+      readonly sources: readonly {
+        readonly kind: string;
+      }[];
+    };
+  };
+
+  expect(sensorReplay.schemaVersion).toBe('replay-snapshot.v1');
+  expect(
+    sensorReplay.frames.some(
+      (frame) =>
+        frame.seed === 'world-instrument-live-browser-sensor-v1' &&
+        frame.streams.some(
+          (stream) =>
+            stream.source.kind === 'sensor' &&
+            stream.metadata?.provider === 'browser-sensor' &&
+            stream.metadata.mode === 'live',
+        ),
+    ),
+  ).toBe(true);
+  expect(sensorReplay.metadata).toMatchObject({
+    capture: {
+      sourceMode: 'live',
+    },
+    sources: [
+      {
+        kind: 'sensor',
+      },
+    ],
+  });
 
   await sourceSelector.selectOption('weather.open-meteo');
   await page.getByRole('button', { name: 'Live', exact: true }).click();
@@ -98,7 +198,6 @@ test('loads the instrument shell', async ({ page }) => {
 
   const captureControls = page.getByRole('region', { name: 'Capture controls' });
   await expect(captureControls).toBeVisible();
-  await expect(captureControls).toHaveAttribute('data-capture-state', 'idle');
   await page.getByRole('button', { name: 'Start capture' }).click();
   await expect(captureControls).toHaveAttribute('data-capture-state', 'recording');
   await expect(captureControls).toHaveAttribute('data-capture-frame-count', '1');

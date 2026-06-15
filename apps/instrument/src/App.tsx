@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -8,8 +9,20 @@ import {
   type SetStateAction,
 } from 'react';
 
+import { BROWSER_SENSOR_STREAM_SOURCE_ID } from '@world-instrument/adapters';
+
 import { InstrumentAudioEngine } from './audioEngine.ts';
 import { serializeAudioParametersForDom } from './audioParameters.ts';
+import {
+  BROWSER_SENSOR_POINTER_REFRESH_MS,
+  createInitialBrowserSensorRuntimeState,
+  isBrowserSensorStateAtLeastAsFresh,
+  requestBrowserSensorPermission,
+  updateBrowserSensorMotion,
+  updateBrowserSensorOrientation,
+  updateBrowserSensorPointer,
+  type BrowserSensorRuntimeState,
+} from './browserSensor.ts';
 import { InstrumentStage } from './components/InstrumentStage.tsx';
 import { BrowserVibrationHapticEngine, type HapticPlaybackState } from './hapticEngine.ts';
 import { serializeHapticPatternForDom, type InstrumentHapticPattern } from './hapticParameters.ts';
@@ -36,6 +49,7 @@ import {
 import {
   DEFAULT_INSTRUMENT_SOURCE_ID,
   DEFAULT_INSTRUMENT_SOURCE_MODE,
+  browserSensorStaleRefreshDelayMs,
   instrumentSourceDefinitions,
   readSourceFrame,
   selectableModeForSource,
@@ -81,6 +95,9 @@ export function App() {
   const [framePosition, setFramePosition] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [sourceRefreshToken, setSourceRefreshToken] = useState(0);
+  const [browserSensorState, setBrowserSensorState] = useState(
+    createInitialBrowserSensorRuntimeState,
+  );
   const [sourceState, setSourceState] = useState<SourceUiState>({
     sourceId: DEFAULT_INSTRUMENT_SOURCE_ID,
     sourceName: sourceDefinition(DEFAULT_INSTRUMENT_SOURCE_ID).displayName,
@@ -99,6 +116,19 @@ export function App() {
   const hapticActivationPatternKeyRef = useRef<string | undefined>(undefined);
   const sourceSequenceRef = useRef<number | undefined>(undefined);
   const captureLastFrameKeyRef = useRef<string | undefined>(undefined);
+  const browserSensorRefreshRef = useRef<number | undefined>(undefined);
+  const browserSensorTrailingRefreshRef = useRef<number | undefined>(undefined);
+  const browserSensorStateRef = useRef(browserSensorState);
+  const browserSensorSnapshotRef = useRef(browserSensorState.snapshot);
+  const publishBrowserSensorState = useCallback((nextState: BrowserSensorRuntimeState) => {
+    browserSensorStateRef.current = nextState;
+    browserSensorSnapshotRef.current = nextState.snapshot;
+    setBrowserSensorState(nextState);
+  }, []);
+  const sampleBrowserSensorState = useCallback((nextState: BrowserSensorRuntimeState) => {
+    browserSensorStateRef.current = nextState;
+    browserSensorSnapshotRef.current = nextState.snapshot;
+  }, []);
   const selectedSource = sourceDefinition(selectedSourceId);
   const sourceReplayArchives = useMemo(
     () => archives.filter((archive) => archiveMatchesSource(archive, selectedSource.kind)),
@@ -212,6 +242,9 @@ export function App() {
     void readSourceFrame({
       sourceId: selectedSourceId,
       sourceMode: instrumentMode,
+      ...(selectedSourceId === BROWSER_SENSOR_STREAM_SOURCE_ID
+        ? { browserSensorSnapshot: browserSensorSnapshotRef.current }
+        : {}),
       signal: abortController.signal,
       ...(sourceSequenceRef.current === undefined
         ? {}
@@ -271,6 +304,15 @@ export function App() {
   }, [instrumentMode, selectedSourceId, sourceRefreshToken]);
 
   useEffect(() => {
+    if (!isBrowserSensorStateAtLeastAsFresh(browserSensorState, browserSensorStateRef.current)) {
+      return;
+    }
+
+    browserSensorStateRef.current = browserSensorState;
+    browserSensorSnapshotRef.current = browserSensorState.snapshot;
+  }, [browserSensorState]);
+
+  useEffect(() => {
     if (instrumentMode !== 'live') {
       return;
     }
@@ -289,6 +331,131 @@ export function App() {
       window.clearInterval(intervalId);
     };
   }, [instrumentMode, selectedSource.displayName, selectedSourceId]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    if (selectedSourceId !== BROWSER_SENSOR_STREAM_SOURCE_ID || instrumentMode !== 'live') {
+      return;
+    }
+
+    let lastRefreshAt = 0;
+
+    const requestSensorSourceRefresh = () => {
+      if (browserSensorRefreshRef.current !== undefined) {
+        return;
+      }
+
+      browserSensorRefreshRef.current = window.requestAnimationFrame(() => {
+        browserSensorRefreshRef.current = undefined;
+        setBrowserSensorState(browserSensorStateRef.current);
+        setSourceRefreshToken((currentToken) => currentToken + 1);
+      });
+    };
+
+    const refreshSensorSource = () => {
+      const now = window.performance.now();
+      const elapsedMs = now - lastRefreshAt;
+
+      if (elapsedMs < BROWSER_SENSOR_POINTER_REFRESH_MS) {
+        if (browserSensorTrailingRefreshRef.current === undefined) {
+          browserSensorTrailingRefreshRef.current = window.setTimeout(() => {
+            browserSensorTrailingRefreshRef.current = undefined;
+            refreshSensorSource();
+          }, BROWSER_SENSOR_POINTER_REFRESH_MS - elapsedMs);
+        }
+
+        return;
+      }
+
+      if (browserSensorTrailingRefreshRef.current !== undefined) {
+        window.clearTimeout(browserSensorTrailingRefreshRef.current);
+        browserSensorTrailingRefreshRef.current = undefined;
+      }
+
+      lastRefreshAt = now;
+      requestSensorSourceRefresh();
+    };
+
+    const handlePointer = (event: PointerEvent) => {
+      sampleBrowserSensorState(updateBrowserSensorPointer(browserSensorStateRef.current, event));
+      refreshSensorSource();
+    };
+    const handleMotion = (event: DeviceMotionEvent) => {
+      sampleBrowserSensorState(updateBrowserSensorMotion(browserSensorStateRef.current, event));
+      refreshSensorSource();
+    };
+    const handleOrientation = (event: DeviceOrientationEvent) => {
+      sampleBrowserSensorState(
+        updateBrowserSensorOrientation(browserSensorStateRef.current, event),
+      );
+      refreshSensorSource();
+    };
+
+    window.addEventListener('pointermove', handlePointer, { passive: true });
+    window.addEventListener('pointerdown', handlePointer, { passive: true });
+    window.addEventListener('pointerup', handlePointer, { passive: true });
+    window.addEventListener('pointercancel', handlePointer, { passive: true });
+    window.addEventListener('devicemotion', handleMotion);
+    window.addEventListener('deviceorientation', handleOrientation);
+
+    return () => {
+      window.removeEventListener('pointermove', handlePointer);
+      window.removeEventListener('pointerdown', handlePointer);
+      window.removeEventListener('pointerup', handlePointer);
+      window.removeEventListener('pointercancel', handlePointer);
+      window.removeEventListener('devicemotion', handleMotion);
+      window.removeEventListener('deviceorientation', handleOrientation);
+
+      if (browserSensorRefreshRef.current !== undefined) {
+        window.cancelAnimationFrame(browserSensorRefreshRef.current);
+        browserSensorRefreshRef.current = undefined;
+      }
+
+      if (browserSensorTrailingRefreshRef.current !== undefined) {
+        window.clearTimeout(browserSensorTrailingRefreshRef.current);
+        browserSensorTrailingRefreshRef.current = undefined;
+      }
+    };
+  }, [instrumentMode, sampleBrowserSensorState, selectedSourceId]);
+
+  useEffect(() => {
+    if (
+      typeof window === 'undefined' ||
+      selectedSourceId !== BROWSER_SENSOR_STREAM_SOURCE_ID ||
+      instrumentMode !== 'live' ||
+      sourceState.status === 'loading' ||
+      sourceState.status === 'stale' ||
+      sourceState.sourceId !== selectedSourceId ||
+      sourceState.sourceMode !== 'live' ||
+      sourceState.streamState === undefined
+    ) {
+      return;
+    }
+
+    const delayMs = browserSensorStaleRefreshDelayMs(sourceState.streamState.observedAt);
+
+    if (delayMs === undefined) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setSourceRefreshToken((currentToken) => currentToken + 1);
+    }, delayMs);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [
+    instrumentMode,
+    selectedSourceId,
+    sourceState.sourceId,
+    sourceState.sourceMode,
+    sourceState.status,
+    sourceState.streamState,
+  ]);
 
   useEffect(() => {
     audioEngineRef.current?.applyParameters(viewState.audioParameters);
@@ -424,6 +591,11 @@ export function App() {
     setIsPlaying(true);
   };
 
+  const enableBrowserSensors = async () => {
+    publishBrowserSensorState(await requestBrowserSensorPermission(browserSensorStateRef.current));
+    setSourceRefreshToken((currentToken) => currentToken + 1);
+  };
+
   const restartReplay = () => {
     setFramePosition(0);
     setIsPlaying(false);
@@ -548,6 +720,10 @@ export function App() {
         ? 'ready'
         : 'unavailable'
       : sourceState.status;
+  const canRequestBrowserSensorPermission =
+    selectedSourceId === BROWSER_SENSOR_STREAM_SOURCE_ID &&
+    instrumentMode === 'live' &&
+    browserSensorState.permissionRequestAvailable;
 
   return (
     <main className="instrument-shell" aria-labelledby="instrument-title">
@@ -644,6 +820,17 @@ export function App() {
                     ? `Refreshing ${instrumentMode}`
                     : `Refresh ${instrumentMode}`}
                 </button>
+                {canRequestBrowserSensorPermission ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void enableBrowserSensors();
+                    }}
+                    disabled={browserSensorState.permissionState === 'granted'}
+                  >
+                    Enable device sensors
+                  </button>
+                ) : null}
               </div>
             </>
           ) : (

@@ -7,7 +7,13 @@ import {
   parseReplaySnapshot,
   type ReplaySnapshot,
 } from '@world-instrument/core';
-import { normalizeWeatherPayload, type RecordedWeatherPayload } from '@world-instrument/adapters';
+import {
+  createDeterministicBrowserSensorSnapshot,
+  normalizeBrowserSensorPayload,
+  normalizeWeatherPayload,
+  type RecordedBrowserSensorPayload,
+  type RecordedWeatherPayload,
+} from '@world-instrument/adapters';
 
 import {
   WEATHER_SCORE_V1_ID,
@@ -72,6 +78,166 @@ describe('weather score v1', () => {
     expect(first).toEqual(second);
   });
 
+  it('maps browser sensor streams into the shared deterministic output parameters', () => {
+    const stream = normalizeBrowserSensorPayload(sensorFixture, { sequence: 2 });
+    const input = {
+      schemaVersion: SCORE_INPUT_SCHEMA_VERSION,
+      score: weatherScoreV1.metadata,
+      frame: {
+        frameIndex: 2,
+        elapsedMs: 240,
+        renderedAt: '2026-06-15T12:00:00.240Z',
+      },
+      streams: [stream],
+      seed: 'world-instrument-test-sensor-v1',
+    };
+
+    const first = weatherScoreV1.evaluate(input);
+    const second = weatherScoreV1.evaluate(input);
+
+    expect(first).toEqual(second);
+    expect(first).toMatchObject({
+      scoreId: 'weather-score',
+      scoreVersion: '1.0.0',
+      frameIndex: 2,
+      generatedAt: '2026-06-15T12:00:00.240Z',
+      metadata: {
+        streamStatus: 'ok',
+        streamId: 'sensor:studio-browser',
+        condition: 'sensor-touch',
+        inputKind: 'sensor',
+      },
+      audio: {
+        enabled: true,
+      },
+      haptic: {
+        enabled: false,
+      },
+    });
+    expect(first.visual.parameters.map((parameter) => parameter.key)).toEqual([
+      'warmth',
+      'humidity',
+      'wind',
+      'precipitation',
+      'pressure',
+      'cloudCover',
+      'motion',
+      'diffusion',
+      'tension',
+      'brightness',
+    ]);
+    expect(first.trace?.find((entry) => entry.key === 'condition')).toEqual({
+      key: 'condition',
+      value: 'sensor-touch',
+    });
+  });
+
+  it('does not score a still gravity-removed accelerometer as sensor motion', () => {
+    const stream = normalizeBrowserSensorPayload({
+      provider: sensorFixture.provider,
+      observedAt: sensorFixture.observedAt,
+      device: sensorFixture.device,
+      capabilities: {
+        pointer: 'available',
+        deviceMotion: 'available',
+        deviceOrientation: 'unavailable',
+        permission: 'granted',
+        fallback: 'none',
+      },
+      pointer: {
+        position: [0.5, 0.5],
+        velocity: [0, 0],
+        pressure: 0,
+        buttons: 0,
+        active: false,
+      },
+      motion: {
+        acceleration: [0, 0, 0],
+        rotationRate: [0, 0, 0],
+      },
+    });
+
+    const output = weatherScoreV1.evaluate({
+      schemaVersion: SCORE_INPUT_SCHEMA_VERSION,
+      score: weatherScoreV1.metadata,
+      frame: {
+        frameIndex: 3,
+        elapsedMs: 360,
+        renderedAt: '2026-06-15T12:00:00.360Z',
+      },
+      streams: [stream],
+      seed: 'world-instrument-test-still-sensor-v1',
+    });
+
+    expect(output.metadata).toMatchObject({
+      condition: 'sensor-still',
+      inputKind: 'sensor',
+    });
+    expect(output.trace?.find((entry) => entry.key === 'condition')).toEqual({
+      key: 'condition',
+      value: 'sensor-still',
+    });
+    expect(output.haptic).toMatchObject({
+      enabled: false,
+    });
+  });
+
+  it('silences haptics for stale browser sensor streams', () => {
+    const staleStream = {
+      ...normalizeBrowserSensorPayload({
+        provider: sensorFixture.provider,
+        observedAt: sensorFixture.observedAt,
+        device: sensorFixture.device,
+        capabilities: {
+          pointer: 'available',
+          deviceMotion: 'available',
+          deviceOrientation: 'available',
+          permission: 'granted',
+          fallback: 'none',
+        },
+        pointer: {
+          position: [0.6, 0.4],
+          velocity: [0.4, 0.1],
+          pressure: 0.9,
+          buttons: 1,
+          active: true,
+        },
+        motion: {
+          acceleration: [5, 0, 0],
+          rotationRate: [0, 120, 0],
+        },
+      }),
+      status: 'stale' as const,
+    };
+
+    const output = weatherScoreV1.evaluate({
+      schemaVersion: SCORE_INPUT_SCHEMA_VERSION,
+      score: weatherScoreV1.metadata,
+      frame: {
+        frameIndex: 4,
+        elapsedMs: 480,
+        renderedAt: '2026-06-15T12:00:03.480Z',
+      },
+      streams: [staleStream],
+      seed: 'world-instrument-test-stale-sensor-v1',
+    });
+
+    expect(output.metadata).toMatchObject({
+      condition: 'sensor-stale',
+      inputKind: 'sensor',
+      streamStatus: 'stale',
+    });
+    expect(output.haptic).toMatchObject({
+      enabled: false,
+      parameters: [
+        {
+          key: 'pulseIntensity',
+          value: 0,
+        },
+      ],
+    });
+  });
+
   it('keeps the adapter fixture aligned with the replay stream fixture', async () => {
     const weatherFixture = await loadWeatherFixture();
     const snapshot = await loadReplaySnapshot();
@@ -108,3 +274,7 @@ async function loadWeatherFixture(): Promise<RecordedWeatherPayload> {
 
   return JSON.parse(contents) as RecordedWeatherPayload;
 }
+
+const sensorFixture: RecordedBrowserSensorPayload = createDeterministicBrowserSensorSnapshot({
+  observedAt: '2026-06-15T12:00:00.000Z',
+});
