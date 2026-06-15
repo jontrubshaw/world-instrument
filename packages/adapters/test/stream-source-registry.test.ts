@@ -204,7 +204,7 @@ describe('stream source registry', () => {
     });
   });
 
-  it('marks pointer-only browser sensor frames as degraded fallback input', async () => {
+  it('marks pointer-only browser sensor frames as degraded fallback input', () => {
     const state = normalizeBrowserSensorPayload({
       provider: sensorFixture.provider,
       observedAt: sensorFixture.observedAt,
