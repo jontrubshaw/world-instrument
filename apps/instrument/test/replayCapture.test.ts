@@ -179,8 +179,7 @@ describe('instrument replay capture', () => {
     const firstStream = frame?.streams[0];
 
     expect(capturedSession.frames.map((capturedFrame) => capturedFrame.elapsedMs)).toEqual([
-      12000,
-      45000,
+      12000, 45000,
     ]);
     expect(frame).toMatchObject({
       sourceMode: 'live',
