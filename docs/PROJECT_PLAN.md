@@ -75,13 +75,12 @@ The project should be built as a high-quality creative system, not an MVP. Deter
 14. Haptic output abstraction and browser vibration prototype implemented: `JTW-36`.
 15. Live weather stream mode connected to the instrument pipeline: `JTW-41`.
 16. Replay capture and provenance export implemented: `JTW-42`.
+17. Stream source registry and fixture-only non-weather source boundary implemented: `JTW-43`.
 
 ## Current Sequence
 
-1. Monitor `JTW-43`, the active coding-heavy issue delegated to Cursor for the stream source registry boundary.
-2. Do not release another coding-heavy Cursor issue until `JTW-43` lands, is explicitly paused, or is confirmed blocked.
-3. Review the `JTW-43` PR when it appears, wait for automatic Codex review unless a documented exception applies, and merge only after checks and actionable feedback are handled.
-4. After `JTW-43` lands, update durable docs and release the next ready issue from the gap-driven backlog.
-5. Current backlog order after `JTW-43` is `JTW-44` Cursor Cloud Playwright Chromium setup.
-6. Continue creating Linear issues for new problems, follow-on implementation work, refactor reviews, and human decisions as they arise.
-7. If the explicit backlog runs out again, evaluate the built app against the product vision and create new scoped Linear issues for the next concrete gaps rather than pausing the project.
+1. Complete `JTW-49`, the documentation-only refresh after `JTW-43` merged.
+2. Release `JTW-44`, the next ready backlog item, to update Cursor Cloud setup so Playwright Chromium is installed before smoke tests.
+3. After `JTW-44` lands, evaluate the current app against the World Instrument intent and create the next scoped product/code issues from concrete gaps.
+4. Continue creating Linear issues for new problems, follow-on implementation work, refactor reviews, and human decisions as they arise.
+5. If the explicit backlog runs out again, evaluate the built app against the product vision and create new scoped Linear issues for the next concrete gaps rather than pausing the project.
