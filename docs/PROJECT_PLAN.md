@@ -76,12 +76,15 @@ The project should be built as a high-quality creative system, not an MVP. Deter
 15. Live weather stream mode connected to the instrument pipeline: `JTW-41`.
 16. Replay capture and provenance export implemented: `JTW-42`.
 17. Stream source registry and fixture-only non-weather source boundary implemented: `JTW-43`.
+18. Cursor Cloud setup now installs Playwright Chromium under Node 24: `JTW-44`.
 
 ## Current Sequence
 
-1. Monitor `JTW-44`, the active Cursor-delegated environment setup issue for installing Playwright Chromium in Cursor Cloud.
-2. Do not release another coding-heavy Cursor issue until `JTW-44` lands, is explicitly paused, or is confirmed blocked.
-3. Review the `JTW-44` PR when it appears, wait for automatic Codex review unless a documented exception applies, and merge only after checks and actionable feedback are handled.
-4. After `JTW-44` lands, evaluate the current app against the World Instrument intent and create the next scoped product/code issues from concrete gaps.
-5. Continue creating Linear issues for new problems, follow-on implementation work, refactor reviews, and human decisions as they arise.
-6. If the explicit backlog runs out again, evaluate the built app against the product vision and create new scoped Linear issues for the next concrete gaps rather than pausing the project.
+1. Monitor `JTW-53`, the active Cursor-delegated implementation issue for registry-backed source selection in the instrument app.
+2. Do not release another coding-heavy Cursor issue until `JTW-53` lands, is explicitly paused, or is confirmed blocked.
+3. Review the `JTW-53` PR when it appears, wait for automatic Codex review unless a documented exception applies, and merge only after checks and actionable feedback are handled.
+4. After `JTW-53` lands, start `JTW-52` so the browser sensor/interaction source can use the registry-backed selection and routing boundary.
+5. Keep `JTW-54` blocked until registry-backed source selection exists, then decide whether provenance legibility should land before or after the sensor source.
+6. Schedule `JTW-55` as a human-owned refactor/hygiene review after the next product slice or earlier if review findings point to cross-cutting design drift.
+7. Continue creating Linear issues for new problems, follow-on implementation work, refactor reviews, and human decisions as they arise.
+8. If the explicit backlog runs out again, evaluate the built app against the product vision and create new scoped Linear issues for the next concrete gaps rather than pausing the project.
