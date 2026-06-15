@@ -80,14 +80,14 @@ The project should be built as a high-quality creative system, not an MVP. Deter
 19. Registry-backed source selection implemented in the instrument app: `JTW-53`.
 20. Browser sensor/interaction stream source implemented and routed through the instrument: `JTW-52`.
 21. Live-data provenance/status layer implemented for live, fixture, replay, fallback, stale, offline, error, and sensor states: `JTW-54`.
+22. Dedicated browser sensor score mappings implemented so browser sensor output no longer depends on Weather Score v1 semantics: `JTW-59`.
 
 ## Current Sequence
 
-1. Monitor `JTW-59`, the active Cursor-delegated implementation issue for dedicated browser sensor score mappings.
-2. Do not release another coding-heavy Cursor issue until `JTW-59` lands, is explicitly paused, or is confirmed blocked.
-3. Review the `JTW-59` PR when it appears, wait for automatic Codex review unless a documented exception applies, and merge only after checks and actionable feedback are handled.
-4. Treat `JTW-55` as the human-owned realtime pipeline hygiene review before or alongside the next implementation slice.
-5. Use `JTW-61` to decide the next external world stream before adding another source domain.
-6. Keep `JTW-60` as the replay archive import implementation backlog after the active sensor-score slice.
-7. Continue creating Linear issues for new problems, follow-on implementation work, refactor reviews, and human decisions as they arise.
-8. If the explicit backlog runs out again, evaluate the built app against the product vision and create new scoped Linear issues for the next concrete gaps rather than pausing the project.
+1. Finish `JTW-64`, the durable docs refresh after the `JTW-59` merge.
+2. Keep coding-heavy issues in Backlog until one is deliberately selected and the duplicate-session pre-flight check confirms there is no active Cursor session, open PR, or branch for the target issue.
+3. Treat `JTW-55` as the human-owned realtime pipeline hygiene review before or alongside the next implementation slice.
+4. Use `JTW-61` to decide the next external world stream before adding another source domain.
+5. Keep `JTW-60` as the next replay archive import implementation candidate unless the human-owned hygiene review or next-stream decision changes priority.
+6. Continue creating Linear issues for new problems, follow-on implementation work, refactor reviews, and human decisions as they arise.
+7. If the explicit backlog runs out again, evaluate the built app against the product vision and create new scoped Linear issues for the next concrete gaps rather than pausing the project.
