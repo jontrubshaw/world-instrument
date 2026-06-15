@@ -57,7 +57,7 @@
 
 Cursor environment setup is complete. Coding-heavy issues should still be assigned or delegated to Cursor only when intentionally ready to start. Keep planned work in Backlog until it is selected.
 
-`JTW-53` is the current coding-heavy work delegated to Cursor. Do not release another coding-heavy Cursor issue until `JTW-53` lands, is explicitly paused, or is confirmed blocked with a documented decision. Before any restart, reassign, or new Cursor ping on `JTW-53`, run the duplicate-session pre-flight check above.
+`JTW-52` is the current coding-heavy work delegated to Cursor. Do not release another coding-heavy Cursor issue until `JTW-52` lands, is explicitly paused, or is confirmed blocked with a documented decision. Before any restart, reassign, or new Cursor ping on `JTW-52`, run the duplicate-session pre-flight check above.
 
 ## CI
 
