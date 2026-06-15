@@ -129,10 +129,10 @@ describe('weather score visual parameters', () => {
         signature: state.scoreSignature,
         bodyColor: '#f8d56b',
         accentColor: '#76d7ff',
-        rotationSpeedY: 0.277,
+        rotationSpeedY: 0.308,
         pulseAmplitude: 0.072,
-        wireOpacity: 0.303,
-        glowOpacity: 0.273,
+        wireOpacity: 0.295,
+        glowOpacity: 0.283,
       }),
     );
   });
