@@ -245,6 +245,10 @@ export function createRegisteredStreamAdapter(
 export function createRegisteredStreamAdapter(
   sourceId: string,
   config: RegisteredStreamAdapterConfig,
+): StreamAdapter<unknown, RegisteredStreamAdapterConfig>;
+export function createRegisteredStreamAdapter(
+  sourceId: string,
+  config: RegisteredStreamAdapterConfig,
 ): StreamAdapter<unknown, RegisteredStreamAdapterConfig> {
   switch (sourceId) {
     case WEATHER_STREAM_SOURCE_ID:

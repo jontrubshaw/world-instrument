@@ -26,6 +26,8 @@ describe('stream source registry contracts', () => {
     expect(registry.supports('weather.test', 'replay')).toBe(false);
     expect(registry.supports('missing', 'fixture')).toBe(false);
     expect(streamSourceModes(testWeatherSourceDefinition)).toEqual(['fixture', 'live']);
+    expect(supportsStreamSourceMode(testWeatherSourceDefinition, 'live')).toBe(true);
+    expect(supportsStreamSourceMode(testWeatherSourceDefinition, 'replay')).toBe(false);
   });
 
   it('rejects duplicate ids and missing required lookups', () => {
