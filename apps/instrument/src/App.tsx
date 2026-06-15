@@ -128,8 +128,10 @@ export function App() {
     }));
 
     void readLiveWeatherFrame({
-      previousSequence: liveSequenceRef.current,
       signal: abortController.signal,
+      ...(liveSequenceRef.current === undefined
+        ? {}
+        : { previousSequence: liveSequenceRef.current }),
     })
       .then((nextState) => {
         if (!isCurrentRequest) {
@@ -140,11 +142,15 @@ export function App() {
           liveSequenceRef.current = nextState.frame.streamSequence;
         }
 
-        setLiveWeatherState((currentState) => ({
-          status: nextState.status,
-          message: nextState.message,
-          frame: nextState.frame ?? currentState.frame,
-        }));
+        setLiveWeatherState((currentState) => {
+          const frame = nextState.frame ?? currentState.frame;
+
+          return {
+            status: nextState.status,
+            message: nextState.message,
+            ...(frame === undefined ? {} : { frame }),
+          };
+        });
       })
       .catch((error: unknown) => {
         if (!isCurrentRequest || abortController.signal.aborted) {
