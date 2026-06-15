@@ -8,7 +8,7 @@ This file is the durable project handoff. Keep it current whenever project conve
 - Linear project: https://linear.app/jtworks/project/world-instrument-1472eb8e5477
 - Linear team: Jtworks
 - Local checkout: `/Users/JonathanTrubshaw/Documents/weathart/world-instrument`
-- Active implementation branch: none confirmed yet for `JTW-42`; watch for a fresh Cursor PR/branch after release.
+- Active implementation branch: none confirmed yet for `JTW-43`; watch for a fresh Cursor PR/branch after release.
 - Cursor environment setup is complete.
 - Stale pre-setup Cursor draft PRs closed: PR #1 (`cursor/instrument-app-shell-1cf1`) and PR #3 (`cursor/core-contracts-7e26`).
 - Local Node environment: Homebrew `node@24` installed; current shell resolves `node` to `v24.16.0` and `npm` to `11.13.0`.
@@ -45,11 +45,12 @@ This file is the durable project handoff. Keep it current whenever project conve
 - `JTW-39`: Refresh durable docs after replay merge and audio release. Done; PR #29 merged.
 - `JTW-40`: Refresh durable docs after audio merge and haptics release. Done; PR #32 merged.
 - `JTW-41`: Connect live weather stream mode to the instrument pipeline. Done; PR #36 merged. Duplicate Cursor PR #37 closed as superseded.
-- `JTW-42`: Add replay capture and provenance export for generated sessions. In Progress, delegated to Cursor.
-- `JTW-43`: Define stream source registry for additional realtime inputs. Backlog.
+- `JTW-42`: Add replay capture and provenance export for generated sessions. Done; PR #40 merged. Duplicate Cursor PR #39 closed as superseded.
+- `JTW-43`: Define stream source registry for additional realtime inputs. In Progress, delegated to Cursor.
 - `JTW-44`: Update Cursor Cloud environment to install Playwright Chromium. Backlog.
 - `JTW-45`: Refresh durable docs after haptics merge and live-weather release. Done; PR #35 merged.
-- `JTW-46`: Refresh durable docs after live-weather merge and replay-capture release. Current docs issue.
+- `JTW-46`: Refresh durable docs after live-weather merge and replay-capture release. Done; PR #38 merged.
+- `JTW-47`: Refresh durable docs after replay-capture merge and registry release. Current docs issue.
 
 ## Orchestration Rules
 
@@ -106,7 +107,7 @@ This file is the durable project handoff. Keep it current whenever project conve
 
 There is no longer a global pause on Cursor setup. Pick the next issue deliberately, assign/delegate it only when ready, and avoid starting multiple coding-heavy Cursor tasks unless that concurrency is intentional.
 
-Current coding-heavy work is `JTW-42`, delegated to Cursor. Watch for a fresh Cursor branch/PR for replay capture and provenance export. Do not release another coding-heavy Cursor issue until this work is resolved and merged or explicitly paused.
+Current coding-heavy work is `JTW-43`, delegated to Cursor. Watch for a fresh Cursor branch/PR for the stream source registry boundary. Do not release another coding-heavy Cursor issue until this work is resolved and merged or explicitly paused.
 
 ## Source Checks
 
@@ -154,6 +155,9 @@ Current coding-heavy work is `JTW-42`, delegated to Cursor. Watch for a fresh Cu
 - JTW-41 produced two independent Cursor PRs on 2026-06-15: PR #36 (`cursor/live-weather-mode-ca87`) and PR #37 (`cursor/live-weather-mode-3949`). Cursor converged on PR #36 and marked PR #37 superseded. PR #37 was closed after PR #36 was marked ready for review.
 - PR #36 (`JTW-41 connect live weather stream mode`) merged on 2026-06-15 after CI passed and the documented post-fix Codex review fallback window elapsed with the known live-mode loading and credential-free URL feedback addressed. `JTW-41` was marked Done.
 - JTW-42 was released to Cursor on 2026-06-15 after PR #36 merged. Scope is replay capture and provenance export: capture generated sessions from replay/live modes where practical, include enough score/source/time/seed/normalized-frame metadata to reproduce output, export replay JSON from a compact control, validate exported archives with the existing parser, and keep `JTW-43` registry work separate.
+- JTW-42 produced two independent Cursor PRs on 2026-06-15: PR #40 (`cursor/replay-capture-export-7c2c`) and PR #39 (`cursor/replay-capture-export-a937`). Cursor converged on PR #40 and marked PR #39 superseded. PR #39 was closed after PR #40 was marked ready for review.
+- PR #40 (`JTW-42 add replay capture export`) merged on 2026-06-15 after CI passed and the documented latest-head Codex review fallback window elapsed with all known replay timing, live stream/frame pairing, output consistency, and fallback capture feedback addressed. `JTW-42` was marked Done.
+- JTW-43 was released to Cursor on 2026-06-15 after PR #40 merged. Scope is the stream-source registry/extensibility boundary: source metadata, capabilities, fixture/live/replay support, score compatibility, normalized-stream mapping documentation, tests for registry behavior, and minimal non-weather fixture proof only if useful.
 
 ## Cursor Cloud specific instructions
 
