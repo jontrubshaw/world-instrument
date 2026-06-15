@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer';
 import { readFile } from 'node:fs/promises';
 
 import { expect, test } from '@playwright/test';
@@ -332,6 +333,22 @@ test('loads the instrument shell', async ({ page }) => {
     },
   });
 
+  const replayControls = page.getByRole('region', { name: 'Replay controls' });
+  const replayImportInput = page.getByLabel('Import replay JSON');
+
+  await replayImportInput.setInputFiles({
+    name: 'invalid.replay.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from('{"schemaVersion":"old"}'),
+  });
+  await expect(replayControls).toHaveAttribute('data-import-state', 'error');
+  await expect(replayControls.locator('.replay-import-status')).toContainText(
+    'Replay import failed: Invalid replay snapshot',
+  );
+  await expect(streamControls).toHaveAttribute('data-source-id', 'weather.open-meteo');
+  await expect(streamControls).toHaveAttribute('data-source-mode', 'live');
+  await expect(streamControls).toHaveAttribute('data-source-state', 'ready');
+
   await page.getByRole('button', { name: 'Replay', exact: true }).click();
   await expect(streamControls).toHaveAttribute('data-instrument-mode', 'replay');
   await expect(streamControls).toHaveAttribute('data-provenance-mode', 'replay');
@@ -366,7 +383,7 @@ test('loads the instrument shell', async ({ page }) => {
       glowOpacity: 0.24,
     });
 
-  await expect(page.getByRole('region', { name: 'Replay controls' })).toBeVisible();
+  await expect(replayControls).toBeVisible();
   await expect(page.getByLabel('Archive')).toHaveValue('weather-london-archive');
   await expect(page.getByLabel('Replay time')).toHaveValue('0');
 
@@ -464,6 +481,28 @@ test('loads the instrument shell', async ({ page }) => {
   await page.getByRole('button', { name: 'Play', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Pause', exact: true })).toBeVisible();
   await expect.poll(() => canvas.evaluate((element) => element.dataset.scoreFrameIndex)).toBe('0');
+  await page.getByRole('button', { name: 'Pause', exact: true }).click();
+
+  await replayImportInput.setInputFiles(downloadPath);
+  await expect(replayControls).toHaveAttribute('data-import-state', 'ready');
+  const importedArchiveId = await replayControls.getAttribute('data-import-archive-id');
+
+  expect(importedArchiveId).toMatch(/^imported-captured-live-weather-/);
+  await expect(streamControls).toHaveAttribute('data-instrument-mode', 'replay');
+  await expect(streamControls).toHaveAttribute('data-provenance-mode', 'replay');
+  await expect(streamControls).toHaveAttribute('data-provenance-status', 'ready');
+  await expect(page.getByLabel('Archive')).toHaveValue(importedArchiveId ?? '');
+  await expect(page.getByLabel('Archive').locator('option:checked')).toContainText(
+    'Imported: London, UK weather live session (London, UK weather)',
+  );
+  await expect(replayControls.locator('.replay-import-status')).toContainText(
+    'Imported Imported: London, UK weather live session (London, UK weather) for this session.',
+  );
+  await expect(provenance.locator('.provenance-summary')).toContainText(
+    'Replay archive is driving output from London, UK weather.',
+  );
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Pause', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Pause', exact: true }).click();
 });
 

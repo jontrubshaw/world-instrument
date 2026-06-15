@@ -18,6 +18,9 @@ export interface ReplayArchive {
   readonly id: string;
   readonly label: string;
   readonly snapshot: ReplaySnapshot;
+  readonly origin?: 'bundled' | 'imported';
+  readonly importedFilename?: string;
+  readonly provenanceLabel?: string;
 }
 
 export interface ReplayInstrumentFrameState extends WeatherInstrumentState {
@@ -36,8 +39,34 @@ export function loadReplayArchives(): readonly ReplayArchive[] {
       id: 'weather-london-archive',
       label: metadataString(snapshot.metadata?.title, 'London weather archive'),
       snapshot,
+      origin: 'bundled',
+      provenanceLabel: replayArchiveProvenanceLabel(snapshot),
     },
   ];
+}
+
+export class ReplayArchiveImportError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ReplayArchiveImportError';
+  }
+}
+
+export function importReplayArchiveFromJson(contents: string, filename: string): ReplayArchive {
+  const parsed = parseReplayJson(contents);
+  const snapshot = parseImportedSnapshot(parsed);
+  const archive = {
+    id: importedArchiveId(snapshot, filename, contents),
+    label: importedArchiveLabel(snapshot),
+    snapshot,
+    origin: 'imported',
+    importedFilename: filename,
+    provenanceLabel: replayArchiveProvenanceLabel(snapshot),
+  } satisfies ReplayArchive;
+
+  validateReplayArchivePlayback(archive);
+
+  return archive;
 }
 
 export function evaluateReplayFrame(
@@ -84,6 +113,18 @@ export function createReplayScoreSequence(archive: ReplayArchive): readonly Scor
   );
 }
 
+export function replayArchiveSourceKinds(archive: ReplayArchive): readonly string[] {
+  const sourceKinds = new Set<string>();
+
+  archive.snapshot.frames.forEach((frame) => {
+    frame.streams.forEach((stream) => {
+      sourceKinds.add(stream.source.kind);
+    });
+  });
+
+  return [...sourceKinds];
+}
+
 export function clampFramePosition(snapshot: ReplaySnapshot, requestedPosition: number): number {
   if (snapshot.frames.length === 0) {
     throw new Error('Replay archive must include at least one frame.');
@@ -108,6 +149,90 @@ function sourceLabel(frame: ReplayFrame): string {
   return stream?.source.label ?? stream?.source.id ?? 'Recorded stream';
 }
 
+function parseReplayJson(contents: string): unknown {
+  try {
+    return JSON.parse(contents) as unknown;
+  } catch {
+    throw new ReplayArchiveImportError('Replay import failed: file is not valid JSON.');
+  }
+}
+
+function parseImportedSnapshot(value: unknown): ReplaySnapshot {
+  try {
+    return parseReplaySnapshot(value);
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      throw new ReplayArchiveImportError(`Replay import failed: ${error.message}`);
+    }
+
+    throw new ReplayArchiveImportError('Replay import failed: file is not a replay snapshot.');
+  }
+}
+
+function validateReplayArchivePlayback(archive: ReplayArchive): void {
+  try {
+    createReplayScoreSequence(archive);
+    evaluateReplayFrame(archive, 0);
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      throw new ReplayArchiveImportError(`Replay import failed: ${error.message}`);
+    }
+
+    throw new ReplayArchiveImportError('Replay import failed: archive cannot be replayed.');
+  }
+}
+
+function importedArchiveId(snapshot: ReplaySnapshot, filename: string, contents: string): string {
+  return `imported-${safeId(snapshot.snapshotId)}-${safeId(filename)}-${hashString(contents)}`;
+}
+
+function importedArchiveLabel(snapshot: ReplaySnapshot): string {
+  const title = metadataString(snapshot.metadata?.title, snapshot.snapshotId);
+  const provenanceLabel = replayArchiveProvenanceLabel(snapshot);
+
+  return `Imported: ${title}${provenanceLabel.length > 0 ? ` (${provenanceLabel})` : ''}`;
+}
+
+function replayArchiveProvenanceLabel(snapshot: ReplaySnapshot): string {
+  const metadataSources: unknown = snapshot.metadata?.sources;
+  const metadataSource: unknown = Array.isArray(metadataSources) ? metadataSources[0] : undefined;
+
+  if (isRecord(metadataSource)) {
+    const label = metadataString(metadataSource.label, '');
+
+    if (label.length > 0) {
+      return label;
+    }
+  }
+
+  const firstStream = snapshot.frames[0]?.streams[0];
+
+  return firstStream?.source.label ?? firstStream?.source.id ?? '';
+}
+
 function metadataString(value: unknown, fallback: string): string {
   return typeof value === 'string' && value.length > 0 ? value : fallback;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function safeId(value: string): string {
+  return value
+    .replace(/\.[^.]+$/u, '')
+    .replace(/[^0-9A-Za-z]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .toLowerCase();
+}
+
+function hashString(value: string): string {
+  let hash = 0x811c9dc5;
+
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 0x01000193);
+  }
+
+  return (hash >>> 0).toString(16).padStart(8, '0');
 }

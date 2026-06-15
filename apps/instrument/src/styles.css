@@ -160,6 +160,7 @@ h1 {
 
 .source-picker,
 .archive-picker,
+.archive-import,
 .time-scrubber,
 .audio-controls,
 .capture-controls,
@@ -275,7 +276,8 @@ h1 {
 }
 
 .source-picker select,
-.archive-picker select {
+.archive-picker select,
+.archive-import input {
   width: 100%;
   min-height: 2.45rem;
   color: #f8fbff;
@@ -335,6 +337,7 @@ h1 {
 .mode-switch button:focus-visible,
 .source-picker select:focus-visible,
 .archive-picker select:focus-visible,
+.archive-import input:focus-visible,
 .capture-controls button:focus-visible,
 .time-scrubber input:focus-visible {
   outline: 2px solid #8eeaff;
@@ -349,6 +352,18 @@ h1 {
 .time-scrubber output {
   color: rgba(248, 251, 255, 0.82);
   letter-spacing: 0.12em;
+}
+
+.replay-import-status {
+  margin: 0;
+  color: rgba(248, 251, 255, 0.72);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  line-height: 1.45;
+}
+
+.replay-controls[data-import-state='error'] .replay-import-status {
+  color: #fecdd3;
 }
 
 .audio-controls,
