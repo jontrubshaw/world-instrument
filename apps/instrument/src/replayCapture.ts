@@ -6,13 +6,14 @@ import {
   type ReplayFrame,
   type ReplaySnapshot,
   type ScoreOutput,
+  type StreamSourceMode,
 } from '@world-instrument/core';
 import { weatherScoreV1 } from '@world-instrument/scores';
 
 import type { ReplayArchive, ReplayInstrumentFrameState } from './replayArchive.ts';
 import { evaluateWeatherInstrumentFrame } from './weatherInstrument.ts';
 
-export type ReplayCaptureSourceMode = 'live' | 'replay';
+export type ReplayCaptureSourceMode = StreamSourceMode;
 
 export interface ReplayCaptureFrameInput {
   readonly sourceMode: ReplayCaptureSourceMode;
@@ -48,6 +49,11 @@ export interface CreateReplayCaptureSessionOptions {
   readonly startedAt: string;
 }
 
+export interface CreateReplayCaptureSessionForFrameOptions {
+  readonly startedAt: string;
+  readonly frame: ReplayCaptureFrameInput;
+}
+
 export interface BuildReplaySnapshotOptions {
   readonly createdAt: string;
   readonly description?: string;
@@ -68,6 +74,26 @@ export function createReplayCaptureSession(
     status: 'recording',
     frames: [],
   };
+}
+
+export function createReplayCaptureSessionForFrame(
+  options: CreateReplayCaptureSessionForFrameOptions,
+): ReplayCaptureSession {
+  const sourceKind = captureSourceKind(options.frame);
+  const sourceLabel = options.frame.sourceLabel ?? sourceKind;
+
+  return createReplayCaptureSession({
+    sessionId: createReplayCaptureSessionId(
+      options.startedAt,
+      options.frame.sourceMode,
+      sourceKind,
+    ),
+    title:
+      options.frame.sourceMode === 'replay'
+        ? `${sourceLabel} generated replay capture`
+        : `${sourceLabel} ${options.frame.sourceMode} session`,
+    startedAt: options.startedAt,
+  });
 }
 
 export function stopReplayCaptureSession(
@@ -104,7 +130,7 @@ export function prepareFrameForCaptureClock(
   frame: ReplayCaptureFrameInput,
   capturedAt: string,
 ): ReplayCaptureFrameInput {
-  if (frame.sourceMode !== 'live') {
+  if (frame.sourceMode === 'replay') {
     return frame;
   }
 
@@ -179,10 +205,12 @@ export function serializeReplaySnapshot(snapshot: ReplaySnapshot): string {
 export function createReplayCaptureSessionId(
   startedAt: string,
   sourceMode: ReplayCaptureSourceMode,
+  sourceKind = 'weather',
 ): string {
   const timestamp = startedAt.replace(/\.\d{3}Z$/, 'Z').replace(/[^0-9A-Za-z]+/g, '-');
+  const safeSourceKind = sourceKind.replace(/[^0-9A-Za-z]+/g, '-').toLowerCase();
 
-  return `captured-${sourceMode}-weather-${timestamp}`;
+  return `captured-${sourceMode}-${safeSourceKind}-${timestamp}`;
 }
 
 export function createReplayDownloadFilename(snapshot: ReplaySnapshot): string {
@@ -304,6 +332,10 @@ function sourceModeSummary(frames: readonly CapturedReplayFrame[]): string {
   }
 
   return 'mixed';
+}
+
+function captureSourceKind(frame: ReplayCaptureFrameInput): string {
+  return frame.streams[0]?.source.kind ?? 'stream';
 }
 
 function elapsedFromSessionStart(startedAt: string, capturedAt: string): number {

@@ -6,6 +6,7 @@ import {
   buildReplaySnapshot,
   createReplayCaptureFrameFromArchive,
   createReplayCaptureSession,
+  createReplayCaptureSessionForFrame,
   createReplayCaptureSessionId,
   createReplayDownloadFilename,
   prepareFrameForCaptureClock,
@@ -161,6 +162,22 @@ describe('instrument replay capture', () => {
     );
   });
 
+  it('derives capture session metadata from replay fallback frames', () => {
+    const archive = firstReplayArchive();
+    const replayFallbackFrame = captureInputForReplayFrame(archive, 0);
+    const session = createReplayCaptureSessionForFrame({
+      startedAt: '2026-06-14T21:05:00.000Z',
+      frame: replayFallbackFrame,
+    });
+
+    expect(session).toMatchObject({
+      sessionId: 'captured-replay-weather-2026-06-14T21-05-00Z',
+      title: 'London, UK weather generated replay capture',
+      startedAt: '2026-06-14T21:05:00.000Z',
+    });
+    expect(session.sessionId).not.toContain('sensor');
+  });
+
   it('uses capture-clock elapsed times for live frames with older observations', () => {
     const session = createReplayCaptureSession({
       sessionId: 'captured-live-clock-regression',
@@ -208,6 +225,52 @@ describe('instrument replay capture', () => {
     });
     expect(frame?.output.generatedAt).toBe('2026-06-14T21:05:12.000Z');
     expect(firstStream?.observedAt).toBe('2026-06-14T20:00:00.000Z');
+  });
+
+  it('uses capture-clock elapsed times for fixture frames with older observations', () => {
+    const session = createReplayCaptureSession({
+      sessionId: 'captured-fixture-clock-regression',
+      title: 'Captured fixture clock regression',
+      startedAt: '2026-06-14T21:05:00.000Z',
+    });
+    const replayInput = captureInputForReplayFrame(firstReplayArchive(), 0);
+    const preparedFrame = prepareFrameForCaptureClock(
+      session,
+      {
+        ...replayInput,
+        sourceMode: 'fixture',
+        capturedAt: '2026-06-14T20:00:00.000Z',
+        streams: replayInput.streams.map((stream) => ({
+          ...stream,
+          observedAt: '2026-06-14T20:00:00.000Z',
+        })),
+      },
+      '2026-06-14T21:05:30.000Z',
+    );
+    const capturedSession = appendCapturedReplayFrame(session, preparedFrame);
+    const snapshot = buildReplaySnapshot(capturedSession, {
+      createdAt: '2026-06-14T21:06:00.000Z',
+    });
+
+    expect(preparedFrame).toMatchObject({
+      sourceMode: 'fixture',
+      capturedAt: '2026-06-14T21:05:30.000Z',
+      elapsedMs: 30000,
+    });
+    expect(preparedFrame.output.generatedAt).toBe('2026-06-14T21:05:30.000Z');
+    expect(capturedSession.frames[0]?.elapsedMs).toBe(30000);
+    expect(parseReplaySnapshot(snapshot).frames[0]).toMatchObject({
+      capturedAt: '2026-06-14T21:05:30.000Z',
+      elapsedMs: 30000,
+      output: {
+        generatedAt: '2026-06-14T21:05:30.000Z',
+      },
+    });
+    expect(metadataFrames(snapshot.metadata)[0]).toMatchObject({
+      sourceMode: 'fixture',
+      capturedAt: '2026-06-14T21:05:30.000Z',
+      elapsedMs: 30000,
+    });
   });
 
   it('rescores live frames after applying the capture clock', () => {
