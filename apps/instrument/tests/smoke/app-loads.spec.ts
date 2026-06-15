@@ -148,7 +148,7 @@ test('loads the instrument shell', async ({ page }) => {
             .__worldInstrumentVibrations,
       ),
     )
-    .toContainEqual([59, 131, 59]);
+    .toEqual([[59, 131, 59]]);
 
   await page.getByRole('button', { name: 'Play' }).click();
   await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible();

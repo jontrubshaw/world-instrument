@@ -4,7 +4,10 @@ import { InstrumentAudioEngine } from './audioEngine.ts';
 import { serializeAudioParametersForDom } from './audioParameters.ts';
 import { InstrumentStage } from './components/InstrumentStage.tsx';
 import { BrowserVibrationHapticEngine, type HapticPlaybackState } from './hapticEngine.ts';
-import { serializeHapticPatternForDom } from './hapticParameters.ts';
+import {
+  serializeHapticPatternForDom,
+  type InstrumentHapticPattern,
+} from './hapticParameters.ts';
 import {
   REPLAY_PLAYBACK_INTERVAL_MS,
   evaluateReplayFrame,
@@ -32,6 +35,7 @@ export function App() {
   const [hapticsEnabled, setHapticsEnabled] = useState(false);
   const audioEngineRef = useRef<InstrumentAudioEngine | undefined>(undefined);
   const hapticEngineRef = useRef<BrowserVibrationHapticEngine | undefined>(undefined);
+  const hapticActivationPatternKeyRef = useRef<string | undefined>(undefined);
   const activeArchive = archives.find((archive) => archive.id === archiveId) ?? archives[0];
 
   const viewState = useMemo(() => {
@@ -89,6 +93,16 @@ export function App() {
     if (!hapticsEnabled) {
       return;
     }
+
+    const patternKey = hapticPatternPlaybackKey(viewState.hapticPattern);
+
+    if (hapticActivationPatternKeyRef.current === patternKey) {
+      hapticActivationPatternKeyRef.current = undefined;
+
+      return;
+    }
+
+    hapticActivationPatternKeyRef.current = undefined;
 
     const playbackState = hapticEngineRef.current?.play(viewState.hapticPattern) ?? 'unsupported';
     setHapticControlState(hapticControlStateFromPlayback(playbackState));
@@ -184,8 +198,9 @@ export function App() {
       return;
     }
 
-    setHapticsEnabled(true);
     setHapticControlState(hapticControlStateFromPlayback(engine.play(viewState.hapticPattern)));
+    hapticActivationPatternKeyRef.current = hapticPatternPlaybackKey(viewState.hapticPattern);
+    setHapticsEnabled(true);
   };
 
   return (
@@ -376,6 +391,17 @@ function hapticControlStateFromPlayback(state: HapticPlaybackState): HapticContr
   }
 
   return 'enabled';
+}
+
+function hapticPatternPlaybackKey(pattern: InstrumentHapticPattern): string {
+  return [
+    pattern.scoreId,
+    pattern.scoreVersion,
+    pattern.frameIndex,
+    pattern.signature,
+    pattern.enabled,
+    pattern.pattern.join(','),
+  ].join('|');
 }
 
 function initialHapticControlState(): HapticControlState {
