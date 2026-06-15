@@ -1,8 +1,22 @@
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 
-export function InstrumentStage() {
+import {
+  serializeVisualParametersForCanvas,
+  type InstrumentVisualParameters,
+} from '../visualParameters.ts';
+
+interface InstrumentStageProps {
+  readonly visualParameters: InstrumentVisualParameters;
+}
+
+export function InstrumentStage({ visualParameters }: InstrumentStageProps) {
   const mountRef = useRef<HTMLDivElement>(null);
+  const visualParametersRef = useRef(visualParameters);
+
+  useEffect(() => {
+    visualParametersRef.current = visualParameters;
+  }, [visualParameters]);
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -12,14 +26,12 @@ export function InstrumentStage() {
     }
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setClearColor(0x050716, 1);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.domElement.dataset.testid = 'instrument-canvas';
-    renderer.domElement.setAttribute('aria-label', 'Abstract World Instrument visual surface');
+    renderer.domElement.setAttribute('aria-label', 'Weather score-driven World Instrument surface');
     mount.append(renderer.domElement);
 
     const scene = new THREE.Scene();
-    scene.fog = new THREE.Fog(0x050716, 4, 9);
 
     const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
     camera.position.set(0, 0.1, 5.2);
@@ -80,21 +92,57 @@ export function InstrumentStage() {
 
     const startTime = window.performance.now();
     let animationFrameId = 0;
+    let appliedSignature = '';
+
+    const applyVisualParameters = (parameters: InstrumentVisualParameters) => {
+      appliedSignature = parameters.signature;
+
+      renderer.setClearColor(new THREE.Color(parameters.backgroundColor), 1);
+      renderer.domElement.dataset.scoreId = parameters.scoreId;
+      renderer.domElement.dataset.scoreVersion = parameters.scoreVersion;
+      renderer.domElement.dataset.scoreSignature = parameters.signature;
+      renderer.domElement.dataset.weatherCondition = parameters.condition;
+      renderer.domElement.dataset.visualParameters = serializeVisualParametersForCanvas(parameters);
+      mount.dataset.scoreSignature = parameters.signature;
+
+      const fogColor = new THREE.Color(parameters.backgroundColor);
+      scene.fog = new THREE.Fog(fogColor, parameters.fogNear, parameters.fogFar);
+
+      bodyMaterial.color.set(parameters.bodyColor);
+      bodyMaterial.emissive.set(parameters.emissiveColor);
+      bodyMaterial.emissiveIntensity = parameters.emissiveIntensity;
+      wireMaterial.color.set(parameters.accentColor);
+      wireMaterial.opacity = parameters.wireOpacity;
+      innerMaterial.color.set(parameters.innerColor);
+      innerMaterial.opacity = parameters.innerOpacity;
+
+      keyLight.color.set(parameters.bodyColor);
+      keyLight.intensity = parameters.keyLightIntensity;
+      fillLight.color.set(parameters.accentColor);
+      fillLight.intensity = parameters.fillLightIntensity;
+      ambient.intensity = parameters.ambientIntensity;
+    };
 
     const renderFrame = () => {
+      const parameters = visualParametersRef.current;
       const elapsed = (window.performance.now() - startTime) / 1000;
-      const pulse = Math.sin(elapsed * 1.7) * 0.08;
+      const pulse = Math.sin(elapsed * parameters.pulseRate) * parameters.pulseAmplitude;
 
-      body.rotation.x = elapsed * 0.21;
-      body.rotation.y = elapsed * 0.34;
-      body.scale.setScalar(1 + pulse);
+      if (appliedSignature !== parameters.signature) {
+        applyVisualParameters(parameters);
+      }
+
+      body.rotation.x = elapsed * parameters.rotationSpeedX + parameters.tensionTilt;
+      body.rotation.y = elapsed * parameters.rotationSpeedY;
+      body.scale.setScalar(parameters.bodyScale + pulse);
 
       wire.rotation.x = body.rotation.x + 0.12;
       wire.rotation.y = body.rotation.y - 0.18;
+      wire.scale.setScalar(1.018 + parameters.tensionTilt * 0.08);
 
-      innerPulse.rotation.x = -elapsed * 0.43;
-      innerPulse.rotation.z = elapsed * 0.52;
-      innerPulse.scale.setScalar(1.2 - pulse);
+      innerPulse.rotation.x = -elapsed * parameters.innerRotationSpeed;
+      innerPulse.rotation.z = elapsed * (parameters.innerRotationSpeed + 0.09);
+      innerPulse.scale.setScalar(parameters.innerScale - pulse);
 
       renderer.render(scene, camera);
       animationFrameId = window.requestAnimationFrame(renderFrame);

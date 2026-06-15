@@ -16,3 +16,4 @@ export {
   type WeatherLiveAdapterConfig,
   type WeatherLocation,
 } from './weather.ts';
+export { recordedOpenMeteoLondonCurrentV1 } from './fixtures/open-meteo-london-current-v1.ts';
