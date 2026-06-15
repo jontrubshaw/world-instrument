@@ -3,6 +3,8 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { InstrumentAudioEngine } from './audioEngine.ts';
 import { serializeAudioParametersForDom } from './audioParameters.ts';
 import { InstrumentStage } from './components/InstrumentStage.tsx';
+import { BrowserVibrationHapticAdapter } from './hapticEngine.ts';
+import { serializeHapticPatternForDom } from './hapticParameters.ts';
 import {
   REPLAY_PLAYBACK_INTERVAL_MS,
   evaluateReplayFrame,
@@ -17,6 +19,8 @@ type AudioControlState =
   | 'unsupported'
   | 'error';
 
+type HapticControlState = 'disabled' | 'enabled' | 'unsupported' | 'error';
+
 export function App() {
   const [archives] = useState(() => loadReplayArchives());
   const [archiveId, setArchiveId] = useState(archives[0]?.id ?? '');
@@ -24,7 +28,10 @@ export function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioControlState, setAudioControlState] = useState<AudioControlState>('stopped');
   const [isAudioMuted, setIsAudioMuted] = useState(false);
+  const [hapticControlState, setHapticControlState] =
+    useState<HapticControlState>(initialHapticControlState);
   const audioEngineRef = useRef<InstrumentAudioEngine | undefined>(undefined);
+  const hapticAdapterRef = useRef<BrowserVibrationHapticAdapter | undefined>(undefined);
   const activeArchive = archives.find((archive) => archive.id === archiveId) ?? archives[0];
 
   const viewState = useMemo(() => {
@@ -44,6 +51,9 @@ export function App() {
     audioControlState === 'suspended' ||
     audioControlState === 'interrupted';
   const audioStatusLabel = audioStatusText(audioControlState, isAudioMuted);
+  const hapticsAreSupported = hapticControlState !== 'unsupported';
+  const hapticsAreEnabled = hapticControlState === 'enabled';
+  const hapticStatusLabel = hapticStatusText(hapticControlState, viewState.hapticPattern);
 
   useEffect(() => {
     if (!isPlaying) {
@@ -72,8 +82,42 @@ export function App() {
   }, [viewState.audioParameters]);
 
   useEffect(() => {
+    const adapter = hapticAdapterRef.current ?? new BrowserVibrationHapticAdapter();
+    hapticAdapterRef.current = adapter;
+
+    setHapticControlState((currentState) => {
+      if (!adapter.isSupported) {
+        return 'unsupported';
+      }
+
+      return currentState === 'unsupported' ? 'disabled' : currentState;
+    });
+
+    return () => {
+      adapter.stop();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!hapticsAreEnabled) {
+      return;
+    }
+
+    const playbackState = hapticAdapterRef.current?.applyPattern(viewState.hapticPattern);
+
+    if (playbackState === 'unsupported') {
+      setHapticControlState('unsupported');
+    }
+
+    if (playbackState === 'rejected') {
+      setHapticControlState('error');
+    }
+  }, [hapticsAreEnabled, viewState.hapticPattern]);
+
+  useEffect(() => {
     return () => {
       void audioEngineRef.current?.stop();
+      hapticAdapterRef.current?.stop();
     };
   }, []);
 
@@ -139,6 +183,25 @@ export function App() {
     const nextMuted = !isAudioMuted;
     setIsAudioMuted(nextMuted);
     audioEngineRef.current?.setMuted(nextMuted);
+  };
+
+  const toggleHaptics = () => {
+    const adapter = hapticAdapterRef.current ?? new BrowserVibrationHapticAdapter();
+    hapticAdapterRef.current = adapter;
+
+    if (!adapter.isSupported) {
+      setHapticControlState('unsupported');
+      return;
+    }
+
+    if (hapticsAreEnabled) {
+      const playbackState = adapter.stop();
+      setHapticControlState(playbackState === 'rejected' ? 'error' : 'disabled');
+      return;
+    }
+
+    const playbackState = adapter.applyPattern(viewState.hapticPattern);
+    setHapticControlState(playbackState === 'rejected' ? 'error' : 'enabled');
   };
 
   return (
@@ -247,12 +310,33 @@ export function App() {
               texture {viewState.audioParameters.textureGain.toFixed(3)}
             </p>
           </section>
+          {hapticsAreSupported && (
+            <section
+              className="haptic-controls"
+              aria-label="Haptic controls"
+              data-haptic-state={hapticControlState}
+              data-haptic-active={String(viewState.hapticPattern.enabled)}
+              data-haptic-pattern={serializeHapticPatternForDom(viewState.hapticPattern)}
+            >
+              <div className="transport-controls">
+                <button type="button" onClick={toggleHaptics}>
+                  {hapticsAreEnabled ? 'Disable haptics' : 'Enable haptics'}
+                </button>
+              </div>
+              <p aria-live="polite">
+                {hapticStatusLabel} / pulse{' '}
+                {formatMilliseconds(viewState.hapticPattern.totalDurationMs)}, intensity{' '}
+                {viewState.hapticPattern.intensity.toFixed(3)}
+              </p>
+            </section>
+          )}
         </section>
         <div className="signal-strip" aria-label="Score-driven output lanes">
           <span>{viewState.sourceLabel}</span>
           <span>{viewState.statusLabel}</span>
           <span>visual signature {viewState.visualParameters.signature}</span>
           <span>audio signature {viewState.audioParameters.signature}</span>
+          <span>haptic signature {viewState.hapticPattern.signature}</span>
         </div>
       </section>
     </main>
@@ -269,6 +353,10 @@ function formatElapsed(elapsedMs: number): string {
 
 function formatHertz(value: number): string {
   return `${value.toFixed(1)} Hz`;
+}
+
+function formatMilliseconds(value: number): string {
+  return `${String(value)} ms`;
 }
 
 function audioStatusText(state: AudioControlState, isMuted: boolean): string {
@@ -293,4 +381,29 @@ function audioStatusText(state: AudioControlState, isMuted: boolean): string {
   }
 
   return 'Audio silent until Start audio is pressed';
+}
+
+function hapticStatusText(
+  state: HapticControlState,
+  pattern: { readonly enabled: boolean },
+): string {
+  if (state === 'unsupported') {
+    return 'Haptics unsupported in this browser';
+  }
+
+  if (state === 'error') {
+    return 'Haptics rejected by this browser';
+  }
+
+  if (state === 'enabled') {
+    return pattern.enabled ? 'Haptics following score' : 'Haptics enabled, score is resting';
+  }
+
+  return 'Haptics silent until enabled';
+}
+
+function initialHapticControlState(): HapticControlState {
+  return typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function'
+    ? 'disabled'
+    : 'unsupported';
 }

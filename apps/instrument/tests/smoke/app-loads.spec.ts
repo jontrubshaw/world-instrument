@@ -1,6 +1,13 @@
 import { expect, test } from '@playwright/test';
 
 test('loads the instrument shell', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(Navigator.prototype, 'vibrate', {
+      configurable: true,
+      value: undefined,
+    });
+  });
+
   await page.goto('/');
 
   await expect(page).toHaveTitle('World Instrument');
@@ -70,6 +77,8 @@ test('loads the instrument shell', async ({ page }) => {
       textureGain: 0.003,
     });
 
+  await expect(page.getByRole('region', { name: 'Haptic controls' })).toHaveCount(0);
+
   await page.getByRole('button', { name: 'Step forward' }).click();
   await expect.poll(() => canvas.evaluate((element) => element.dataset.scoreFrameIndex)).toBe('1');
   await expect
@@ -103,4 +112,78 @@ test('loads the instrument shell', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible();
   await expect.poll(() => canvas.evaluate((element) => element.dataset.scoreFrameIndex)).toBe('0');
   await page.getByRole('button', { name: 'Pause' }).click();
+});
+
+test('enables browser vibration controls when haptics are supported', async ({ page }) => {
+  await page.addInitScript(() => {
+    const vibrationCalls: VibratePattern[] = [];
+
+    Object.defineProperty(window, '__worldInstrumentVibrationCalls', {
+      configurable: true,
+      value: vibrationCalls,
+    });
+    Object.defineProperty(Navigator.prototype, 'vibrate', {
+      configurable: true,
+      value(pattern: VibratePattern) {
+        vibrationCalls.push(pattern);
+
+        return true;
+      },
+    });
+  });
+
+  await page.goto('/');
+
+  const hapticControls = page.getByRole('region', { name: 'Haptic controls' });
+  await expect(hapticControls).toBeVisible();
+  await expect(hapticControls).toHaveAttribute('data-haptic-state', 'disabled');
+  await expect(hapticControls).toHaveAttribute('data-haptic-active', 'true');
+  await expect
+    .poll(() =>
+      hapticControls.evaluate((element) => {
+        const serializedPattern = element.dataset.hapticPattern;
+        const parsedPattern: unknown =
+          serializedPattern === undefined ? undefined : JSON.parse(serializedPattern);
+
+        return parsedPattern;
+      }),
+    )
+    .toEqual({
+      signature: '8f5c7a72',
+      enabled: true,
+      intensity: 0.083,
+      repetitions: 2,
+      pattern: [26, 105, 26],
+      totalDurationMs: 157,
+    });
+
+  await page.getByRole('button', { name: 'Enable haptics' }).click();
+  await expect(hapticControls).toHaveAttribute('data-haptic-state', 'enabled');
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (
+            window as Window & {
+              readonly __worldInstrumentVibrationCalls?: readonly VibratePattern[];
+            }
+          ).__worldInstrumentVibrationCalls ?? [],
+      ),
+    )
+    .toContainEqual([26, 105, 26]);
+
+  await page.getByRole('button', { name: 'Disable haptics' }).click();
+  await expect(hapticControls).toHaveAttribute('data-haptic-state', 'disabled');
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (
+            window as Window & {
+              readonly __worldInstrumentVibrationCalls?: readonly VibratePattern[];
+            }
+          ).__worldInstrumentVibrationCalls ?? [],
+      ),
+    )
+    .toContain(0);
 });
