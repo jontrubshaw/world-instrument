@@ -35,6 +35,6 @@ export async function loadFixtureWeatherInstrumentState(): Promise<WeatherInstru
 
   return {
     visualParameters: mapScoreOutputToVisualParameters(output),
-    sourceLabel: result.state.source.label,
+    sourceLabel: result.state.source.label ?? result.state.source.id,
   };
 }
