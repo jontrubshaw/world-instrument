@@ -28,11 +28,14 @@ describe('InstrumentAudioEngine', () => {
 
     const context = FakeAudioContext.instances[0];
 
-    expect(context).toBeDefined();
-    expect(context?.oscillators[1]?.connections).toEqual([context.gains[1]]);
-    expect(context?.gains[1]?.connections).toEqual([context.filter.frequency]);
-    expect(context?.filter.connections).toEqual([context.gains[2]]);
-    expect(context?.gains[1]?.gain.targets.at(-1)?.value).toBe(72);
+    if (context === undefined) {
+      throw new Error('Expected the audio engine to create an AudioContext.');
+    }
+
+    expect(context.oscillators[1]?.connections).toEqual([context.gains[1]]);
+    expect(context.gains[1]?.connections).toEqual([context.filter.frequency]);
+    expect(context.filter.connections).toEqual([context.gains[2]]);
+    expect(context.gains[1]?.gain.targets.at(-1)?.value).toBe(72);
   });
 });
 
