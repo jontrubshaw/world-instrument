@@ -73,13 +73,13 @@ test('replay controls step, play, restart, and scrub deterministically', async (
     .poll(() => canvas.evaluate((element) => element.dataset.scoreSignature))
     .toBe(secondSignature);
 
-  await page.getByRole('button', { name: 'Play' }).click();
-  await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible();
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Pause', exact: true })).toBeVisible();
   await expect
     .poll(() => canvas.evaluate((element) => element.dataset.weatherCondition))
     .toBe('storm');
-  await page.getByRole('button', { name: 'Pause' }).click();
-  await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();
+  await page.getByRole('button', { name: 'Pause', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeVisible();
 
   await page.getByLabel('Replay time').press('End');
   await expect
