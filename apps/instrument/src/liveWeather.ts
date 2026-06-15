@@ -123,7 +123,7 @@ function evaluateLiveWeatherInstrumentFrame(
   const instrumentFrame = evaluateWeatherInstrumentFrame({
     frameIndex: streamState.sequence,
     elapsedMs: 0,
-    capturedAt: streamState.receivedAt,
+    capturedAt: streamState.observedAt,
     streams: [streamState],
     seed: LIVE_WEATHER_SEED,
     sourceLabel: streamState.source.label ?? streamState.source.id,

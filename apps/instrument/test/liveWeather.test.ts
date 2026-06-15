@@ -48,6 +48,7 @@ describe('live weather instrument state', () => {
         },
       },
     });
+    expect(firstFrame.frame?.output.generatedAt).toBe('2026-06-14T21:00:00.000Z');
     expect(firstFrame.frame?.visualParameters.signature).toBe(
       repeatedFrame.frame?.visualParameters.signature,
     );
