@@ -52,7 +52,8 @@ This file is the durable project handoff. Keep it current whenever project conve
 - `JTW-46`: Refresh durable docs after live-weather merge and replay-capture release. Done; PR #38 merged.
 - `JTW-47`: Refresh durable docs after replay-capture merge and registry release. Done; PR #41 merged.
 - `JTW-48`: Enable Cursor Cloud Agent on-demand usage. Done.
-- `JTW-49`: Refresh durable docs after stream registry merge and Cursor env release. Current docs issue.
+- `JTW-49`: Refresh durable docs after stream registry merge and Cursor env release. Done; PR #43 merged.
+- `JTW-50`: Refresh durable docs after JTW-44 release. Current docs issue.
 
 ## Orchestration Rules
 
@@ -161,6 +162,8 @@ Cursor Cloud environment setup work is active in `JTW-44` on branch `cursor/play
 - PR #40 (`JTW-42 add replay capture export`) merged on 2026-06-15 after CI passed and the documented latest-head Codex review fallback window elapsed with all known replay timing, live stream/frame pairing, output consistency, and fallback capture feedback addressed. `JTW-42` was marked Done.
 - JTW-43 was released to Cursor on 2026-06-15 after PR #40 merged. Scope was the stream-source registry/extensibility boundary: source metadata, capabilities, fixture/live/replay support, score compatibility, normalized-stream mapping documentation, tests for registry behavior, and minimal non-weather fixture proof only if useful.
 - PR #42 (`JTW-43 define stream source registry`) merged on 2026-06-15 after CI passed, the branch was clean, and the documented latest-head Codex review fallback window elapsed with no review appearing. `JTW-43` was marked Done.
+- PR #43 (`JTW-49 refresh durable docs after registry merge`) merged on 2026-06-15 after CI passed; docs-only review exception applied. `JTW-49` was marked Done.
+- JTW-44 was released to Cursor on 2026-06-15 after PR #43 merged. Scope is Cursor Cloud setup only: install Playwright Chromium under Node 24 so `npm run test:smoke` works without manual browser installation, preserve `engine-strict`, and document durable setup conventions.
 
 ## Cursor Cloud specific instructions
 

@@ -79,8 +79,9 @@ The project should be built as a high-quality creative system, not an MVP. Deter
 
 ## Current Sequence
 
-1. Complete `JTW-49`, the documentation-only refresh after `JTW-43` merged.
-2. Release `JTW-44`, the next ready backlog item, to update Cursor Cloud setup so Playwright Chromium is installed before smoke tests.
-3. After `JTW-44` lands, evaluate the current app against the World Instrument intent and create the next scoped product/code issues from concrete gaps.
-4. Continue creating Linear issues for new problems, follow-on implementation work, refactor reviews, and human decisions as they arise.
-5. If the explicit backlog runs out again, evaluate the built app against the product vision and create new scoped Linear issues for the next concrete gaps rather than pausing the project.
+1. Monitor `JTW-44`, the active Cursor-delegated environment setup issue for installing Playwright Chromium in Cursor Cloud.
+2. Do not release another coding-heavy Cursor issue until `JTW-44` lands, is explicitly paused, or is confirmed blocked.
+3. Review the `JTW-44` PR when it appears, wait for automatic Codex review unless a documented exception applies, and merge only after checks and actionable feedback are handled.
+4. After `JTW-44` lands, evaluate the current app against the World Instrument intent and create the next scoped product/code issues from concrete gaps.
+5. Continue creating Linear issues for new problems, follow-on implementation work, refactor reviews, and human decisions as they arise.
+6. If the explicit backlog runs out again, evaluate the built app against the product vision and create new scoped Linear issues for the next concrete gaps rather than pausing the project.
