@@ -58,6 +58,7 @@ import {
   sourceCapabilitySummary,
   sourceDefinition,
   sourceHasCompatibleScore,
+  sourceScoreLabel,
   sourceSupportsMode,
   type SourceInstrumentFrameState,
   type SourceReadState,
@@ -201,6 +202,7 @@ export function App() {
         replayViewState,
         selectedSourceId,
         selectedSourceName: selectedSource.displayName,
+        activeOutput: viewState.output,
         sourceState,
         visibleFallbackActive,
       }),
@@ -213,6 +215,7 @@ export function App() {
       selectedSource.displayName,
       selectedSourceId,
       sourceState,
+      viewState.output,
       visibleFallbackActive,
     ],
   );
@@ -813,6 +816,8 @@ export function App() {
           data-provenance-mode={provenanceState.displayMode}
           data-provenance-status={provenanceState.status}
           data-provenance-source-id={provenanceState.sourceId}
+          data-provenance-score-id={provenanceState.scoreId}
+          data-provenance-score-version={provenanceState.scoreVersion}
           data-provenance-frame-age-ms={
             provenanceState.frameAgeMs === undefined
               ? 'unknown'
@@ -841,7 +846,9 @@ export function App() {
           <div className="capability-strip" aria-label="Source capabilities">
             <span>{sourceCapabilitySummary(selectedSource)}</span>
             <span>
-              {sourceHasCompatibleScore(selectedSourceId) ? 'shared score' : 'score pending'}
+              {sourceHasCompatibleScore(selectedSourceId)
+                ? sourceScoreLabel(selectedSourceId)
+                : 'score pending'}
             </span>
           </div>
 
@@ -884,6 +891,7 @@ export function App() {
             data-provenance-mode={provenanceState.displayMode}
             data-provenance-status={provenanceState.status}
             data-provenance-source-id={provenanceState.sourceId}
+            data-provenance-score-id={provenanceState.scoreId}
           >
             <p className="provenance-summary" role="status" aria-live="polite">
               {provenanceState.summary}
@@ -904,6 +912,10 @@ export function App() {
               <div>
                 <dt>Source</dt>
                 <dd>{provenanceState.sourceIdentity}</dd>
+              </div>
+              <div>
+                <dt>Score</dt>
+                <dd>{provenanceState.scoreLabel}</dd>
               </div>
             </dl>
           </section>
@@ -1129,6 +1141,9 @@ interface ProvenanceViewState {
   readonly status: string;
   readonly sourceId: string;
   readonly sourceIdentity: string;
+  readonly scoreId: string;
+  readonly scoreVersion: string;
+  readonly scoreLabel: string;
   readonly streamStatus: string;
   readonly frameAgeLabel: string;
   readonly frameAgeMs?: number;
@@ -1140,6 +1155,7 @@ interface ProvenanceViewState {
 function buildProvenanceViewState(options: {
   readonly activeArchive: ReplayArchive | undefined;
   readonly activeReplayFrame: ReplayFrame | undefined;
+  readonly activeOutput: ReplayFrame['output'];
   readonly instrumentMode: InstrumentMode;
   readonly now: Date;
   readonly replayViewState: ReplayInstrumentFrameState;
@@ -1174,6 +1190,17 @@ function buildProvenanceViewState(options: {
         ? 'unavailable'
         : options.sourceState.status;
   const streamStatus = stream?.status ?? options.sourceState.frame?.streamStatus ?? status;
+  const scoreId =
+    options.activeOutput?.scoreId ??
+    options.activeReplayFrame?.output?.scoreId ??
+    options.activeArchive?.snapshot.score.scoreId ??
+    'unknown-score';
+  const scoreVersion =
+    options.activeOutput?.scoreVersion ??
+    options.activeReplayFrame?.output?.scoreVersion ??
+    options.activeArchive?.snapshot.score.scoreVersion ??
+    'unknown-version';
+  const scoreLabel = `${scoreId} ${scoreVersion}`;
   const frameAge = formatFrameAge(observedAt, options.now);
   const captureSourceMode = replayDriven ? 'replay' : options.instrumentMode;
   const summary = provenanceSummaryText({
@@ -1193,6 +1220,10 @@ function buildProvenanceViewState(options: {
     sourceName: options.selectedSourceName,
     sourceIdentity,
     sourceId,
+    score: {
+      scoreId,
+      scoreVersion,
+    },
     ...(stream === undefined
       ? {}
       : {
@@ -1229,13 +1260,16 @@ function buildProvenanceViewState(options: {
     status,
     sourceId,
     sourceIdentity,
+    scoreId,
+    scoreVersion,
+    scoreLabel,
     streamStatus,
     frameAgeLabel: frameAge.label,
     ...(frameAge.ms === undefined ? {} : { frameAgeMs: frameAge.ms }),
     summary,
     ariaLabel: `${provenanceModeLabel(displayMode)} provenance: ${provenanceStatusLabel(
       status,
-    )}, ${sourceIdentity}, ${frameAge.label}.`,
+    )}, ${sourceIdentity}, ${scoreLabel}, ${frameAge.label}.`,
     captureMetadata,
   };
 }
