@@ -58,7 +58,7 @@ test('loads the instrument shell', async ({ page }) => {
   await expect(streamControls).toBeVisible();
   await expect(streamControls).toHaveAttribute('data-instrument-mode', 'live');
   await expect(streamControls).toHaveAttribute('data-live-state', 'ready');
-  await expect(streamControls.getByRole('status')).toHaveText(
+  await expect(streamControls.locator('.live-status')).toHaveText(
     'Live weather is driving the instrument.',
   );
   await expect
