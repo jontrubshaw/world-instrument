@@ -180,7 +180,7 @@ test('loads the instrument shell', async ({ page }) => {
     )
     .toEqual([[59, 131, 59]]);
 
-  await page.getByRole('button', { name: 'Play' }).click();
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible();
   await expect.poll(() => canvas.evaluate((element) => element.dataset.scoreFrameIndex)).toBe('0');
   await page.getByRole('button', { name: 'Pause' }).click();
@@ -190,7 +190,7 @@ test('loads the instrument shell', async ({ page }) => {
   await expect(inputModeControls).toHaveAttribute('data-input-mode', 'replay');
   await expect(liveControls).toHaveAttribute('data-live-status', 'idle');
 
-  await page.getByRole('button', { name: 'Live weather' }).click();
+  await page.getByRole('button', { name: 'Live weather', exact: true }).click();
   await expect(liveControls).toHaveAttribute('data-live-status', 'ready');
   await expect(inputModeControls).toHaveAttribute('data-input-mode', 'live');
   await expect.poll(() => liveRequestUrl).not.toBeUndefined();

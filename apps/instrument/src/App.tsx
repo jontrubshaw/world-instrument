@@ -471,7 +471,7 @@ function formatHertz(value: number): string {
 }
 
 function browserIsOffline(): boolean {
-  return typeof navigator !== 'undefined' && navigator.onLine === false;
+  return typeof navigator !== 'undefined' && !navigator.onLine;
 }
 
 function liveWeatherStatusText(state: LiveWeatherControlState): string {

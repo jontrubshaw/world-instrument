@@ -135,7 +135,7 @@ function liveStatusLabel(
   return `${condition} live weather current`;
 }
 
-function adapterErrorMessage(result: StreamAdapterResult<unknown>): string {
+function adapterErrorMessage(result: StreamAdapterResult): string {
   const raw = result.raw;
 
   if (isWeatherAdapterFailure(raw)) {
