@@ -19,8 +19,10 @@ test('loads the instrument shell', async ({ page }) => {
     .poll(() =>
       canvas.evaluate((element) => {
         const serializedParameters = element.dataset.visualParameters;
+        const parsedParameters: unknown =
+          serializedParameters === undefined ? undefined : JSON.parse(serializedParameters);
 
-        return serializedParameters === undefined ? undefined : JSON.parse(serializedParameters);
+        return parsedParameters;
       }),
     )
     .toEqual({

@@ -80,7 +80,7 @@ export function mapScoreOutputToVisualParameters(output: ScoreOutput): Instrumen
     frameIndex: output.frameIndex,
     generatedAt: output.generatedAt,
     condition: metadataString(output.metadata?.condition, 'unknown'),
-    signature: traceValue(output, 'inputHash') ?? `${output.scoreId}:${output.frameIndex}`,
+    signature: traceValue(output, 'inputHash') ?? `${output.scoreId}:${String(output.frameIndex)}`,
     backgroundColor: paletteColor(visual, 0, DEFAULT_VISUAL_PARAMETERS.backgroundColor),
     bodyColor: paletteColor(visual, 1, DEFAULT_VISUAL_PARAMETERS.bodyColor),
     accentColor: paletteColor(visual, 2, DEFAULT_VISUAL_PARAMETERS.accentColor),
