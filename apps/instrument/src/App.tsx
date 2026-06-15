@@ -1,5 +1,7 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 
+import { InstrumentAudioEngine } from './audioEngine.ts';
+import { serializeAudioParametersForDom } from './audioParameters.ts';
 import { InstrumentStage } from './components/InstrumentStage.tsx';
 import {
   REPLAY_PLAYBACK_INTERVAL_MS,
@@ -7,11 +9,22 @@ import {
   loadReplayArchives,
 } from './replayArchive.ts';
 
+type AudioControlState =
+  | AudioContextState
+  | 'interrupted'
+  | 'stopped'
+  | 'starting'
+  | 'unsupported'
+  | 'error';
+
 export function App() {
   const [archives] = useState(() => loadReplayArchives());
   const [archiveId, setArchiveId] = useState(archives[0]?.id ?? '');
   const [framePosition, setFramePosition] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [audioControlState, setAudioControlState] = useState<AudioControlState>('stopped');
+  const [isAudioMuted, setIsAudioMuted] = useState(false);
+  const audioEngineRef = useRef<InstrumentAudioEngine | undefined>(undefined);
   const activeArchive = archives.find((archive) => archive.id === archiveId) ?? archives[0];
 
   const viewState = useMemo(() => {
@@ -26,6 +39,11 @@ export function App() {
     '--stage-glow-color': viewState.visualParameters.accentColor,
     '--stage-glow-opacity': String(viewState.visualParameters.glowOpacity),
   } as CSSProperties;
+  const audioIsActive =
+    audioControlState === 'running' ||
+    audioControlState === 'suspended' ||
+    audioControlState === 'interrupted';
+  const audioStatusLabel = audioStatusText(audioControlState, isAudioMuted);
 
   useEffect(() => {
     if (!isPlaying) {
@@ -48,6 +66,16 @@ export function App() {
       window.clearInterval(intervalId);
     };
   }, [isPlaying, lastFramePosition]);
+
+  useEffect(() => {
+    audioEngineRef.current?.applyParameters(viewState.audioParameters);
+  }, [viewState.audioParameters]);
+
+  useEffect(() => {
+    return () => {
+      void audioEngineRef.current?.stop();
+    };
+  }, []);
 
   const selectArchive = (nextArchiveId: string) => {
     setArchiveId(nextArchiveId);
@@ -83,6 +111,34 @@ export function App() {
   const scrubReplay = (nextPosition: number) => {
     setIsPlaying(false);
     setFramePosition(nextPosition);
+  };
+
+  const startAudio = async () => {
+    setAudioControlState('starting');
+
+    try {
+      const engine = audioEngineRef.current ?? new InstrumentAudioEngine();
+      audioEngineRef.current = engine;
+      engine.setMuted(isAudioMuted);
+      const nextState = await engine.start(viewState.audioParameters);
+      setAudioControlState(nextState);
+    } catch {
+      setAudioControlState('error');
+    }
+  };
+
+  const stopAudio = async () => {
+    try {
+      await audioEngineRef.current?.stop();
+    } finally {
+      setAudioControlState('stopped');
+    }
+  };
+
+  const toggleAudioMute = () => {
+    const nextMuted = !isAudioMuted;
+    setIsAudioMuted(nextMuted);
+    audioEngineRef.current?.setMuted(nextMuted);
   };
 
   return (
@@ -161,11 +217,42 @@ export function App() {
               {formatElapsed(viewState.elapsedMs)} / {formatElapsed(viewState.durationMs)}
             </output>
           </label>
+
+          <section
+            className="audio-controls"
+            aria-label="Audio controls"
+            data-audio-state={audioControlState}
+            data-audio-muted={String(isAudioMuted)}
+            data-audio-parameters={serializeAudioParametersForDom(viewState.audioParameters)}
+          >
+            <div className="transport-controls">
+              <button
+                type="button"
+                onClick={() => {
+                  void startAudio();
+                }}
+                disabled={audioControlState === 'starting' || audioIsActive}
+              >
+                Start audio
+              </button>
+              <button type="button" onClick={() => void stopAudio()} disabled={!audioIsActive}>
+                Stop audio
+              </button>
+              <button type="button" onClick={toggleAudioMute} disabled={!audioIsActive}>
+                {isAudioMuted ? 'Unmute audio' : 'Mute audio'}
+              </button>
+            </div>
+            <p aria-live="polite">
+              {audioStatusLabel} / tone {formatHertz(viewState.audioParameters.carrierFrequencyHz)},
+              texture {viewState.audioParameters.textureGain.toFixed(3)}
+            </p>
+          </section>
         </section>
         <div className="signal-strip" aria-label="Score-driven output lanes">
           <span>{viewState.sourceLabel}</span>
           <span>{viewState.statusLabel}</span>
           <span>visual signature {viewState.visualParameters.signature}</span>
+          <span>audio signature {viewState.audioParameters.signature}</span>
         </div>
       </section>
     </main>
@@ -178,4 +265,32 @@ function formatElapsed(elapsedMs: number): string {
   const seconds = totalSeconds % 60;
 
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
+function formatHertz(value: number): string {
+  return `${value.toFixed(1)} Hz`;
+}
+
+function audioStatusText(state: AudioControlState, isMuted: boolean): string {
+  if (state === 'unsupported') {
+    return 'Audio unsupported in this browser';
+  }
+
+  if (state === 'error') {
+    return 'Audio could not start';
+  }
+
+  if (state === 'starting') {
+    return 'Audio starting after activation';
+  }
+
+  if (state === 'running') {
+    return isMuted ? 'Audio muted' : 'Audio sounding';
+  }
+
+  if (state === 'suspended' || state === 'interrupted') {
+    return 'Audio waiting for browser resume';
+  }
+
+  return 'Audio silent until Start audio is pressed';
 }

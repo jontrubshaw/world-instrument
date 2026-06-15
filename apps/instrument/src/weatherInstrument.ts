@@ -1,8 +1,10 @@
 import { evaluateReplayFrame, loadReplayArchives } from './replayArchive.ts';
+import type { InstrumentAudioParameters } from './audioParameters.ts';
 import type { InstrumentVisualParameters } from './visualParameters.ts';
 
 export interface WeatherInstrumentState {
   readonly visualParameters: InstrumentVisualParameters;
+  readonly audioParameters: InstrumentAudioParameters;
   readonly sourceLabel: string;
 }
 
