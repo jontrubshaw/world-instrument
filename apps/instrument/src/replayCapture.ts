@@ -9,6 +9,8 @@ import {
 } from '@world-instrument/core';
 import { weatherScoreV1 } from '@world-instrument/scores';
 
+import { evaluateWeatherInstrumentFrame } from './weatherInstrument.ts';
+
 export type ReplayCaptureSourceMode = 'live' | 'replay';
 
 export interface ReplayCaptureFrameInput {
@@ -100,10 +102,25 @@ export function prepareFrameForCaptureClock(
     return frame;
   }
 
+  const elapsedMs = elapsedFromSessionStart(session.startedAt, capturedAt);
+  const rescoredFrame = evaluateWeatherInstrumentFrame({
+    frameIndex: frame.frameIndex,
+    elapsedMs,
+    capturedAt,
+    streams: frame.streams,
+    seed: frame.seed,
+    sourceLabel: frame.sourceLabel,
+    statusLabel: frame.statusLabel,
+  });
+
   return {
     ...frame,
     capturedAt,
-    elapsedMs: elapsedFromSessionStart(session.startedAt, capturedAt),
+    elapsedMs,
+    output: rescoredFrame.output,
+    visualSignature: rescoredFrame.visualParameters.signature,
+    audioSignature: rescoredFrame.audioParameters.signature,
+    hapticSignature: rescoredFrame.hapticPattern.signature,
   };
 }
 

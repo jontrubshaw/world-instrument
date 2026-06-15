@@ -186,7 +186,47 @@ describe('instrument replay capture', () => {
       capturedAt: '2026-06-14T21:05:12.000Z',
       elapsedMs: 12000,
     });
+    expect(frame?.output.generatedAt).toBe('2026-06-14T21:05:12.000Z');
     expect(firstStream?.observedAt).toBe('2026-06-14T20:00:00.000Z');
+  });
+
+  it('rescores live frames after applying the capture clock', () => {
+    const session = createReplayCaptureSession({
+      sessionId: 'captured-live-rescore-regression',
+      title: 'Captured live rescore regression',
+      startedAt: '2026-06-14T21:05:00.000Z',
+    });
+    const replayInput = captureInputForReplayFrame(firstReplayArchive(), 0);
+    const preparedFrame = prepareFrameForCaptureClock(
+      session,
+      {
+        ...replayInput,
+        sourceMode: 'live',
+        capturedAt: '2026-06-14T20:00:00.000Z',
+        streams: replayInput.streams.map((stream) => ({
+          ...stream,
+          observedAt: '2026-06-14T20:00:00.000Z',
+        })),
+      },
+      '2026-06-14T21:05:12.000Z',
+    );
+    const capturedSession = appendCapturedReplayFrame(session, preparedFrame);
+    const snapshot = buildReplaySnapshot(capturedSession, {
+      createdAt: '2026-06-14T21:06:00.000Z',
+    });
+    const capturedArchive: ReplayArchive = {
+      id: 'captured-live-rescore-regression',
+      label: 'Captured live rescore regression',
+      snapshot,
+    };
+
+    expect(preparedFrame.output.generatedAt).toBe(preparedFrame.capturedAt);
+    expect(parseReplaySnapshot(snapshot).frames[0]?.output?.generatedAt).toBe(
+      '2026-06-14T21:05:12.000Z',
+    );
+    expect(createReplayScoreSequence(capturedArchive)).toEqual(
+      snapshot.frames.map((frame) => frame.output),
+    );
   });
 });
 
