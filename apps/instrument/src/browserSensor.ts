@@ -77,9 +77,9 @@ export function updateBrowserSensorPointer(
     buttons: event.buttons,
     active: event.buttons > 0 || event.pointerType === 'touch' || event.pointerType === 'pen',
   };
-  const capabilities = {
+  const capabilities: BrowserSensorCapabilities = {
     ...current.snapshot.capabilities,
-    pointer: 'available' as const,
+    pointer: 'available',
     fallback: hasDeviceInput(current.snapshot) ? 'none' : 'pointer',
   };
 
@@ -102,9 +102,11 @@ export function updateBrowserSensorMotion(
   event: DeviceMotionEvent,
   now = new Date(),
 ): BrowserSensorRuntimeState {
+  const acceleration = tripleFromDeviceMotionAcceleration(event.acceleration);
+  const rotationRate = tripleFromDeviceRotationRate(event.rotationRate);
   const motion: BrowserSensorMotionPayload = {
-    acceleration: tripleFromDeviceMotionAcceleration(event.acceleration),
-    rotationRate: tripleFromDeviceRotationRate(event.rotationRate),
+    ...(acceleration === undefined ? {} : { acceleration }),
+    ...(rotationRate === undefined ? {} : { rotationRate }),
     ...(typeof event.interval === 'number' && Number.isFinite(event.interval)
       ? { intervalMs: round(event.interval) }
       : {}),
@@ -135,8 +137,9 @@ export function updateBrowserSensorOrientation(
   event: DeviceOrientationEvent,
   now = new Date(),
 ): BrowserSensorRuntimeState {
+  const angles = tripleFromDeviceOrientation(event);
   const orientation: BrowserSensorOrientationPayload = {
-    angles: tripleFromDeviceOrientation(event),
+    ...(angles === undefined ? {} : { angles }),
     absolute: event.absolute,
   };
   const capabilities = permissionedCapabilities(current.snapshot.capabilities, {

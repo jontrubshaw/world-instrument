@@ -118,17 +118,23 @@ describe('instrument source runtime', () => {
   });
 
   it('routes live browser sensor snapshots and reports pointer fallback capability state', async () => {
+    const sensorSnapshot = createDeterministicBrowserSensorSnapshot({
+      observedAt: '2026-06-15T12:00:00.000Z',
+      receivedAt: '2026-06-15T12:00:00.200Z',
+    });
+
     const frame = await readSourceFrame({
       sourceId: BROWSER_SENSOR_STREAM_SOURCE_ID,
       sourceMode: 'live',
       now: new Date('2026-06-15T12:00:01.000Z'),
       browserSensorSnapshot: {
-        ...createDeterministicBrowserSensorSnapshot({
-          observedAt: '2026-06-15T12:00:00.000Z',
-          receivedAt: '2026-06-15T12:00:00.200Z',
-        }),
-        motion: undefined,
-        orientation: undefined,
+        provider: sensorSnapshot.provider,
+        observedAt: sensorSnapshot.observedAt,
+        ...(sensorSnapshot.receivedAt === undefined
+          ? {}
+          : { receivedAt: sensorSnapshot.receivedAt }),
+        device: sensorSnapshot.device,
+        ...(sensorSnapshot.pointer === undefined ? {} : { pointer: sensorSnapshot.pointer }),
         capabilities: {
           pointer: 'available',
           deviceMotion: 'permission-required',

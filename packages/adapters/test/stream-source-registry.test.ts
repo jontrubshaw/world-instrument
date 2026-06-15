@@ -206,9 +206,11 @@ describe('stream source registry', () => {
 
   it('marks pointer-only browser sensor frames as degraded fallback input', async () => {
     const state = normalizeBrowserSensorPayload({
-      ...sensorFixture,
-      motion: undefined,
-      orientation: undefined,
+      provider: sensorFixture.provider,
+      observedAt: sensorFixture.observedAt,
+      ...(sensorFixture.receivedAt === undefined ? {} : { receivedAt: sensorFixture.receivedAt }),
+      device: sensorFixture.device,
+      ...(sensorFixture.pointer === undefined ? {} : { pointer: sensorFixture.pointer }),
       capabilities: {
         pointer: 'available',
         deviceMotion: 'permission-required',
