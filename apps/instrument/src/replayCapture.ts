@@ -243,7 +243,7 @@ function captureProvenanceKey(provenance: JsonObject | undefined): string {
 
   const stableProvenance = Object.fromEntries(
     Object.entries(provenance).filter(([key]) => key !== 'frameAgeMs'),
-  ) as JsonObject;
+  );
 
   return stableStringify(stableProvenance);
 }
