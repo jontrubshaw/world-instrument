@@ -214,6 +214,98 @@ describe('weather adapter', () => {
     expect(JSON.stringify(result.state)).not.toContain('test-api-key');
   });
 
+  it('omits provider credentials when live Open-Meteo reads do not require them', async () => {
+    let requestedUrl: string | undefined;
+    const adapter = new WeatherAdapter({
+      mode: 'live',
+      endpointUrl: 'https://api.open-meteo.com/v1/forecast',
+      receivedAt: '2026-06-14T21:05:00.000Z',
+      location: {
+        id: 'london-uk',
+        label: 'London, UK',
+        latitude: 51.5072,
+        longitude: -0.1276,
+      },
+      fetchWeather: (url) => {
+        requestedUrl = url;
+
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () =>
+            Promise.resolve({
+              current: {
+                time: '2026-06-14T21:00',
+                temperature_2m: 18.4,
+                apparent_temperature: 17.9,
+                relative_humidity_2m: 72,
+                precipitation: 0.1,
+                rain: 0,
+                weather_code: 3,
+                cloud_cover: 86,
+                surface_pressure: 1012.4,
+                wind_speed_10m: 6.8,
+                wind_direction_10m: 248,
+              },
+            }),
+        });
+      },
+    });
+
+    const result = await adapter.read();
+
+    expect(requestedUrl).toBeDefined();
+    expect(new URL(requestedUrl ?? '').searchParams.has('apikey')).toBe(false);
+    expect(result.state).toMatchObject({
+      status: 'ok',
+      metadata: {
+        provider: 'open-meteo',
+        mode: 'live',
+      },
+    });
+  });
+
+  it('ignores default environment credentials when live reads do not require them', async () => {
+    const previousValue = process.env.WORLD_INSTRUMENT_WEATHER_API_KEY;
+    process.env.WORLD_INSTRUMENT_WEATHER_API_KEY = 'env-secret-that-should-not-leak';
+    let requestedUrl: string | undefined;
+
+    try {
+      const adapter = new WeatherAdapter({
+        mode: 'live',
+        endpointUrl: 'https://api.open-meteo.com/v1/forecast',
+        receivedAt: '2026-06-14T21:05:00.000Z',
+        location: {
+          id: 'london-uk',
+          label: 'London, UK',
+          latitude: 51.5072,
+          longitude: -0.1276,
+        },
+        fetchWeather: (url) => {
+          requestedUrl = url;
+
+          return Promise.resolve({
+            ok: false,
+            status: 503,
+            json: () => Promise.resolve({}),
+          });
+        },
+      });
+
+      await adapter.read();
+
+      expect(requestedUrl).toBeDefined();
+      expect(new URL(requestedUrl ?? '').searchParams.has('apikey')).toBe(false);
+      expect(requestedUrl).not.toContain('env-secret-that-should-not-leak');
+    } finally {
+      if (previousValue === undefined) {
+        delete process.env.WORLD_INSTRUMENT_WEATHER_API_KEY;
+      } else {
+        process.env.WORLD_INSTRUMENT_WEATHER_API_KEY = previousValue;
+      }
+    }
+  });
+
   it('returns a clear error stream state when live credentials are missing', async () => {
     const envName = 'WORLD_INSTRUMENT_TEST_WEATHER_API_KEY';
     const previousValue = process.env.WORLD_INSTRUMENT_TEST_WEATHER_API_KEY;
@@ -224,6 +316,7 @@ describe('weather adapter', () => {
         mode: 'live',
         endpointUrl: 'https://weather.example.test/current',
         credentialEnvName: envName,
+        requiresCredential: true,
         receivedAt: '2026-06-14T21:05:00.000Z',
         location: {
           id: 'london-uk',
@@ -272,6 +365,7 @@ describe('weather adapter', () => {
       const adapter = new WeatherAdapter({
         mode: 'live',
         endpointUrl: 'https://weather.example.test/current',
+        requiresCredential: true,
         receivedAt: '2026-06-14T21:05:00.000Z',
         location: {
           id: 'london-uk',
