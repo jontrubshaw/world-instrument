@@ -1,7 +1,4 @@
-import {
-  enforceHapticSafety,
-  type InstrumentHapticPattern,
-} from './hapticParameters.ts';
+import { enforceHapticSafety, type InstrumentHapticPattern } from './hapticParameters.ts';
 
 export type HapticCapabilityState = 'supported' | 'unsupported';
 export type HapticPlaybackState = 'played' | 'disabled' | 'blocked' | 'unsupported';

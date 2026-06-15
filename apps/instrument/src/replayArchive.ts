@@ -11,10 +11,7 @@ import {
   mapScoreOutputToAudioParameters,
   type InstrumentAudioParameters,
 } from './audioParameters.ts';
-import {
-  mapScoreOutputToHapticPattern,
-  type InstrumentHapticPattern,
-} from './hapticParameters.ts';
+import { mapScoreOutputToHapticPattern, type InstrumentHapticPattern } from './hapticParameters.ts';
 import recordedWeatherReplay from './replayArchives/weather-london.v1.replay.json';
 import {
   mapScoreOutputToVisualParameters,

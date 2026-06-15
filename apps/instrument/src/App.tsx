@@ -3,10 +3,7 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { InstrumentAudioEngine } from './audioEngine.ts';
 import { serializeAudioParametersForDom } from './audioParameters.ts';
 import { InstrumentStage } from './components/InstrumentStage.tsx';
-import {
-  BrowserVibrationHapticEngine,
-  type HapticPlaybackState,
-} from './hapticEngine.ts';
+import { BrowserVibrationHapticEngine, type HapticPlaybackState } from './hapticEngine.ts';
 import { serializeHapticPatternForDom } from './hapticParameters.ts';
 import {
   REPLAY_PLAYBACK_INTERVAL_MS,
@@ -410,5 +407,7 @@ function hapticStatusText(
     return 'Haptics available, disabled';
   }
 
-  return currentPatternEnabled ? 'Haptics following score' : 'Haptics enabled, current frame silent';
+  return currentPatternEnabled
+    ? 'Haptics following score'
+    : 'Haptics enabled, current frame silent';
 }
