@@ -1136,8 +1136,8 @@ interface ProvenanceViewState {
 }
 
 function buildProvenanceViewState(options: {
-  readonly activeArchive?: ReplayArchive;
-  readonly activeReplayFrame?: ReplayFrame;
+  readonly activeArchive: ReplayArchive | undefined;
+  readonly activeReplayFrame: ReplayFrame | undefined;
   readonly instrumentMode: InstrumentMode;
   readonly now: Date;
   readonly replayViewState: ReplayInstrumentFrameState;
@@ -1151,7 +1151,9 @@ function buildProvenanceViewState(options: {
       ? 'replay-fallback'
       : options.instrumentMode;
   const replayDriven = displayMode === 'replay' || displayMode === 'replay-fallback';
-  const stream = replayDriven ? options.activeReplayFrame?.streams[0] : options.sourceState.streamState;
+  const stream = replayDriven
+    ? options.activeReplayFrame?.streams[0]
+    : options.sourceState.streamState;
   const observedAt =
     stream?.observedAt ??
     (options.instrumentMode === 'replay' ? options.activeReplayFrame?.capturedAt : undefined) ??
@@ -1237,7 +1239,7 @@ function buildProvenanceViewState(options: {
 }
 
 function provenanceSummaryText(options: {
-  readonly archiveLabel?: string;
+  readonly archiveLabel: string | undefined;
   readonly displayMode: ProvenanceDisplayMode;
   readonly frameAgeLabel: string;
   readonly sourceIdentity: string;
@@ -1264,11 +1266,16 @@ function provenanceSummaryText(options: {
 }
 
 function provenanceModeLabel(mode: ProvenanceDisplayMode): string {
-  if (mode === 'replay-fallback') {
-    return 'Replay fallback';
+  switch (mode) {
+    case 'fixture':
+      return 'Fixture';
+    case 'live':
+      return 'Live';
+    case 'replay':
+      return 'Replay';
+    case 'replay-fallback':
+      return 'Replay fallback';
   }
-
-  return mode[0].toUpperCase() + mode.slice(1);
 }
 
 function provenanceStatusLabel(status: string): string {
