@@ -12,6 +12,8 @@ interface BrowserVibrationNavigator {
   readonly vibrate?: Navigator['vibrate'];
 }
 
+type SafeVibrationPattern = number | Iterable<number>;
+
 export class BrowserVibrationHapticAdapter implements HapticOutputAdapter {
   constructor(private readonly browserNavigator: BrowserVibrationNavigator = navigator) {}
 
@@ -30,7 +32,9 @@ export class BrowserVibrationHapticAdapter implements HapticOutputAdapter {
       return this.stop();
     }
 
-    return vibrate(pattern.pattern) ? 'active' : 'rejected';
+    return invokeBrowserVibration(vibrate, this.browserNavigator, pattern.pattern)
+      ? 'active'
+      : 'rejected';
   }
 
   stop(): HapticPlaybackState {
@@ -40,6 +44,14 @@ export class BrowserVibrationHapticAdapter implements HapticOutputAdapter {
       return 'unsupported';
     }
 
-    return vibrate(0) ? 'idle' : 'rejected';
+    return invokeBrowserVibration(vibrate, this.browserNavigator, 0) ? 'idle' : 'rejected';
   }
+}
+
+function invokeBrowserVibration(
+  vibrate: Navigator['vibrate'],
+  browserNavigator: BrowserVibrationNavigator,
+  pattern: SafeVibrationPattern,
+): boolean {
+  return Reflect.apply(vibrate, browserNavigator, [pattern]) === true;
 }
