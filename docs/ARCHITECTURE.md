@@ -33,7 +33,7 @@ World Instrument is organized as a deterministic translation pipeline.
 ## Output Modalities
 
 - Visual: WebGL-first browser rendering.
-- Sound: Web Audio API, started only after user activation.
+- Sound: deterministic score-to-audio parameter plans drive a small Web Audio graph. The browser `AudioContext` is not constructed or resumed until the user activates the Start Audio control, preserving autoplay compliance while replay frames continue to advance silently.
 - Haptics: Browser vibration where supported and future hardware adapters.
 
 ## Non-Goals

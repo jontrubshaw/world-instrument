@@ -153,6 +153,33 @@ h1 {
   box-shadow: inset 0 0 2rem rgba(110, 231, 249, 0.035);
 }
 
+.audio-controls {
+  display: grid;
+  gap: 0.65rem;
+  max-width: 34rem;
+  padding: 0.72rem 0.8rem;
+  color: rgba(248, 251, 255, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1.05rem;
+  background: rgba(5, 7, 22, 0.42);
+}
+
+.audio-controls__header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.audio-controls__header output {
+  color: #8eeaff;
+}
+
 .archive-picker,
 .time-scrubber {
   display: grid;
@@ -202,10 +229,18 @@ h1 {
 }
 
 .transport-controls button:focus-visible,
+.audio-controls button:focus-visible,
 .archive-picker select:focus-visible,
 .time-scrubber input:focus-visible {
   outline: 2px solid #8eeaff;
   outline-offset: 3px;
+}
+
+.audio-description {
+  margin: 0;
+  color: rgba(248, 251, 255, 0.56);
+  font-size: 0.76rem;
+  line-height: 1.45;
 }
 
 .time-scrubber input {

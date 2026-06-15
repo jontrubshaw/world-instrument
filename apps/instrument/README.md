@@ -13,7 +13,7 @@ Browser-based live instrument shell for World Instrument.
 
 - Use Vite + React + TypeScript.
 - Use Three.js as the initial WebGL rendering path.
-- Web Audio should require explicit user activation before sound starts.
+- Web Audio is created only from the `Start audio` control. Browsers require this explicit user gesture before an `AudioContext` can resume, so replay and visual state can run silently until the user opts in.
 - Haptic output must be constrained by safety limits defined in shared core.
 
 ## Local Development

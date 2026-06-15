@@ -5,7 +5,7 @@ test('loads the instrument shell', async ({ page }) => {
 
   await expect(page).toHaveTitle('World Instrument');
   await expect(
-    page.getByRole('heading', { name: 'A weather score tuned into light.' }),
+    page.getByRole('heading', { name: 'A weather score tuned into light and tone.' }),
   ).toBeVisible();
 
   const canvas = page.getByTestId('instrument-canvas');
@@ -47,11 +47,60 @@ test('loads the instrument shell', async ({ page }) => {
   await expect(page.getByLabel('Archive')).toHaveValue('weather-london-archive');
   await expect(page.getByLabel('Replay time')).toHaveValue('0');
 
+  const audioControls = page.getByRole('region', { name: 'Audio controls' });
+  await expect(audioControls).toBeVisible();
+  await expect(audioControls.getByText('Audio standing by')).toBeVisible();
+  await expect
+    .poll(() => audioControls.evaluate((element) => element.dataset.audioStatus))
+    .toBe('idle');
+  await expect
+    .poll(() =>
+      audioControls.evaluate((element) => {
+        const serializedPlan = element.dataset.audioPlan;
+        const parsedPlan: unknown =
+          serializedPlan === undefined ? undefined : JSON.parse(serializedPlan);
+
+        return parsedPlan;
+      }),
+    )
+    .toEqual({
+      signature: '8f5c7a72',
+      frameIndex: 0,
+      carrierFrequencyHz: 211.562,
+      filterFrequencyHz: 650.68,
+      modulationRateHz: 1.966,
+      enabled: true,
+    });
+
+  await page.getByRole('button', { name: 'Start audio' }).click();
+  await expect(audioControls.getByText('Audio running')).toBeVisible();
+  await page.getByRole('button', { name: 'Mute' }).click();
+  await expect(audioControls.getByText('Audio muted')).toBeVisible();
+  await expect
+    .poll(() => audioControls.evaluate((element) => element.dataset.audioMuted))
+    .toBe('true');
+  await page.getByRole('button', { name: 'Unmute' }).click();
+  await expect(audioControls.getByText('Audio running')).toBeVisible();
+
   await page.getByRole('button', { name: 'Step forward' }).click();
   await expect.poll(() => canvas.evaluate((element) => element.dataset.scoreFrameIndex)).toBe('1');
   await expect
     .poll(() => canvas.evaluate((element) => element.dataset.weatherCondition))
     .toBe('clear');
+  await expect
+    .poll(() =>
+      audioControls.evaluate((element) => {
+        const serializedPlan = element.dataset.audioPlan;
+        const parsedPlan: unknown =
+          serializedPlan === undefined ? undefined : JSON.parse(serializedPlan);
+
+        return parsedPlan;
+      }),
+    )
+    .toMatchObject({
+      frameIndex: 1,
+      signature: 'a64de263',
+    });
 
   await page.getByRole('button', { name: 'Restart' }).click();
   await expect.poll(() => canvas.evaluate((element) => element.dataset.scoreFrameIndex)).toBe('0');
@@ -71,4 +120,6 @@ test('loads the instrument shell', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible();
   await expect.poll(() => canvas.evaluate((element) => element.dataset.scoreFrameIndex)).toBe('0');
   await page.getByRole('button', { name: 'Pause' }).click();
+  await page.getByRole('button', { name: 'Stop' }).click();
+  await expect(audioControls.getByText('Audio stopped')).toBeVisible();
 });

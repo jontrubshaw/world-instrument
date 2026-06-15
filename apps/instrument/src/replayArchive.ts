@@ -8,6 +8,7 @@ import {
 import { weatherScoreV1 } from '@world-instrument/scores';
 
 import recordedWeatherReplay from './replayArchives/weather-london.v1.replay.json';
+import { mapScoreOutputToAudioPlan, type InstrumentAudioPlan } from './audioParameters.ts';
 import {
   mapScoreOutputToVisualParameters,
   type InstrumentVisualParameters,
@@ -32,6 +33,7 @@ export interface ReplayInstrumentFrameState {
   readonly statusLabel: string;
   readonly output: ScoreOutput;
   readonly visualParameters: InstrumentVisualParameters;
+  readonly audioPlan: InstrumentAudioPlan;
 }
 
 export function loadReplayArchives(): readonly ReplayArchive[] {
@@ -54,6 +56,7 @@ export function evaluateReplayFrame(
   const frame = frameAt(archive.snapshot, framePosition);
   const output = evaluateWeatherScore(frame);
   const visualParameters = mapScoreOutputToVisualParameters(output);
+  const audioPlan = mapScoreOutputToAudioPlan(output);
   const frameCount = archive.snapshot.frames.length;
   const durationMs = archive.snapshot.frames.at(-1)?.elapsedMs ?? frame.elapsedMs;
 
@@ -70,6 +73,7 @@ export function evaluateReplayFrame(
     )}`,
     output,
     visualParameters,
+    audioPlan,
   };
 }
 
