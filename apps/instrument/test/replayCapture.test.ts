@@ -141,7 +141,7 @@ describe('instrument replay capture', () => {
     );
   });
 
-  it('uses capture-clock elapsed time for live frames with older observations', () => {
+  it('uses capture-clock elapsed times for live frames with older observations', () => {
     const session = createReplayCaptureSession({
       sessionId: 'captured-live-clock-regression',
       title: 'Captured live clock regression',
@@ -157,15 +157,31 @@ describe('instrument replay capture', () => {
         observedAt: '2026-06-14T20:00:00.000Z',
       })),
     };
-    const clockedInput = prepareFrameForCaptureClock(
+    const capturedSession = [
+      prepareFrameForCaptureClock(session, liveInput, '2026-06-14T21:05:12.000Z'),
+      prepareFrameForCaptureClock(
+        session,
+        {
+          ...liveInput,
+          frameIndex: 1,
+          streams: liveInput.streams.map((stream) => ({
+            ...stream,
+            sequence: 1,
+          })),
+        },
+        '2026-06-14T21:05:45.000Z',
+      ),
+    ].reduce(
+      (currentSession, frameInput) => appendCapturedReplayFrame(currentSession, frameInput),
       session,
-      liveInput,
-      '2026-06-14T21:05:12.000Z',
     );
-    const capturedSession = appendCapturedReplayFrame(session, clockedInput);
     const frame = capturedSession.frames[0];
     const firstStream = frame?.streams[0];
 
+    expect(capturedSession.frames.map((capturedFrame) => capturedFrame.elapsedMs)).toEqual([
+      12000,
+      45000,
+    ]);
     expect(frame).toMatchObject({
       sourceMode: 'live',
       capturedAt: '2026-06-14T21:05:12.000Z',
