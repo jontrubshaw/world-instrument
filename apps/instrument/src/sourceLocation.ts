@@ -17,7 +17,7 @@ export interface SourceLocationUiState {
   readonly customLabel: string;
   readonly browserStatus: BrowserLocationStatus;
   readonly browserMessage: string;
-  readonly browserLocation?: StreamSourceLocation;
+  readonly browserLocation?: StreamSourceLocation | undefined;
 }
 
 export interface SourceLocationResolution {
