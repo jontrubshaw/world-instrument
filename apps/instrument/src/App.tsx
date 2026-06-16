@@ -28,10 +28,7 @@ import {
 import { InstrumentStage } from './components/InstrumentStage.tsx';
 import { BrowserVibrationHapticEngine, type HapticPlaybackState } from './hapticEngine.ts';
 import { serializeHapticPatternForDom, type InstrumentHapticPattern } from './hapticParameters.ts';
-import {
-  DEFAULT_LIVE_WEATHER_LOCATION,
-  LIVE_WEATHER_REFRESH_INTERVAL_MS,
-} from './liveWeather.ts';
+import { DEFAULT_LIVE_WEATHER_LOCATION, LIVE_WEATHER_REFRESH_INTERVAL_MS } from './liveWeather.ts';
 import {
   appendCapturedReplayFrame,
   buildReplaySnapshot,
@@ -129,9 +126,7 @@ export function App() {
   const [framePosition, setFramePosition] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [sourceRefreshToken, setSourceRefreshToken] = useState(0);
-  const [sourceLocationState, setSourceLocationState] = useState(
-    createInitialSourceLocationState,
-  );
+  const [sourceLocationState, setSourceLocationState] = useState(createInitialSourceLocationState);
   const [browserSensorState, setBrowserSensorState] = useState(
     createInitialBrowserSensorRuntimeState,
   );
@@ -780,10 +775,16 @@ export function App() {
     setSourceLocationState(update);
 
     if (sourceLocationRequired) {
-      markSourceLoading(setSourceState, selectedSourceId, selectedSource.displayName, instrumentMode, {
-        message: 'Updating source location...',
-        preserveFrame: false,
-      });
+      markSourceLoading(
+        setSourceState,
+        selectedSourceId,
+        selectedSource.displayName,
+        instrumentMode,
+        {
+          message: 'Updating source location...',
+          preserveFrame: false,
+        },
+      );
     }
   };
 
@@ -806,7 +807,8 @@ export function App() {
   };
 
   const requestBrowserSourceLocation = async () => {
-    const geolocation = (navigator as unknown as { readonly geolocation?: Geolocation }).geolocation;
+    const geolocation = (navigator as unknown as { readonly geolocation?: Geolocation })
+      .geolocation;
 
     if (geolocation === undefined) {
       updateSourceLocation((currentState) => ({
@@ -1050,7 +1052,9 @@ export function App() {
                 <select
                   value={sourceLocationState.inputMode}
                   onChange={(event) => {
-                    selectSourceLocationMode(event.target.value as SourceLocationUiState['inputMode']);
+                    selectSourceLocationMode(
+                      event.target.value as SourceLocationUiState['inputMode'],
+                    );
                   }}
                 >
                   <option value="default">Default London</option>
@@ -1833,7 +1837,9 @@ function geolocationErrorMessage(error: unknown): string {
 }
 
 function isGeolocationPositionError(error: unknown): error is GeolocationPositionError {
-  return typeof GeolocationPositionError !== 'undefined' && error instanceof GeolocationPositionError;
+  return (
+    typeof GeolocationPositionError !== 'undefined' && error instanceof GeolocationPositionError
+  );
 }
 
 function markSourceLoading(

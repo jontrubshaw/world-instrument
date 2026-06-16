@@ -141,7 +141,8 @@ function resolveBrowserLocation(state: SourceLocationUiState): SourceLocationRes
   if (state.browserStatus === 'unavailable') {
     return {
       status: 'unavailable',
-      message: 'Browser geolocation is unavailable. Choose custom coordinates or the default location.',
+      message:
+        'Browser geolocation is unavailable. Choose custom coordinates or the default location.',
     };
   }
 
