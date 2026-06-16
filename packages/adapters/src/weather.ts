@@ -11,6 +11,7 @@ import {
   type StreamSample,
   type StreamSampleQuality,
   type StreamSource,
+  type StreamSourceLocation,
   type VectorStreamSample,
 } from '@world-instrument/core';
 
@@ -31,13 +32,7 @@ const OPEN_METEO_CURRENT_FIELDS = [
   'wind_direction_10m',
 ] as const;
 
-export interface WeatherLocation {
-  readonly id: string;
-  readonly label: string;
-  readonly latitude: number;
-  readonly longitude: number;
-  readonly timezone?: string;
-}
+export interface WeatherLocation extends StreamSourceLocation {}
 
 export interface RecordedWeatherPayload {
   readonly provider: 'open-meteo';

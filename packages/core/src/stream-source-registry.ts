@@ -13,6 +13,24 @@ export interface StreamSourceCapability {
   readonly requiresCredential?: boolean;
 }
 
+export interface StreamSourceLocation {
+  readonly id: string;
+  readonly label: string;
+  readonly latitude: number;
+  readonly longitude: number;
+  readonly timezone?: string;
+}
+
+export interface StreamSourceLocationConfiguration {
+  readonly required: boolean;
+  readonly modes?: readonly StreamSourceMode[];
+  readonly description: string;
+}
+
+export interface StreamSourceConfiguration {
+  readonly location?: StreamSourceLocationConfiguration;
+}
+
 export interface StreamSourceAdapterMetadata {
   readonly id: string;
   readonly version: string;
@@ -62,6 +80,7 @@ export interface StreamSourceDefinition {
   readonly mapping: StreamSourceNormalizedMapping;
   readonly scoreCompatibility: readonly StreamSourceScoreCompatibility[];
   readonly defaultScoreId?: string;
+  readonly configuration?: StreamSourceConfiguration;
   readonly fixtures?: readonly StreamSourceFixtureReference[];
   readonly metadata?: JsonObject;
 }
@@ -147,6 +166,19 @@ export function supportsStreamSourceMode(
   mode: StreamSourceMode,
 ): boolean {
   return definition.capabilities.some((capability) => capability.mode === mode);
+}
+
+export function sourceSupportsLocationConfiguration(
+  definition: StreamSourceDefinition,
+  mode: StreamSourceMode,
+): boolean {
+  const location = definition.configuration?.location;
+
+  if (location === undefined) {
+    return false;
+  }
+
+  return location.modes === undefined || location.modes.includes(mode);
 }
 
 export function isStreamSourceCompatibleWithScore(

@@ -54,6 +54,12 @@ describe('stream source registry', () => {
       adapter: {
         id: WEATHER_ADAPTER_ID,
       },
+      configuration: {
+        location: {
+          required: true,
+          modes: ['live'],
+        },
+      },
       mapping: {
         streamKind: 'weather',
         streamIdPrefix: 'weather',

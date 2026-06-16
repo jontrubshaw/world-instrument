@@ -28,7 +28,10 @@ import {
 import { InstrumentStage } from './components/InstrumentStage.tsx';
 import { BrowserVibrationHapticEngine, type HapticPlaybackState } from './hapticEngine.ts';
 import { serializeHapticPatternForDom, type InstrumentHapticPattern } from './hapticParameters.ts';
-import { LIVE_WEATHER_REFRESH_INTERVAL_MS } from './liveWeather.ts';
+import {
+  DEFAULT_LIVE_WEATHER_LOCATION,
+  LIVE_WEATHER_REFRESH_INTERVAL_MS,
+} from './liveWeather.ts';
 import {
   appendCapturedReplayFrame,
   buildReplaySnapshot,
@@ -62,10 +65,18 @@ import {
   sourceDefinition,
   sourceHasCompatibleScore,
   sourceScoreLabel,
+  sourceSupportsLocation,
   sourceSupportsMode,
   type SourceInstrumentFrameState,
   type SourceReadState,
 } from './sourceRuntime.ts';
+import {
+  createBrowserSourceLocation,
+  createInitialSourceLocationState,
+  resolveSourceLocation,
+  sourceLocationKey,
+  type SourceLocationUiState,
+} from './sourceLocation.ts';
 
 type AudioControlState =
   | AudioContextState
@@ -118,6 +129,9 @@ export function App() {
   const [framePosition, setFramePosition] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [sourceRefreshToken, setSourceRefreshToken] = useState(0);
+  const [sourceLocationState, setSourceLocationState] = useState(
+    createInitialSourceLocationState,
+  );
   const [browserSensorState, setBrowserSensorState] = useState(
     createInitialBrowserSensorRuntimeState,
   );
@@ -158,6 +172,14 @@ export function App() {
     browserSensorSnapshotRef.current = nextState.snapshot;
   }, []);
   const selectedSource = sourceDefinition(selectedSourceId);
+  const sourceLocationControlVisible = sourceSupportsLocation(selectedSourceId, 'live');
+  const sourceLocationRequired =
+    instrumentMode !== 'replay' && sourceSupportsLocation(selectedSourceId, instrumentMode);
+  const sourceLocationResolution = useMemo(
+    () => resolveSourceLocation(sourceLocationState, DEFAULT_LIVE_WEATHER_LOCATION),
+    [sourceLocationState],
+  );
+  const selectedSourceLocationKey = sourceLocationKey(sourceLocationResolution.location);
   const sourceReplayArchives = useMemo(
     () => archives.filter((archive) => archiveMatchesSource(archive, selectedSource.kind)),
     [archives, selectedSource.kind],
@@ -339,6 +361,19 @@ export function App() {
       return;
     }
 
+    if (sourceLocationRequired && sourceLocationResolution.status !== 'ready') {
+      sourceSequenceRef.current = undefined;
+      setSourceState({
+        sourceId: selectedSourceId,
+        sourceName: selectedSource.displayName,
+        sourceMode: instrumentMode,
+        status: sourceLocationResolution.status === 'loading' ? 'loading' : 'unavailable',
+        message: sourceLocationResolution.message,
+      });
+
+      return;
+    }
+
     const abortController = new AbortController();
     let isCurrentRequest = true;
 
@@ -347,6 +382,9 @@ export function App() {
       sourceMode: instrumentMode,
       ...(selectedSourceId === BROWSER_SENSOR_STREAM_SOURCE_ID
         ? { browserSensorSnapshot: browserSensorSnapshotRef.current }
+        : {}),
+      ...(sourceLocationRequired && sourceLocationResolution.location !== undefined
+        ? { location: sourceLocationResolution.location }
         : {}),
       signal: abortController.signal,
       ...(sourceSequenceRef.current === undefined
@@ -404,7 +442,17 @@ export function App() {
       isCurrentRequest = false;
       abortController.abort();
     };
-  }, [instrumentMode, selectedSourceId, sourceRefreshToken]);
+  }, [
+    instrumentMode,
+    selectedSource.displayName,
+    selectedSourceId,
+    selectedSourceLocationKey,
+    sourceLocationRequired,
+    sourceLocationResolution.location,
+    sourceLocationResolution.message,
+    sourceLocationResolution.status,
+    sourceRefreshToken,
+  ]);
 
   useEffect(() => {
     if (!isBrowserSensorStateAtLeastAsFresh(browserSensorState, browserSensorStateRef.current)) {
@@ -724,6 +772,82 @@ export function App() {
     setSourceRefreshToken((currentToken) => currentToken + 1);
   };
 
+  const updateSourceLocation = (
+    update: (currentState: SourceLocationUiState) => SourceLocationUiState,
+  ) => {
+    sourceSequenceRef.current = undefined;
+    setIsPlaying(false);
+    setSourceLocationState(update);
+
+    if (sourceLocationRequired) {
+      markSourceLoading(setSourceState, selectedSourceId, selectedSource.displayName, instrumentMode, {
+        message: 'Updating source location...',
+        preserveFrame: false,
+      });
+    }
+  };
+
+  const selectSourceLocationMode = (nextMode: SourceLocationUiState['inputMode']) => {
+    updateSourceLocation((currentState) => ({
+      ...currentState,
+      inputMode: nextMode,
+    }));
+  };
+
+  const updateCustomSourceLocation = (
+    field: 'customLabel' | 'customLatitude' | 'customLongitude',
+    value: string,
+  ) => {
+    updateSourceLocation((currentState) => ({
+      ...currentState,
+      inputMode: 'custom',
+      [field]: value,
+    }));
+  };
+
+  const requestBrowserSourceLocation = async () => {
+    if (typeof navigator === 'undefined' || navigator.geolocation === undefined) {
+      updateSourceLocation((currentState) => ({
+        ...currentState,
+        inputMode: 'browser',
+        browserStatus: 'unavailable',
+        browserMessage: 'Browser geolocation is unavailable in this environment.',
+        browserLocation: undefined,
+      }));
+
+      return;
+    }
+
+    updateSourceLocation((currentState) => ({
+      ...currentState,
+      inputMode: 'browser',
+      browserStatus: 'locating',
+      browserMessage: 'Requesting browser location...',
+      browserLocation: undefined,
+    }));
+
+    try {
+      const position = await readBrowserGeolocation(navigator.geolocation);
+      const browserLocation = createBrowserSourceLocation(position.coords);
+
+      updateSourceLocation((currentState) => ({
+        ...currentState,
+        inputMode: 'browser',
+        browserStatus: 'ready',
+        browserMessage: `Browser location ready: ${browserLocation.label}.`,
+        browserLocation,
+      }));
+    } catch (error) {
+      updateSourceLocation((currentState) => ({
+        ...currentState,
+        inputMode: 'browser',
+        browserStatus: geolocationErrorStatus(error),
+        browserMessage: geolocationErrorMessage(error),
+        browserLocation: undefined,
+      }));
+    }
+  };
+
   const togglePlayback = () => {
     if (isPlaying) {
       setIsPlaying(false);
@@ -890,6 +1014,10 @@ export function App() {
           data-source-id={selectedSourceId}
           data-source-mode={instrumentMode}
           data-source-state={sourceDataStatus}
+          data-source-location-status={
+            sourceLocationControlVisible ? sourceLocationResolution.status : 'none'
+          }
+          data-source-location-id={sourceLocationResolution.location?.id ?? ''}
         >
           <label className="source-picker">
             <span>Source</span>
@@ -906,6 +1034,103 @@ export function App() {
               ))}
             </select>
           </label>
+
+          {sourceLocationControlVisible ? (
+            <section
+              className="source-location-control"
+              aria-label="Source location"
+              data-location-mode={sourceLocationState.inputMode}
+              data-location-status={sourceLocationResolution.status}
+              data-location-id={sourceLocationResolution.location?.id ?? ''}
+            >
+              <label className="location-picker">
+                <span>Location</span>
+                <select
+                  value={sourceLocationState.inputMode}
+                  onChange={(event) => {
+                    selectSourceLocationMode(event.target.value as SourceLocationUiState['inputMode']);
+                  }}
+                >
+                  <option value="default">Default London</option>
+                  <option value="browser">Browser location</option>
+                  <option value="custom">Custom coordinates</option>
+                </select>
+              </label>
+
+              {sourceLocationState.inputMode === 'browser' ? (
+                <div className="location-browser-controls">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void requestBrowserSourceLocation();
+                    }}
+                    disabled={sourceLocationState.browserStatus === 'locating'}
+                  >
+                    {sourceLocationState.browserStatus === 'locating'
+                      ? 'Locating...'
+                      : 'Use browser location'}
+                  </button>
+                </div>
+              ) : null}
+
+              {sourceLocationState.inputMode === 'custom' ? (
+                <div className="location-coordinate-grid">
+                  <label>
+                    <span>Latitude</span>
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      min="-90"
+                      max="90"
+                      step="0.0001"
+                      value={sourceLocationState.customLatitude}
+                      onChange={(event) => {
+                        updateCustomSourceLocation('customLatitude', event.target.value);
+                      }}
+                    />
+                  </label>
+                  <label>
+                    <span>Longitude</span>
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      min="-180"
+                      max="180"
+                      step="0.0001"
+                      value={sourceLocationState.customLongitude}
+                      onChange={(event) => {
+                        updateCustomSourceLocation('customLongitude', event.target.value);
+                      }}
+                    />
+                  </label>
+                  <label className="location-label-input">
+                    <span>Label</span>
+                    <input
+                      type="text"
+                      value={sourceLocationState.customLabel}
+                      placeholder="Optional place name"
+                      onChange={(event) => {
+                        updateCustomSourceLocation('customLabel', event.target.value);
+                      }}
+                    />
+                  </label>
+                </div>
+              ) : null}
+
+              <p
+                className="location-status"
+                role={
+                  sourceLocationResolution.status === 'invalid' ||
+                  sourceLocationResolution.status === 'unavailable'
+                    ? 'alert'
+                    : 'status'
+                }
+                aria-live="polite"
+              >
+                {sourceLocationResolution.message}
+              </p>
+            </section>
+          ) : null}
 
           <div className="capability-strip" aria-label="Source capabilities">
             <span>{sourceCapabilitySummary(selectedSource)}</span>
@@ -1563,14 +1788,65 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : 'Unknown import error.';
 }
 
+function readBrowserGeolocation(geolocation: Geolocation): Promise<GeolocationPosition> {
+  return new Promise((resolve, reject) => {
+    geolocation.getCurrentPosition(resolve, reject, {
+      enableHighAccuracy: false,
+      maximumAge: 5 * 60 * 1000,
+      timeout: 10_000,
+    });
+  });
+}
+
+function geolocationErrorStatus(error: unknown): SourceLocationUiState['browserStatus'] {
+  if (isGeolocationPositionError(error)) {
+    if (error.code === GeolocationPositionError.PERMISSION_DENIED) {
+      return 'denied';
+    }
+
+    if (error.code === GeolocationPositionError.POSITION_UNAVAILABLE) {
+      return 'unavailable';
+    }
+  }
+
+  return 'error';
+}
+
+function geolocationErrorMessage(error: unknown): string {
+  if (isGeolocationPositionError(error)) {
+    if (error.code === GeolocationPositionError.PERMISSION_DENIED) {
+      return 'Browser location permission was denied.';
+    }
+
+    if (error.code === GeolocationPositionError.POSITION_UNAVAILABLE) {
+      return 'Browser location is unavailable right now.';
+    }
+
+    if (error.code === GeolocationPositionError.TIMEOUT) {
+      return 'Browser location timed out.';
+    }
+  }
+
+  return 'Browser location could not be read.';
+}
+
+function isGeolocationPositionError(error: unknown): error is GeolocationPositionError {
+  return typeof GeolocationPositionError !== 'undefined' && error instanceof GeolocationPositionError;
+}
+
 function markSourceLoading(
   setSourceState: Dispatch<SetStateAction<SourceUiState>>,
   sourceId: string,
   sourceName: string,
   sourceMode: Exclude<InstrumentMode, 'replay'>,
+  options: {
+    readonly message?: string;
+    readonly preserveFrame?: boolean;
+  } = {},
 ): void {
   setSourceState((currentState) => {
     const canPreserveFrame =
+      options.preserveFrame !== false &&
       currentState.sourceId === sourceId &&
       currentState.sourceMode === sourceMode &&
       currentState.frame !== undefined;
@@ -1580,9 +1856,11 @@ function markSourceLoading(
       sourceName,
       sourceMode,
       status: 'loading',
-      message: canPreserveFrame
-        ? `Refreshing ${sourceName} ${sourceMode} input...`
-        : `Loading ${sourceName} ${sourceMode} input...`,
+      message:
+        options.message ??
+        (canPreserveFrame
+          ? `Refreshing ${sourceName} ${sourceMode} input...`
+          : `Loading ${sourceName} ${sourceMode} input...`),
       ...(canPreserveFrame
         ? {
             frame: currentState.frame,

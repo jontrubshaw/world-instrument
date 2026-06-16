@@ -78,6 +78,73 @@ describe('instrument source runtime', () => {
     });
   });
 
+  it('passes selected source location into the live weather runtime and adapter', async () => {
+    let requestedUrl: string | undefined;
+
+    const frame = await readSourceFrame({
+      sourceId: WEATHER_STREAM_SOURCE_ID,
+      sourceMode: 'live',
+      now: new Date('2026-06-15T12:05:00.000Z'),
+      online: true,
+      location: {
+        id: 'custom-edinburgh',
+        label: 'Edinburgh, UK',
+        latitude: 55.9533,
+        longitude: -3.1883,
+      },
+      fetchWeather: (url) => {
+        requestedUrl = url;
+
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () =>
+            Promise.resolve({
+              timezone: 'GMT',
+              current: {
+                time: '2026-06-15T12:00',
+                temperature_2m: 12.6,
+                relative_humidity_2m: 80,
+                weather_code: 61,
+                wind_speed_10m: 8.1,
+                wind_direction_10m: 210,
+              },
+            }),
+        });
+      },
+    });
+
+    expect(requestedUrl).toBeDefined();
+    const url = new URL(requestedUrl ?? '');
+    expect(url.searchParams.get('latitude')).toBe('55.9533');
+    expect(url.searchParams.get('longitude')).toBe('-3.1883');
+    expect(frame).toMatchObject({
+      sourceId: WEATHER_STREAM_SOURCE_ID,
+      sourceMode: 'live',
+      status: 'ready',
+      frame: {
+        sourceLabel: 'Edinburgh, UK weather',
+        streamSequence: 0,
+      },
+      streamState: {
+        streamId: 'weather:custom-edinburgh',
+        source: {
+          id: 'weather.open-meteo:custom-edinburgh',
+          label: 'Edinburgh, UK weather',
+        },
+        metadata: {
+          location: {
+            id: 'custom-edinburgh',
+            label: 'Edinburgh, UK',
+            latitude: 55.9533,
+            longitude: -3.1883,
+            timezone: 'GMT',
+          },
+        },
+      },
+    });
+  });
+
   it('routes a browser sensor fixture through the shared output pipeline', async () => {
     const frame = await readSourceFrame({
       sourceId: BROWSER_SENSOR_STREAM_SOURCE_ID,
