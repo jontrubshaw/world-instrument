@@ -806,8 +806,7 @@ export function App() {
   };
 
   const requestBrowserSourceLocation = async () => {
-    const geolocation = (navigator as Navigator & { readonly geolocation?: Geolocation })
-      .geolocation;
+    const geolocation = (navigator as unknown as { readonly geolocation?: Geolocation }).geolocation;
 
     if (geolocation === undefined) {
       updateSourceLocation((currentState) => ({
