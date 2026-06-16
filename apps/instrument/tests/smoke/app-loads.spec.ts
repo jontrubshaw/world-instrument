@@ -87,10 +87,7 @@ test('loads the instrument shell', async ({ page }) => {
   await page.getByLabel('Label').fill('Edinburgh, UK');
   await page.getByLabel('Latitude').fill('55.9533');
   await page.getByLabel('Longitude').fill('-3.1883');
-  await expect(streamControls).toHaveAttribute(
-    'data-source-location-id',
-    'custom-55.9533--3.1883',
-  );
+  await expect(streamControls).toHaveAttribute('data-source-location-id', 'custom-55.9533--3.1883');
   await expect(streamControls).toHaveAttribute(
     'data-provenance-source-id',
     'weather.open-meteo:custom-55.9533--3.1883',
