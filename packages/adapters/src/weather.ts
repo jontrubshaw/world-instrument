@@ -32,7 +32,7 @@ const OPEN_METEO_CURRENT_FIELDS = [
   'wind_direction_10m',
 ] as const;
 
-export interface WeatherLocation extends StreamSourceLocation {}
+export type WeatherLocation = StreamSourceLocation;
 
 export interface RecordedWeatherPayload {
   readonly provider: 'open-meteo';
