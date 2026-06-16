@@ -83,10 +83,11 @@ test('loads the instrument shell', async ({ page }) => {
   await expect(streamControls.locator('.live-status')).toHaveText(
     'Live weather is driving the instrument.',
   );
-  await page.getByLabel('Location').selectOption('custom');
-  await page.getByLabel('Label').fill('Edinburgh, UK');
-  await page.getByLabel('Latitude').fill('55.9533');
-  await page.getByLabel('Longitude').fill('-3.1883');
+  const sourceLocation = page.getByRole('region', { name: 'Source location' });
+  await sourceLocation.locator('.location-picker select').selectOption('custom');
+  await sourceLocation.getByLabel('Label').fill('Edinburgh, UK');
+  await sourceLocation.getByLabel('Latitude').fill('55.9533');
+  await sourceLocation.getByLabel('Longitude').fill('-3.1883');
   await expect(streamControls).toHaveAttribute('data-source-location-id', 'custom-55.9533--3.1883');
   await expect(streamControls).toHaveAttribute(
     'data-provenance-source-id',
@@ -103,7 +104,7 @@ test('loads the instrument shell', async ({ page }) => {
     .poll(() => new URL(weatherRequests.at(-1) ?? '').searchParams.get('longitude'))
     .toBe('-3.1883');
 
-  await page.getByLabel('Location').selectOption('default');
+  await sourceLocation.locator('.location-picker select').selectOption('default');
   await expect(streamControls).toHaveAttribute('data-source-location-id', 'london-uk');
   await expect(streamControls).toHaveAttribute(
     'data-provenance-source-id',
