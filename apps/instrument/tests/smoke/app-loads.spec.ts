@@ -3,7 +3,11 @@ import { readFile } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
 
 test('loads the instrument shell', async ({ page }) => {
+  const weatherRequests: string[] = [];
+
   await page.route('https://api.open-meteo.com/v1/forecast**', async (route) => {
+    weatherRequests.push(route.request().url());
+
     const observedAt = new Date().toISOString();
 
     await route.fulfill({
@@ -78,6 +82,36 @@ test('loads the instrument shell', async ({ page }) => {
   await expect(sourceSelector).toHaveValue('weather.open-meteo');
   await expect(streamControls.locator('.live-status')).toHaveText(
     'Live weather is driving the instrument.',
+  );
+  const sourceLocation = page.getByRole('region', { name: 'Source location' });
+  await sourceLocation.locator('.location-picker select').selectOption('custom');
+  await sourceLocation.getByLabel('Label').fill('Edinburgh, UK');
+  await sourceLocation.getByLabel('Latitude').fill('55.9533');
+  await sourceLocation.getByLabel('Longitude').fill('-3.1883');
+  await expect(streamControls).toHaveAttribute('data-source-location-id', 'custom-55.9533--3.1883');
+  await expect(streamControls).toHaveAttribute(
+    'data-provenance-source-id',
+    'weather.open-meteo:custom-55.9533--3.1883',
+  );
+  await expect(provenance.locator('.provenance-summary')).toContainText(
+    'Live output from Edinburgh, UK weather; ready.',
+  );
+  await expect.poll(() => canvas.evaluate((element) => element.dataset.scoreFrameIndex)).toBe('0');
+  await expect
+    .poll(() => new URL(weatherRequests.at(-1) ?? '').searchParams.get('latitude'))
+    .toBe('55.9533');
+  await expect
+    .poll(() => new URL(weatherRequests.at(-1) ?? '').searchParams.get('longitude'))
+    .toBe('-3.1883');
+
+  await sourceLocation.locator('.location-picker select').selectOption('default');
+  await expect(streamControls).toHaveAttribute('data-source-location-id', 'london-uk');
+  await expect(streamControls).toHaveAttribute(
+    'data-provenance-source-id',
+    'weather.open-meteo:london-uk',
+  );
+  await expect(provenance.locator('.provenance-summary')).toContainText(
+    'Live output from London, UK weather; ready.',
   );
   await page.getByRole('button', { name: 'Live', exact: true }).click();
   await page.waitForTimeout(50);

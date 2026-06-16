@@ -149,6 +149,14 @@ export const weatherStreamSourceDefinition = {
     },
   ],
   defaultScoreId: WEATHER_SCORE_ID,
+  configuration: {
+    location: {
+      required: true,
+      modes: ['live'],
+      description:
+        'Live weather reads use the selected source location coordinates while fixtures and replays stay deterministic.',
+    },
+  },
   fixtures: [
     {
       id: 'open-meteo-london-current-v1',

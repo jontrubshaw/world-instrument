@@ -7,6 +7,7 @@ import {
   StreamSourceRegistry,
   createStreamSourceRegistry,
   isStreamSourceCompatibleWithScore,
+  sourceSupportsLocationConfiguration,
   streamSourceModes,
   supportsStreamSourceMode,
   type ScoreVersionMetadata,
@@ -28,6 +29,8 @@ describe('stream source registry contracts', () => {
     expect(streamSourceModes(testWeatherSourceDefinition)).toEqual(['fixture', 'live']);
     expect(supportsStreamSourceMode(testWeatherSourceDefinition, 'live')).toBe(true);
     expect(supportsStreamSourceMode(testWeatherSourceDefinition, 'replay')).toBe(false);
+    expect(sourceSupportsLocationConfiguration(testWeatherSourceDefinition, 'fixture')).toBe(false);
+    expect(sourceSupportsLocationConfiguration(testWeatherSourceDefinition, 'live')).toBe(true);
   });
 
   it('rejects duplicate ids and missing required lookups', () => {
@@ -79,6 +82,13 @@ const testWeatherSourceDefinition: StreamSourceDefinition = {
     },
   ],
   defaultMode: 'fixture',
+  configuration: {
+    location: {
+      required: true,
+      modes: ['live'],
+      description: 'Live reads use a selected test location.',
+    },
+  },
   mapping: {
     streamKind: 'weather',
     streamIdPrefix: 'weather',

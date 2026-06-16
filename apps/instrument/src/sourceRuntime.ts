@@ -10,6 +10,7 @@ import {
   type WeatherLocation,
 } from '@world-instrument/adapters';
 import {
+  sourceSupportsLocationConfiguration,
   supportsStreamSourceMode,
   type NormalizedStreamState,
   type StreamSourceDefinition,
@@ -79,6 +80,10 @@ export function sourceDefinition(sourceId: string): StreamSourceDefinition {
 
 export function sourceSupportsMode(sourceId: string, mode: StreamSourceMode): boolean {
   return streamSourceRegistry.supports(sourceId, mode);
+}
+
+export function sourceSupportsLocation(sourceId: string, mode: StreamSourceMode): boolean {
+  return sourceSupportsLocationConfiguration(sourceDefinition(sourceId), mode);
 }
 
 export function sourceHasCompatibleScore(sourceId: string): boolean {
